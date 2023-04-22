@@ -27,3 +27,6 @@ tmpdaphne.daphne
 # release scripts output
 /artifacts
 
+#Custom - niklas
+!containers/coder-daphne-env/build
+.cache
