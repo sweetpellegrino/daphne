@@ -8,6 +8,9 @@ RUN apt-get update \
 	sudo \
 	vim \
 	wget \ 
+	htop \
+#	doxygen \
+#	graphviz \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' --output vscode_cli.tar.gz
@@ -21,4 +24,3 @@ RUN useradd --groups sudo --no-create-home --shell /bin/bash ${USER} \
 	&& chmod 0440 /etc/sudoers.d/${USER}
 USER ${USER}
 WORKDIR /home/${USER}
-
