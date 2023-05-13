@@ -35,6 +35,7 @@ if(USE_CUDA AND CMAKE_CUDA_COMPILER)
             ${PREFIX}/BatchNorm.cpp
             ${PREFIX}/BiasAdd.cpp
             ${PREFIX}/Convolution.cpp
+            ${PREFIX}/Fill.cu
             ${PREFIX}/Pooling.cpp
             ${PREFIX}/Softmax.cpp
             ${PREFIX}/ColBind.cu
@@ -94,6 +95,6 @@ else()
     list(APPEND LIBS LLVMSupport)
 endif()
 
-list(APPEND LIBS Arrow::arrow_shared Parquet::parquet_shared DaphneMetaDataParser MLIRDaphne MLIRDaphneTransforms)
+list(APPEND LIBS Eigen3::Eigen Arrow::arrow_shared Parquet::parquet_shared DaphneMetaDataParser MLIRDaphne MLIRDaphneTransforms)
 
 target_link_libraries(AllKernels PUBLIC ${LIBS} ${MPI_LIBRARIES})

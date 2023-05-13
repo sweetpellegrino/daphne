@@ -16,6 +16,7 @@
 
 #include <compiler/utils/CompilerUtils.h>
 #include <ir/daphneir/Daphne.h>
+#include <runtime/local/datastructures/Structure.h>
 
 #include <mlir/IR/Value.h>
 
@@ -290,7 +291,7 @@ std::vector<std::pair<ssize_t, ssize_t>> daphne::CTableOp::inferShape() {
     // If the result shape is given as arguments, then we know it.
     // Otherwise, we don't.
     // TODO In case resNumRows/resNumCols are known to be -1 (i.e., if
-    // the output shape shall be determined depening on the values in
+    // the output shape shall be determined depending on the values in
     // the lhs and rhs input matrices) and the lhs/rhs input matrices
     // are compile-time constants, then we could determine the number
     // of rows/columns here.
@@ -298,6 +299,11 @@ std::vector<std::pair<ssize_t, ssize_t>> daphne::CTableOp::inferShape() {
         CompilerUtils::constantOrDefault<ssize_t>(getResNumRows(), -1),
         CompilerUtils::constantOrDefault<ssize_t>(getResNumCols(), -1)
     }};
+}
+
+std::vector<std::pair<ssize_t, ssize_t>> daphne::MatrixConstantOp::inferShape() {
+    const Structure* mat = reinterpret_cast<const Structure*>(CompilerUtils::constantOrThrow<uint64_t>(getMatrixAddr()));
+    return {{mat->getNumRows(), mat->getNumCols()}};
 }
 
 // ****************************************************************************

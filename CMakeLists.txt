@@ -128,6 +128,9 @@ endif()
 find_package(Arrow REQUIRED)
 find_package(Parquet REQUIRED)
 
+# support for Eigen library
+find_package (Eigen3 REQUIRED)
+
 option(USE_FPGAOPENCL "Whether to activate compilation of FPGA OpenCL features" OFF)
 if(USE_FPGAOPENCL)
 	if(NOT DEFINED ENV{QUARTUSDIR})
@@ -154,6 +157,8 @@ include_directories(${PROJECT_BINARY_DIR}/src)
 
 add_subdirectory(src/ir/daphneir)
 add_subdirectory(src/api/cli)
+add_subdirectory(src/api/daphnelib)
+add_subdirectory(src/api/internal)
 add_subdirectory(src/compiler/execution)
 add_subdirectory(src/compiler/explanation)
 add_subdirectory(src/compiler/inference)
