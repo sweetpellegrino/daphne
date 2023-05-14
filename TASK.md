@@ -27,6 +27,7 @@ As an example, consider the very simple expression** **`sqrt(X + 1)`, where** **
 
 * Enable update-in-place operations on sparse matrices (e.g.,** **`CSRMatrix`), too. One challenge is that the allocation size of sparse matrices depends on the number of non-zeros, which needs to be taken into account when identifying possible reuses.
 * Make the DAPHNE compiler reorder the operations in the IR to make it more amenable for update-in-place operations. As an example, consider shift-and-scale, a widely used data preprocessing step in ML applications:** **`X = (X – mean(X, 1)) / stddev(X, 1);`. This subtracts the column mean from each value in a feature matrix** **`X` and divides all resulting values by the column standard deviation. This could result in the following (simplified) DaphneIR:
+
   ```mlir
   ...
   %5 = ... -> !daphne.Matrix<1000x100xf64>
@@ -37,3 +38,7 @@ As an example, consider the very simple expression** **`sqrt(X + 1)`, where** **
   ...
   ```
   Here, the SSA value** **`%5` is the initial matrix** **`X` and** **`%9` is the resulting matrix** **`X` after the assignment. How many opportunities for update-in-place operation does this IR snippet offer? How could the operations be reordered to increase the number of opportunities? Try to generalize your observations and make them widely applicable for other examples.
+
+**Additional information from older problem description:**
+Currently MTWrapper allocates a data object for the output of a vectorized pipeline, but since we still lack compiler support for update-in-place (kernel calls are always passed a null-pointer for their result parameter), we still need to copy a pipeline's output to the actual output object. This is an unnecessary step and we should avoid it.
+https://github.com/daphne-eu/daphne/issues/112
