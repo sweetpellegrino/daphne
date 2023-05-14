@@ -35,7 +35,15 @@ struct TestPrintDefUsePass
     getOperation()->walk([&dot](Operation *op) {
 
       op->dump();
-      dot << "  \"" << op << "\" [label=\"" << op->getName().getStringRef().str() << "\"];\n";
+
+
+      std::string str;
+      llvm::raw_string_ostream ss(str);
+      op->print(ss);
+      ss.flush();
+      str = std::regex_replace(str, std::regex("\""), "\\\"");
+
+      dot << "  \"" << op << "\" [label=\"" << str << "\"];\n";
 
       llvm::errs() << "//" << "Visiting op '" << op->getName() << "' with "
                    << op->getNumOperands() << " operands:\n";
@@ -76,8 +84,11 @@ struct TestPrintDefUsePass
           llvm::errs() << "//" << "    - " << userOp->getName() << "\n";
 
           std::string str;
-          llvm::raw_string_ostream(str) << result;
-          str = std::regex_replace(str, std::regex("\""), "\\\""); 
+          llvm::raw_string_ostream ss(str);
+          result.print(ss);
+          ss.flush();
+          str = std::regex_replace(str, std::regex("\""), "\\\"");
+          str = "";
 
           dot << "  \"" << op << "\" -> \"" << userOp << "\" [label=\"" << str << "\"];\n";
         }
