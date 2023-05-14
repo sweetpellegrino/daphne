@@ -30,3 +30,4 @@ tmpdaphne.daphne
 #Custom - niklas
 !containers/coder-daphne-env/build
 .cache
+.antlr
