@@ -14,6 +14,8 @@
 
 add_mlir_dialect_library(MLIRDaphneExplain
     PrintIRPass.cpp
+    TestPrintNestingPass.cpp
+    TestPrintDefUse.cpp
 
     DEPENDS
     MLIRDaphneOpsIncGen

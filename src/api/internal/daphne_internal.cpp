@@ -434,6 +434,9 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
 
     // Parse the input file and generate the corresponding DaphneIR operations
     // inside the module, assuming DaphneDSL as the input format.
+    
+    //moduleOp->dump();
+    
     DaphneDSLParser parser(scriptArgsFinal, user_config);
     try {
         parser.parseFile(builder, inputFile);
@@ -442,6 +445,8 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
         std::cerr << "Parser error: " << e.what() << std::endl;
         return StatusCode::PARSER_ERROR;
     }
+
+    //moduleOp->dump();
 
     // Further, process the module, including optimization and lowering passes.
     try{
@@ -455,7 +460,7 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
     }
 
     // JIT-compile the module and execute it.
-    // module->dump(); // print the LLVM IR representation
+    //moduleOp->dump(); // print the LLVM IR representation
     try{
         auto engine = executor.createExecutionEngine(moduleOp);
         auto error = engine->invoke("main");
