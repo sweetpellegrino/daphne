@@ -11,9 +11,6 @@
 
 #include <string>
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <regex>
 
 
 using namespace mlir;
@@ -28,15 +25,8 @@ struct TestPrintDefUsePass
   void runOnOperation() override {
     // Recursively traverse the IR nested under the current operation and print
     // every single operation and their operands and users.
-
-    std::ostringstream dot;
-    dot << "digraph DefUseChain {\n";
-
-    getOperation()->walk([&dot](Operation *op) {
-
+    getOperation()->walk([](Operation *op) {
       op->dump();
-      dot << "  \"" << op << "\" [label=\"" << op->getName().getStringRef().str() << "\"];\n";
-
       llvm::errs() << "//" << "Visiting op '" << op->getName() << "' with "
                    << op->getNumOperands() << " operands:\n";
 
@@ -44,8 +34,7 @@ struct TestPrintDefUsePass
       for (Value operand : op->getOperands()) {
         if (Operation *producer = operand.getDefiningOp()) {
           llvm::errs() << "//" << "  - Operand produced by operation '"
-                       << producer->getName() << producer << "'\n";
-          dot << "  \"" << producer << "\" -> \"" << op << "\" [label=\"" << producer->getName().getStringRef().str() << "\"];\n";
+                       << producer->getName() << "'\n";
         } else {
           // If there is no defining op, the Value is necessarily a Block
           // argument.
@@ -74,19 +63,9 @@ struct TestPrintDefUsePass
         }
         for (Operation *userOp : result.getUsers()) {
           llvm::errs() << "//" << "    - " << userOp->getName() << "\n";
-
-          std::string str;
-          llvm::raw_string_ostream(str) << result;
-          str = std::regex_replace(str, std::regex("\""), "\\\""); 
-
-          dot << "  \"" << op << "\" -> \"" << userOp << "\" [label=\"" << str << "\"];\n";
         }
       }
     });
-
-    dot << "}\n";
-    std::cerr << dot.str();
-
   }
 };
 
