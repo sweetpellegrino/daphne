@@ -16,6 +16,7 @@ include_directories(${PROJECT_SOURCE_DIR}/test)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/catch2) # for "catch.hpp"
 
 set(TEST_SOURCES
+        run_tests.h
         run_tests.cpp
 
         api/cli/algorithms/AlgorithmsTest.cpp
@@ -66,9 +67,11 @@ set(TEST_SOURCES
 	runtime/local/io/ReadMMTest.cpp
 	runtime/local/io/WriteDaphneTest.cpp
 	runtime/local/io/ReadDaphneTest.cpp
+        runtime/local/io/DaphneSerializerTest.cpp
 
         runtime/local/kernels/AggAllTest.cpp
         runtime/local/kernels/AggColTest.cpp
+        runtime/local/kernels/AggCumTest.cpp
         runtime/local/kernels/AggRowTest.cpp
         runtime/local/kernels/CartesianTest.cpp
         runtime/local/kernels/CastObjTest.cpp
@@ -100,6 +103,7 @@ set(TEST_SOURCES
         runtime/local/kernels/MapTest.cpp
         runtime/local/kernels/MatMulTest.cpp
         runtime/local/kernels/OrderTest.cpp
+        runtime/local/kernels/OuterBinaryTest.cpp
         runtime/local/kernels/QuantizeTest.cpp
         runtime/local/kernels/RandMatrixTest.cpp
         runtime/local/kernels/ReadTest.cpp
@@ -141,7 +145,8 @@ set_target_properties(run_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SO
 add_dependencies(run_tests daphne daphnelib DistributedWorker)
 
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-set(LIBS AllKernels ${dialect_libs} DataStructures DaphneDSLParser MLIRDaphne WorkerImpl Proto Util ${OPENBLAS_LIBRARIES} DaphneConfigParser DaphneMetaDataParser)
+set(LIBS AllKernels ${dialect_libs} DataStructures DaphneDSLParser MLIRDaphne WorkerImpl Proto DaphneConfigParser
+        DaphneMetaDataParser Util)
 
 if(USE_CUDA AND CMAKE_CUDA_COMPILER)
     target_include_directories(run_tests PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
@@ -156,7 +161,7 @@ endif()
 
 target_link_libraries(run_tests PRIVATE ${LIBS})
 target_link_directories(run_tests PRIVATE ${PROJECT_BINARY_DIR}/lib)
-add_executable(theta_join_test run_tests.cpp runtime/local/kernels/ThetaJoinTest.cpp)
+add_executable(theta_join_test run_tests.cpp run_tests.h runtime/local/kernels/ThetaJoinTest.cpp)
 set_target_properties(theta_join_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 add_dependencies(theta_join_test daphne DistributedWorker)

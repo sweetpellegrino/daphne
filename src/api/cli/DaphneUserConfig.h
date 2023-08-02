@@ -19,7 +19,10 @@
 
 #include <api/daphnelib/DaphneLibResult.h>
 #include <runtime/local/vectorized/LoadPartitioningDefs.h>
-#include "runtime/local/datastructures/IAllocationDescriptor.h"
+#include <runtime/local/datastructures/IAllocationDescriptor.h>
+#include <util/LogConfig.h>
+#include <util/DaphneLogger.h>
+class DaphneLogger;
 
 #include <vector>
 #include <string>
@@ -36,6 +39,8 @@ struct DaphneUserConfig {
     bool use_vectorized_exec = false;
     bool use_distributed = false;
     bool use_obj_ref_mgnt = true;
+    bool use_ipa_const_propa = true;
+    bool use_phy_op_selection = true;
     bool cuda_fuse_any = false;
     bool vectorized_single_queue = false;
     bool prePartitionRows = false;
@@ -43,6 +48,7 @@ struct DaphneUserConfig {
     bool hyperthreadingEnabled = false;
     bool debugMultiThreading = false;
     bool use_fpgaopencl = false;
+    bool enable_profiling = false;
 
     bool debug_llvm = false;
     bool explain_kernels = false;
@@ -50,7 +56,9 @@ struct DaphneUserConfig {
     bool explain_parsing = false;
     bool explain_parsing_simplified = false;
     bool explain_property_inference = false;
+    bool explain_select_matrix_repr = false;
     bool explain_sql = false;
+    bool explain_phy_op_selection = false;
     bool explain_type_adaptation = false;
     bool explain_vectorized = false;
     bool explain_obj_ref_mgnt = false;
@@ -60,6 +68,10 @@ struct DaphneUserConfig {
     ALLOCATION_TYPE distributedBackEndSetup= ALLOCATION_TYPE::DIST_MPI; // default value
     int numberOfThreads = -1;
     int minimumTaskSize = 1;
+    // minimum considered log level (e.g., no logging below ERROR (essentially suppressing WARN, INFO, DEBUG and TRACE)
+    spdlog::level::level_enum log_level_limit = spdlog::level::err;
+    std::vector<LogConfig> loggers;
+    DaphneLogger* log_ptr{};
     
 #ifdef USE_CUDA
     // User config holds once context atm for convenience until we have proper system infrastructure

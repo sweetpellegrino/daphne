@@ -35,14 +35,13 @@ set(LIBS
         MLIRExecutionEngine
         #DaphneIrExecutor
         DataStructures
-        IO
-        ProtoDataConverter
+        IO        
         CallData
         Proto
         DaphneMetaDataParser
         Arrow::arrow_shared
         Parquet::parquet_shared
-        )
+        Util)
 
 add_library(WorkerImpl ${SOURCES})
 #llvm_update_compile_flags(WorkerImpl)
