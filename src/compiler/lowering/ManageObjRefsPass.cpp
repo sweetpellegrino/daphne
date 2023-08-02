@@ -169,7 +169,7 @@ void incRefIfObj(Value v, OpBuilder & b) {
  * @param b
  */
 void incRefArgs(Operation& op, OpBuilder & b) {
-    b.setInsertionPoint(&op);
+    b.setInsertionPoint(&op); //Sets the insertion point to the specified operation, which will cause subsequent insertions to go right before it.
     for(Value arg : op.getOperands())
         incRefIfObj(arg, b);
 }

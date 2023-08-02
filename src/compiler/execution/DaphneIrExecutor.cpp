@@ -85,14 +85,14 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         if(userConfig_.explain_parsing_simplified) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after parsing and some simplifications:"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
         pm.addPass(mlir::daphne::createRewriteSqlOpPass()); // calls SQL Parser
         if(userConfig_.explain_sql) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after SQL parsing:"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
         // TODO There is a cyclic dependency between (shape) inference and
@@ -116,14 +116,14 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         if(userConfig_.explain_property_inference) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after property inference"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
         pm.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createAdaptTypesToKernelsPass());
         if(userConfig_.explain_type_adaptation) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after type adaptation"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
 #if 0
@@ -149,7 +149,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         if(userConfig_.explain_vectorized) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
         
         if (userConfig_.use_distributed)
@@ -179,14 +179,14 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         if(userConfig_.explain_obj_ref_mgnt) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after managing object references"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
         pm.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createRewriteToCallKernelOpPass());
         if(userConfig_.explain_kernels) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after kernel lowering"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
         pm.addPass(mlir::createConvertSCFToCFPass());
@@ -196,7 +196,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         if(userConfig_.explain_llvm) {
             pm.addPass(mlir::daphne::createPrintIRPass("IR after llvm lowering"));
             //pm.addPass(mlir::daphne::createTestPrintNestingPass());
-            pm.addPass(mlir::daphne::createTestPrintDefUsePass());
+            //pm.addPass(mlir::daphne::createTestPrintDefUsePass());
         }
 
         if (failed(pm.run(module))) {

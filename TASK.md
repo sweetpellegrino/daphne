@@ -37,6 +37,7 @@ As an example, consider the very simple expression** **`sqrt(X + 1)`, where** **
   %9 = "daphne.ewDiv"(%7, %8) : (!daphne.Matrix<1000x100xf64>, !daphne.Matrix<1x100xf64>) -> !daphne.Matrix<1000x100xf64>
   ...
   ```
+
   Here, the SSA value** **`%5` is the initial matrix** **`X` and** **`%9` is the resulting matrix** **`X` after the assignment. How many opportunities for update-in-place operation does this IR snippet offer? How could the operations be reordered to increase the number of opportunities? Try to generalize your observations and make them widely applicable for other examples.
 
 **Additional information from older problem description:**

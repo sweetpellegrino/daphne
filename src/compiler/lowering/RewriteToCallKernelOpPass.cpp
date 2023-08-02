@@ -466,7 +466,7 @@ namespace
                 cvpInputs, coNumInputs, cvpOutRows, cvpOutCols, cvpSplits, cvpCombines, op.getIr(), dctx
             };
             auto cko = rewriter.replaceOpWithNewOp<daphne::CallKernelOp>(
-                    op.getOperation(),
+                    op.getOperati
                     callee.str(),
                     newOperands,
                     op.getOutputs().getTypes()

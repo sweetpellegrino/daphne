@@ -36,6 +36,13 @@ struct TestPrintDefUsePass
 
       op->dump();
 
+//Visiting op 'daphne.fill' with 3 operands:
+//  - Operand produced by operation 'daphne.constant0x55d50a2c02b0'
+//  - Operand produced by operation 'daphne.cast0x55d50a2ba970'
+//  - Operand produced by operation 'daphne.cast0x55d50a2c63e0'
+//Has 1 results:
+//  - Result 0 has a single use: 
+//    - daphne.ewAdd
 
       std::string str;
       llvm::raw_string_ostream ss(str);
@@ -96,7 +103,7 @@ struct TestPrintDefUsePass
     });
 
     dot << "}\n";
-    std::cerr << dot.str();
+    //std::cerr << dot.str();
 
   }
 };
