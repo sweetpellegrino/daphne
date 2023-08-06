@@ -64,6 +64,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
     if (module) {
         // This flag is really useful to figure out why the lowering failed
         llvm::DebugFlag = userConfig_.debug_llvm;
+        //llvm::DebugFlag = true;
         {
             mlir::PassManager pm(&context_);
             // TODO Enable the verifier for all passes where it is possible.
@@ -176,6 +177,8 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         pm.addPass(mlir::createCanonicalizerPass());
         pm.addPass(mlir::createCSEPass());
 
+        pm.addPass(mlir::daphne::createFlagUpdateInPlace());
+
         if(userConfig_.use_obj_ref_mgnt)
             pm.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createManageObjRefsPass());
         if(userConfig_.explain_obj_ref_mgnt)
@@ -187,6 +190,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
 
         pm.addPass(mlir::createConvertSCFToCFPass());
         pm.addNestedPass<mlir::func::FuncOp>(mlir::LLVM::createRequestCWrappersPass());
+
         pm.addPass(mlir::daphne::createLowerToLLVMPass(userConfig_));
         pm.addPass(mlir::createReconcileUnrealizedCastsPass());
         if(userConfig_.explain_llvm)

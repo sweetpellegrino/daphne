@@ -50,14 +50,16 @@ namespace mlir::daphne {
     std::unique_ptr<Pass> createManageObjRefsPass();
     std::unique_ptr<Pass> createPhyOperatorSelectionPass();
     std::unique_ptr<Pass> createPrintIRPass(std::string message = "");
-    std::unique_ptr<Pass> createTestPrintNestingPass(); //added
-    std::unique_ptr<Pass> createTestPrintDefUsePass();
     std::unique_ptr<Pass> createRewriteSqlOpPass();
     std::unique_ptr<Pass> createRewriteToCallKernelOpPass();
     std::unique_ptr<Pass> createSelectMatrixRepresentationsPass();
     std::unique_ptr<Pass> createSpecializeGenericFunctionsPass(const DaphneUserConfig& cfg);
     std::unique_ptr<Pass> createVectorizeComputationsPass();
     std::unique_ptr<Pass> createWhileLoopInvariantCodeMotionPass();
+
+    std::unique_ptr<Pass> createFlagUpdateInPlace();
+    std::unique_ptr<Pass> createTestPrintNestingPass(); //added
+    std::unique_ptr<Pass> createTestPrintDefUsePass();
 #ifdef USE_CUDA
     std::unique_ptr<Pass> createMarkCUDAOpsPass(const DaphneUserConfig& cfg);
 #endif

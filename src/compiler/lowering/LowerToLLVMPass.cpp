@@ -29,6 +29,7 @@
 #include "mlir/Dialect/Func/Transforms/FuncConversions.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <memory>
 #include <utility>
@@ -263,6 +264,11 @@ class CallKernelOpLowering : public OpConversionPattern<daphne::CallKernelOp>
             argsLLVM.push_back(type);
         }
         
+        for (int i = 0; i < argsLLVM.size(); i++) {
+            argsLLVM[i].print(llvm::outs());
+            llvm::outs() << "\n";
+        }
+
         return argsLLVM;
     }
 
@@ -300,24 +306,48 @@ public:
         // separate nullptr for each result to the kernel. If it is true, we
         // create an array with the number of results, fill it with nullptrs,
         // and pass that to the kernel (variadic results).
+
+        llvm::outs() << "####################";
+        llvm::outs() << "CallKernelOpLowering";
+        llvm::outs() << "####################\n";
+        llvm::outs() << "op: " << op << "\n";
+
         const bool hasVarRes = op->hasAttr(ATTR_HASVARIADICRESULTS)
                 ? op->getAttr(ATTR_HASVARIADICRESULTS).dyn_cast<BoolAttr>().getValue()
                 : false;
         
+        llvm::outs() << "hasVarRes: " << hasVarRes << "\n";
+
         auto module = op->getParentOfType<ModuleOp>();
+        //llvm::outs() << "module: " << module << "\n";
+
         auto loc = op.getLoc();
+        llvm::outs() << "loc: " << loc << "\n";
 
         auto inputOutputTypes = getLLVMInputOutputTypes(
                                                         loc, rewriter.getContext(), typeConverter,
                                                         op.getResultTypes(), ValueRange(adaptor.getOperands()).getTypes(),
                                                         hasVarRes, rewriter.getIndexType());
+        llvm::outs() << "inputOutputTypes:\n";
+        for(auto type : inputOutputTypes) {
+            type.print(llvm::outs());
+            llvm::outs() << "\n";
+        }
 
         // create function protoype and get `FlatSymbolRefAttr` to it
         auto kernelRef = getOrInsertFunctionAttr(
                                                  rewriter, module, op.getCalleeAttr().getValue(),
                                                  getKernelFuncSignature(rewriter.getContext(), inputOutputTypes));
+        
+        llvm::outs() << "kernelRef: " << kernelRef << "\n";
 
         auto kernelOperands = allocOutputReferences(loc, rewriter, adaptor.getOperands(), inputOutputTypes, op->getNumResults(), hasVarRes);
+
+        llvm::outs() << "kernelOperands:\n";
+        for(auto op : kernelOperands) {
+            op.print(llvm::outs());
+            llvm::outs() << "\n";
+        }
 
         // call function
         // The kernel call has an empty list of return types, because our
@@ -330,6 +360,8 @@ public:
         rewriter.replaceOp(op, dereferenceOutputs(loc, rewriter, module,
                                                   op->getNumResults(),
                                                   hasVarRes, kernelOperands));
+        llvm::outs() << "########################################\n";
+
         return success();
     }
 
@@ -368,6 +400,7 @@ private:
                 results.push_back(resultVal);
             }
         
+
         return results;
     }
 

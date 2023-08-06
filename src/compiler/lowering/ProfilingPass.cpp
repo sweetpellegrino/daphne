@@ -35,6 +35,9 @@ struct ProfilingPass: public PassWrapper<ProfilingPass, OperationPass<func::Func
 void ProfilingPass::runOnOperation()
 {
     func::FuncOp f = getOperation();
+
+    std::cout << f << std::endl;
+
     Block & b = f.getBody().front();
 
     OpBuilder builder(&b, b.begin());

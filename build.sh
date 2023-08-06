@@ -990,6 +990,8 @@ cmake -S "$projectRoot" -B "$daphneBuildDir" -G Ninja -DANTLR_VERSION="$antlrVer
     -DCMAKE_PREFIX_PATH="$installPrefix" \
     $BUILD_CUDA $BUILD_FPGAOPENCL $BUILD_DEBUG $BUILD_MPI
 
+echo "123Test123"
+
 cmake --build "$daphneBuildDir" --target "$target"
 
 build_ts_end=$(date +%s%N)

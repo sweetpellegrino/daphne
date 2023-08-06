@@ -298,6 +298,7 @@ void DenseMatrix<const char*>::alloc_shared_strings(std::shared_ptr<CharBuf> src
             alloc_shared_values();
         strBuf = std::make_shared<CharBuf>(strBufferCapacity_, getNumItems());
         appendZerosRange(&values[0], getNumItems());
+
     }
 }
 
