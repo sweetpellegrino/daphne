@@ -265,11 +265,6 @@ class CallKernelOpLowering : public OpConversionPattern<daphne::CallKernelOp>
             argsLLVM.push_back(type);
         }
         
-        for (unsigned long i = 0; i < argsLLVM.size(); i++) {
-            argsLLVM[i].print(llvm::outs());
-            llvm::outs() << "\n";
-        }
-
         return argsLLVM;
     }
 
@@ -308,10 +303,10 @@ public:
         // create an array with the number of results, fill it with nullptrs,
         // and pass that to the kernel (variadic results).
 
-        llvm::outs() << "####################";
-        llvm::outs() << "CallKernelOpLowering";
-        llvm::outs() << "####################\n";
-        llvm::outs() << "op: " << op << "\n";
+        //llvm::outs() << "####################";
+        //llvm::outs() << "CallKernelOpLowering";
+        //llvm::outs() << "####################\n";
+        //llvm::outs() << "op: " << op << "\n";
 
         const bool hasVarRes = op->hasAttr(ATTR_HASVARIADICRESULTS)
                 ? op->getAttr(ATTR_HASVARIADICRESULTS).dyn_cast<BoolAttr>().getValue()
@@ -320,15 +315,15 @@ public:
         const bool updateInPlace = op->hasAttr(ATTR_UPDATEINPLACE);
         auto updateInPlaceValue = op->getAttr(ATTR_UPDATEINPLACE);
 
-        llvm::outs() << "hasVarRes: " << hasVarRes << "\n";
-        llvm::outs() << "updateInPlace: " << updateInPlace << "\n";
-        llvm::outs() << "updateInPlaceValue: " << updateInPlaceValue << "\n";
+        //llvm::outs() << "hasVarRes: " << hasVarRes << "\n";
+        //llvm::outs() << "updateInPlace: " << updateInPlace << "\n";
+        //llvm::outs() << "updateInPlaceValue: " << updateInPlaceValue << "\n";
 
         auto module = op->getParentOfType<ModuleOp>();
-        llvm::outs() << "module: " << module << "\n";
+        //llvm::outs() << "module: " << module << "\n";
 
         auto loc = op.getLoc();
-        llvm::outs() << "loc: " << loc << "\n";
+        //llvm::outs() << "loc: " << loc << "\n";
 
         /*gets the type of input and output e.g. f64 */
         auto inputOutputTypes = getLLVMInputOutputTypes(
@@ -336,26 +331,26 @@ public:
                                                         op.getResultTypes(), ValueRange(adaptor.getOperands()).getTypes(),
                                                         hasVarRes, rewriter.getIndexType());
 
-        llvm::outs() << "inputOutputTypes:\n";
+        /*llvm::outs() << "inputOutputTypes:\n";
         for(auto type : inputOutputTypes) {
             type.print(llvm::outs());
             llvm::outs() << "\n";
-        }
+        }*/
 
         // create function protoype and get `FlatSymbolRefAttr` to it
         auto kernelRef = getOrInsertFunctionAttr(
                                                  rewriter, module, op.getCalleeAttr().getValue(),
                                                  getKernelFuncSignature(rewriter.getContext(), inputOutputTypes));
         
-        llvm::outs() << "kernelRef: " << kernelRef << "\n";
+        //llvm::outs() << "kernelRef: " << kernelRef << "\n";
 
         auto kernelOperands = allocOutputReferences(loc, rewriter, adaptor.getOperands(), inputOutputTypes, op->getNumResults(), hasVarRes, updateInPlace);
 
-        llvm::outs() << "kernelOperands:\n";
-        for(auto op : kernelOperands) {
+        //llvm::outs() << "kernelOperands:\n";
+        /*for(auto op : kernelOperands) {
             op.print(llvm::outs());
             llvm::outs() << "\n";
-        }
+        }*/
 
 
         // call function
@@ -370,7 +365,7 @@ public:
                                                   op->getNumResults(),
                                                   hasVarRes, updateInPlace, 
                                                   kernelOperands));
-        llvm::outs() << "########################################\n";
+        //llvm::outs() << "########################################\n";
 
         return success();
     }
@@ -412,11 +407,11 @@ private:
                 }
             //}
         
-        llvm::outs() << "dereference results:\n";
+        /*llvm::outs() << "dereference results:\n";
         for(auto type : results) {
             type.print(llvm::outs());
             llvm::outs() << "\n";
-        }
+        }*/
 
         return results;
     }
@@ -429,11 +424,11 @@ private:
 
         std::vector<Value> kernelOperands;
 
-        llvm::outs() << "operands: " << "\n";
+        /*llvm::outs() << "operands: " << "\n";
         for(auto op: operands) {
             op.print(llvm::outs());
             llvm::outs() << "\n";
-        }
+        }*/
         
         // --------------------------------------------------------------------
         // Results
@@ -480,8 +475,8 @@ private:
                     auto allocaOp = rewriter.create<LLVM::AllocaOp>(loc, inputOutputTypes[i], cst1);
                     kernelOperands.push_back(allocaOp);
 
-                    llvm::outs() << "allocaOp: " << "\n";
-                    llvm::outs() << allocaOp << "\n";
+                    /*llvm::outs() << "allocaOp: " << "\n";
+                    llvm::outs() << allocaOp << "\n";*/
 
                     // If the type of this result parameter is a pointer (i.e. when it
                     // represents a matrix or frame), then initialize the allocated
@@ -490,23 +485,23 @@ private:
                     // required.
                     Type elType = inputOutputTypes[i].dyn_cast<LLVM::LLVMPointerType>().getElementType();
                     if(elType.isa<LLVM::LLVMPointerType>()) {
-                        auto storeOp = rewriter.create<LLVM::StoreOp>(
+                        rewriter.create<LLVM::StoreOp>(
                             loc,
                             rewriter.create<LLVM::NullOp>(loc, elType),
                             allocaOp
                         );
                     
-                        llvm::outs() << "storeOp: " << "\n";
-                        llvm::outs() << storeOp << "\n";
+                        /*llvm::outs() << "storeOp: " << "\n";
+                        llvm::outs() << storeOp << "\n";*/
                     }
                 }
             }
             else {
 
-                llvm::outs() << "###########" << "\n";
+                /*llvm::outs() << "###########" << "\n";
                 operands[0].print(llvm::outs());
                 operands[0].getDefiningOp()->getOperands()[0].print(llvm::outs());                
-                llvm::outs() << "##########" << "\n";
+                llvm::outs() << "##########" << "\n";*/
 
                 kernelOperands.push_back(operands[0].getDefiningOp()->getOperands()[0]);
             }
