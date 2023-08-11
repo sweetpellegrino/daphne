@@ -178,6 +178,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         pm.addPass(mlir::createCSEPass());
 
         pm.addPass(mlir::daphne::createFlagUpdateInPlace());
+        pm.addPass(mlir::daphne::createPrintIRPass("IR after flaging"));
 
         if(userConfig_.use_obj_ref_mgnt)
             pm.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createManageObjRefsPass());

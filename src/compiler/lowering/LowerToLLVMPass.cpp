@@ -41,6 +41,7 @@ using namespace mlir;
 // Optional attribute of CallKernelOp, which indicates that all results shall
 // be combined into a single variadic result.
 const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
+const std::string ATTR_UPDATEINPLACE = "updateInPlace";
 
 #if 0
 // At the moment, all of these operations are lowered to kernel calls.
@@ -264,7 +265,7 @@ class CallKernelOpLowering : public OpConversionPattern<daphne::CallKernelOp>
             argsLLVM.push_back(type);
         }
         
-        for (int i = 0; i < argsLLVM.size(); i++) {
+        for (unsigned long i = 0; i < argsLLVM.size(); i++) {
             argsLLVM[i].print(llvm::outs());
             llvm::outs() << "\n";
         }
@@ -316,18 +317,25 @@ public:
                 ? op->getAttr(ATTR_HASVARIADICRESULTS).dyn_cast<BoolAttr>().getValue()
                 : false;
         
+        const bool updateInPlace = op->hasAttr(ATTR_UPDATEINPLACE);
+        auto updateInPlaceValue = op->getAttr(ATTR_UPDATEINPLACE);
+
         llvm::outs() << "hasVarRes: " << hasVarRes << "\n";
+        llvm::outs() << "updateInPlace: " << updateInPlace << "\n";
+        llvm::outs() << "updateInPlaceValue: " << updateInPlaceValue << "\n";
 
         auto module = op->getParentOfType<ModuleOp>();
-        //llvm::outs() << "module: " << module << "\n";
+        llvm::outs() << "module: " << module << "\n";
 
         auto loc = op.getLoc();
         llvm::outs() << "loc: " << loc << "\n";
 
+        /*gets the type of input and output e.g. f64 */
         auto inputOutputTypes = getLLVMInputOutputTypes(
                                                         loc, rewriter.getContext(), typeConverter,
                                                         op.getResultTypes(), ValueRange(adaptor.getOperands()).getTypes(),
                                                         hasVarRes, rewriter.getIndexType());
+
         llvm::outs() << "inputOutputTypes:\n";
         for(auto type : inputOutputTypes) {
             type.print(llvm::outs());
@@ -341,13 +349,14 @@ public:
         
         llvm::outs() << "kernelRef: " << kernelRef << "\n";
 
-        auto kernelOperands = allocOutputReferences(loc, rewriter, adaptor.getOperands(), inputOutputTypes, op->getNumResults(), hasVarRes);
+        auto kernelOperands = allocOutputReferences(loc, rewriter, adaptor.getOperands(), inputOutputTypes, op->getNumResults(), hasVarRes, updateInPlace);
 
         llvm::outs() << "kernelOperands:\n";
         for(auto op : kernelOperands) {
             op.print(llvm::outs());
             llvm::outs() << "\n";
         }
+
 
         // call function
         // The kernel call has an empty list of return types, because our
@@ -359,7 +368,8 @@ public:
                 kernelOperands);
         rewriter.replaceOp(op, dereferenceOutputs(loc, rewriter, module,
                                                   op->getNumResults(),
-                                                  hasVarRes, kernelOperands));
+                                                  hasVarRes, updateInPlace, 
+                                                  kernelOperands));
         llvm::outs() << "########################################\n";
 
         return success();
@@ -369,7 +379,7 @@ private:
 
     static std::vector<Value>
     dereferenceOutputs(Location &loc, PatternRewriter &rewriter, ModuleOp &module,
-                       size_t numResults, bool hasVarRes, std::vector<Value> kernelOperands)
+                       size_t numResults, bool hasVarRes, bool updateInPlace,std::vector<Value> kernelOperands)
     {
         // transformed results
         std::vector<Value> results;
@@ -391,15 +401,22 @@ private:
             }
         }
         else // typical case
-            for (size_t i = 0; i < numResults; i++) {
-                // dereference output
-                auto value = kernelOperands[i];
-                // load element (dereference)
-                auto resultVal = rewriter.create<LLVM::LoadOp>(loc, value);
+            //if(!updateInPlace) {
+                for (size_t i = 0; i < numResults; i++) {
+                    // dereference output
+                    auto value = kernelOperands[i];
+                    // load element (dereference)
+                    auto resultVal = rewriter.create<LLVM::LoadOp>(loc, value);
 
-                results.push_back(resultVal);
-            }
+                    results.push_back(resultVal);
+                }
+            //}
         
+        llvm::outs() << "dereference results:\n";
+        for(auto type : results) {
+            type.print(llvm::outs());
+            llvm::outs() << "\n";
+        }
 
         return results;
     }
@@ -407,10 +424,16 @@ private:
     std::vector<Value>
     allocOutputReferences(Location &loc, PatternRewriter &rewriter,
                           ValueRange operands,
-                          std::vector<Type> inputOutputTypes, size_t numRes, bool hasVarRes) const
+                          std::vector<Type> inputOutputTypes, size_t numRes, bool hasVarRes, bool updateInPlace) const
     {
 
         std::vector<Value> kernelOperands;
+
+        llvm::outs() << "operands: " << "\n";
+        for(auto op: operands) {
+            op.print(llvm::outs());
+            llvm::outs() << "\n";
+        }
         
         // --------------------------------------------------------------------
         // Results
@@ -448,26 +471,44 @@ private:
         }
         else { // typical case
             // Constant of 1 for AllocaOp of output.
-            Value cst1 = rewriter.create<arith::ConstantOp>(loc, rewriter.getI64IntegerAttr(1));
-            
-            for (size_t i = 0; i < numRes; i++) {
-                // Allocate space for a single element.
-                auto allocaOp = rewriter.create<LLVM::AllocaOp>(loc, inputOutputTypes[i], cst1);
-                kernelOperands.push_back(allocaOp);
 
-                // If the type of this result parameter is a pointer (i.e. when it
-                // represents a matrix or frame), then initialize the allocated
-                // element with a null pointer (required by the kernels). Otherwise
-                // (i.e. when it represents a scalar), initialization is not
-                // required.
-                Type elType = inputOutputTypes[i].dyn_cast<LLVM::LLVMPointerType>().getElementType();
-                if(elType.isa<LLVM::LLVMPointerType>()) {
-                    rewriter.create<LLVM::StoreOp>(
-                        loc,
-                        rewriter.create<LLVM::NullOp>(loc, elType),
-                        allocaOp
-                    );
+            if(!updateInPlace) {
+                Value cst1 = rewriter.create<arith::ConstantOp>(loc, rewriter.getI64IntegerAttr(1));
+                
+                for (size_t i = 0; i < numRes; i++) {
+                    // Allocate space for a single element.
+                    auto allocaOp = rewriter.create<LLVM::AllocaOp>(loc, inputOutputTypes[i], cst1);
+                    kernelOperands.push_back(allocaOp);
+
+                    llvm::outs() << "allocaOp: " << "\n";
+                    llvm::outs() << allocaOp << "\n";
+
+                    // If the type of this result parameter is a pointer (i.e. when it
+                    // represents a matrix or frame), then initialize the allocated
+                    // element with a null pointer (required by the kernels). Otherwise
+                    // (i.e. when it represents a scalar), initialization is not
+                    // required.
+                    Type elType = inputOutputTypes[i].dyn_cast<LLVM::LLVMPointerType>().getElementType();
+                    if(elType.isa<LLVM::LLVMPointerType>()) {
+                        auto storeOp = rewriter.create<LLVM::StoreOp>(
+                            loc,
+                            rewriter.create<LLVM::NullOp>(loc, elType),
+                            allocaOp
+                        );
+                    
+                        llvm::outs() << "storeOp: " << "\n";
+                        llvm::outs() << storeOp << "\n";
+                    }
                 }
+            }
+            else {
+
+                llvm::outs() << "###########" << "\n";
+                operands[0].print(llvm::outs());
+                operands[0].getDefiningOp()->getOperands()[0].print(llvm::outs());                
+                llvm::outs() << "##########" << "\n";
+
+                kernelOperands.push_back(operands[0].getDefiningOp()->getOperands()[0]);
             }
         }
         

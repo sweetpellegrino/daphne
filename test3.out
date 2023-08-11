@@ -1,0 +1,1654 @@
+[1;31m%7 = "daphne.ewAdd"(%6, %0) : (!daphne.Matrix<2x2xf64>, f64) -> !daphne.Matrix<2x2xf64>
+ op name: daphne.ewAdd
+hasOneUse: 1
+%8 = "daphne.ewSqrt"(%7) : (!daphne.Matrix<2x2xf64>) -> !daphne.Matrix<2x2xf64>
+ op name: daphne.ewSqrt
+hasOneUse: 1
+[0m####################CallKernelOpLowering####################
+op: %15 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %16 = "daphne.call_kernel"(%2, %11, %11, %15) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %17 = "daphne.call_kernel"(%16, %2, %15) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%16, %15) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %18 = "daphne.call_kernel"(%17, %15) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%17, %15) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%18, %5, %8, %15) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%18, %15) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%15) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<ptr<i1>>
+i64
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+i64
+kernelRef: @_createDaphneContext__DaphneContext__uint64_t
+allocaOp: 
+%16 = "llvm.alloca"(%15) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%17, %16) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%16 = "llvm.alloca"(%15) : (i64) -> !llvm.ptr<ptr<i1>>
+%12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+dereference results:
+%18 = "llvm.load"(%16) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: %21 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %22 = "daphne.call_kernel"(%21, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%21, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %23 = "daphne.call_kernel"(%22, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%22, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%23, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%23, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":1:5)
+!llvm.ptr<ptr<i1>>
+f64
+i64
+i64
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+f64
+i64
+i64
+!llvm.ptr<i1>
+kernelRef: @_fill__DenseMatrix_double__double__size_t__size_t
+allocaOp: 
+%22 = "llvm.alloca"(%21) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%23, %22) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%22 = "llvm.alloca"(%21) : (i64) -> !llvm.ptr<ptr<i1>>
+%0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+%9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+%9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+%24 = "llvm.load"(%22) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: %27 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %28 = "daphne.call_kernel"(%27, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%27, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%28, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%28, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":3:13)
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+f64
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+f64
+!llvm.ptr<i1>
+kernelRef: @_ewAdd__DenseMatrix_double__DenseMatrix_double__double
+allocaOp: 
+%28 = "llvm.alloca"(%27) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%29, %28) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%28 = "llvm.alloca"(%27) : (i64) -> !llvm.ptr<ptr<i1>>
+%25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+%30 = "llvm.load"(%28) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %33 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%33, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%33, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_decRef__Structure
+kernelOperands:
+%25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: %35 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+hasVarRes: 0
+updateInPlace: 1
+updateInPlaceValue: true
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%35, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%35, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":3:5)
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_ewSqrt__DenseMatrix_double__DenseMatrix_double
+allocaOp: 
+%36 = "llvm.alloca"(%35) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%37, %36) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%36 = "llvm.alloca"(%35) : (i64) -> !llvm.ptr<ptr<i1>>
+%31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+%38 = "llvm.load"(%36) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_decRef__Structure
+kernelOperands:
+%31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %41 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %42 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%31, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%31, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":7:0)
+!llvm.ptr<i1>
+i1
+i1
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+i1
+i1
+!llvm.ptr<i1>
+kernelRef: @_print__DenseMatrix_double__bool__bool
+kernelOperands:
+%39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%3 = "llvm.mlir.constant"() {value = true} : () -> i1
+%6 = "llvm.mlir.constant"() {value = false} : () -> i1
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, i1, i1, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_print__DenseMatrix_double__bool__bool"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %41 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %42 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%31, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%31, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %43 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %44 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "func.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_decRef__Structure
+kernelOperands:
+%39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, i1, i1, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_print__DenseMatrix_double__bool__bool"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140731218848640 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140731218848640 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %41 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %42 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%31, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%31, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %43 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %44 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "func.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    %45 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %46 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%39, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%39, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decReFilling DenseMatrix with 1
+DenseMatrix(2x2, double)
+1.41421 1.41421
+1.41421 1.41421
+f__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+kernelRef: @_destroyDaphneContext
+kernelOperands:
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+[1;31m%7 = "daphne.ewAdd"(%6, %0) : (!daphne.Matrix<2x2xf64>, f64) -> !daphne.Matrix<2x2xf64>
+ op name: daphne.ewAdd
+hasOneUse: 1
+%8 = "daphne.ewSqrt"(%7) : (!daphne.Matrix<2x2xf64>) -> !daphne.Matrix<2x2xf64>
+ op name: daphne.ewSqrt
+hasOneUse: 1
+[0m####################CallKernelOpLowering####################
+op: %15 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %16 = "daphne.call_kernel"(%2, %11, %11, %15) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %17 = "daphne.call_kernel"(%16, %2, %15) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%16, %15) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %18 = "daphne.call_kernel"(%17, %15) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%17, %15) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%18, %5, %8, %15) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%18, %15) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%15) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<ptr<i1>>
+i64
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+i64
+kernelRef: @_createDaphneContext__DaphneContext__uint64_t
+allocaOp: 
+%16 = "llvm.alloca"(%15) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%17, %16) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%16 = "llvm.alloca"(%15) : (i64) -> !llvm.ptr<ptr<i1>>
+%12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+dereference results:
+%18 = "llvm.load"(%16) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: %21 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %22 = "daphne.call_kernel"(%21, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%21, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %23 = "daphne.call_kernel"(%22, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%22, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%23, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%23, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":1:5)
+!llvm.ptr<ptr<i1>>
+f64
+i64
+i64
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+f64
+i64
+i64
+!llvm.ptr<i1>
+kernelRef: @_fill__DenseMatrix_double__double__size_t__size_t
+allocaOp: 
+%22 = "llvm.alloca"(%21) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%23, %22) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%22 = "llvm.alloca"(%21) : (i64) -> !llvm.ptr<ptr<i1>>
+%0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+%9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+%9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+%24 = "llvm.load"(%22) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: %27 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %28 = "daphne.call_kernel"(%27, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%27, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%28, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%28, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":3:13)
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+f64
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+f64
+!llvm.ptr<i1>
+kernelRef: @_ewAdd__DenseMatrix_double__DenseMatrix_double__double
+allocaOp: 
+%28 = "llvm.alloca"(%27) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%29, %28) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%28 = "llvm.alloca"(%27) : (i64) -> !llvm.ptr<ptr<i1>>
+%25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+%30 = "llvm.load"(%28) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %33 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%33, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%33, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_decRef__Structure
+kernelOperands:
+%25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: %35 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+hasVarRes: 0
+updateInPlace: 1
+updateInPlaceValue: true
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%35, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%35, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":3:5)
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<ptr<i1>>
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_ewSqrt__DenseMatrix_double__DenseMatrix_double
+allocaOp: 
+%36 = "llvm.alloca"(%35) : (i64) -> !llvm.ptr<ptr<i1>>
+storeOp: 
+"llvm.store"(%37, %36) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+kernelOperands:
+%36 = "llvm.alloca"(%35) : (i64) -> !llvm.ptr<ptr<i1>>
+%31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+%38 = "llvm.load"(%36) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_decRef__Structure
+kernelOperands:
+%31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %41 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %42 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%31, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%31, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc("./test.daph":7:0)
+!llvm.ptr<i1>
+i1
+i1
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+i1
+i1
+!llvm.ptr<i1>
+kernelRef: @_print__DenseMatrix_double__bool__bool
+kernelOperands:
+%39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%3 = "llvm.mlir.constant"() {value = true} : () -> i1
+%6 = "llvm.mlir.constant"() {value = false} : () -> i1
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, i1, i1, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_print__DenseMatrix_double__bool__bool"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %41 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %42 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%31, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%31, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %43 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %44 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "func.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+!llvm.ptr<i1>
+kernelRef: @_decRef__Structure
+kernelOperands:
+%39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################
+####################CallKernelOpLowering####################
+op: "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+hasVarRes: 0
+updateInPlace: 0
+updateInPlaceValue: <<NULL ATTRIBUTE>>
+module: "builtin.module"() ({
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, i1, i1, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_print__DenseMatrix_double__bool__bool"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewSqrt__DenseMatrix_double__DenseMatrix_double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<i1>, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_decRef__Structure"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, ptr<i1>, f64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, f64, i64, i64, ptr<i1>)>, linkage = #llvm.linkage<external>, sym_name = "_fill__DenseMatrix_double__double__size_t__size_t"} : () -> ()
+  "llvm.func"() ({
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void (ptr<ptr<i1>>, i64)>, linkage = #llvm.linkage<external>, sym_name = "_createDaphneContext__DaphneContext__uint64_t"} : () -> ()
+  "llvm.func"() ({
+    %0 = "llvm.mlir.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %2 = "daphne.constant"() {value = 1.000000e+00 : f64} : () -> f64
+    %3 = "llvm.mlir.constant"() {value = true} : () -> i1
+    %4 = "arith.constant"() {value = true} : () -> i1
+    %5 = "daphne.constant"() {value = true} : () -> i1
+    %6 = "llvm.mlir.constant"() {value = false} : () -> i1
+    %7 = "arith.constant"() {value = false} : () -> i1
+    %8 = "daphne.constant"() {value = false} : () -> i1
+    %9 = "llvm.mlir.constant"() {value = 2 : index} : () -> i64
+    %10 = "arith.constant"() {value = 2 : index} : () -> index
+    %11 = "daphne.constant"() {value = 2 : index} : () -> index
+    %12 = "llvm.mlir.constant"() {value = 140721004823264 : ui64} : () -> i64
+    %13 = "arith.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %14 = "daphne.constant"() {value = 140721004823264 : ui64} : () -> ui64
+    %15 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %16 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %17 = "llvm.alloca"(%16) : (i64) -> !llvm.ptr<ptr<i1>>
+    %18 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%18, %17) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    "func.call"(%17, %12) {callee = @_createDaphneContext__DaphneContext__uint64_t} : (!llvm.ptr<ptr<i1>>, i64) -> ()
+    %19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %20 = "daphne.call_kernel"(%14) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
+    %21 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %22 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %23 = "llvm.alloca"(%22) : (i64) -> !llvm.ptr<ptr<i1>>
+    %24 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%24, %23) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    "func.call"(%23, %0, %9, %9, %19) {callee = @_fill__DenseMatrix_double__double__size_t__size_t} : (!llvm.ptr<ptr<i1>>, f64, i64, i64, !llvm.ptr<i1>) -> ()
+    %25 = "llvm.load"(%23) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %26 = "daphne.call_kernel"(%2, %11, %11, %20) {callee = "_fill__DenseMatrix_double__double__size_t__size_t"} : (f64, index, index, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %27 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %28 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %29 = "llvm.alloca"(%28) : (i64) -> !llvm.ptr<ptr<i1>>
+    %30 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%30, %29) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    "func.call"(%29, %25, %0, %19) {callee = @_ewAdd__DenseMatrix_double__DenseMatrix_double__double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, f64, !llvm.ptr<i1>) -> ()
+    %31 = "llvm.load"(%29) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %32 = "daphne.call_kernel"(%26, %2, %20) {callee = "_ewAdd__DenseMatrix_double__DenseMatrix_double__double"} : (!daphne.Matrix<2x2xf64>, f64, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %33 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %34 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%25, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%25, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%26, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %35 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %36 = "arith.constant"() {value = 1 : i64} : () -> i64
+    %37 = "llvm.alloca"(%36) : (i64) -> !llvm.ptr<ptr<i1>>
+    %38 = "llvm.mlir.null"() : () -> !llvm.ptr<i1>
+    "llvm.store"(%38, %37) : (!llvm.ptr<i1>, !llvm.ptr<ptr<i1>>) -> ()
+    "llvm.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%37, %31, %19) {callee = @_ewSqrt__DenseMatrix_double__DenseMatrix_double} : (!llvm.ptr<ptr<i1>>, !llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    %39 = "llvm.load"(%37) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+    %40 = "daphne.call_kernel"(%32, %20) {callee = "_ewSqrt__DenseMatrix_double__DenseMatrix_double", updateInPlace = true} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> !daphne.Matrix<2x2xf64>
+    %41 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %42 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%31, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%31, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%32, %20) {callee = "_decRef__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    %43 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %44 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "func.call"(%39, %3, %6, %19) {callee = @_print__DenseMatrix_double__bool__bool} : (!llvm.ptr<i1>, i1, i1, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%40, %5, %8, %20) {callee = "_print__DenseMatrix_double__bool__bool"} : (!daphne.Matrix<2x2xf64>, i1, i1, !daphne.DaphneContext) -> ()
+    %45 = "llvm.mlir.constant"() {value = 1 : i64} : () -> i64
+    %46 = "arith.constant"() {value = 1 : i64} : () -> i64
+    "llvm.call"(%39, %19) {callee = @_decRef__Structure, fastmathFlags = #llvm.fastmath<none>} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "func.call"(%39, %19) {callee = @_decRef__Structure} : (!llvm.ptr<i1>, !llvm.ptr<i1>) -> ()
+    "daphne.call_kernel"(%40, %20) {callee = "_decReFilling DenseMatrix with 1
+DenseMatrix(2x2, double)
+1.41421 1.41421
+1.41421 1.41421
+f__Structure"} : (!daphne.Matrix<2x2xf64>, !daphne.DaphneContext) -> ()
+    "daphne.call_kernel"(%20) {callee = "_destroyDaphneContext"} : (!daphne.DaphneContext) -> ()
+    "daphne.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "main"} : () -> ()
+  "llvm.func"() ({
+    "llvm.call"() {callee = @main, fastmathFlags = #llvm.fastmath<none>} : () -> ()
+    "llvm.return"() : () -> ()
+  }) {CConv = #llvm.cconv<ccc>, function_type = !llvm.func<void ()>, linkage = #llvm.linkage<external>, llvm.emit_c_interface, sym_name = "_mlir_ciface_main"} : () -> ()
+  "func.func"() ({
+  }) {function_type = () -> (), llvm.emit_c_interface, sym_name = "main"} : () -> ()
+}) : () -> ()
+loc: loc(unknown)
+!llvm.ptr<i1>
+inputOutputTypes:
+!llvm.ptr<i1>
+kernelRef: @_destroyDaphneContext
+kernelOperands:
+%19 = "llvm.load"(%17) : (!llvm.ptr<ptr<i1>>) -> !llvm.ptr<i1>
+dereference results:
+########################################

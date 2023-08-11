@@ -16,10 +16,14 @@
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/OpDefinition.h"
+#include "mlir/IR/Operation.h"
 #include "llvm/IR/User.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include <ir/daphneir/Daphne.h>
 #include <ir/daphneir/Passes.h>
+
+#include <ir/daphneir/DaphneOps.h.inc>
 
 #include <mlir/Pass/Pass.h>
 
@@ -27,56 +31,100 @@ using namespace mlir;
 
 #include <iostream>
 
+const std::string ATTR_UPDATEINPLACE = "updateInPlace";
+
 /**
- * @brief Inserts profiling tracepoints
+ * @brief XXXXXXXXXXX
  */
+
+bool hasOneUseAfter(mlir::Operation *op) {
+
+    //Check if operand is used after the operation
+    auto value = op->getOperand(0);
+    for (Operation *userOp : value.getUsers()) {
+        if (userOp != op) {
+            return true;
+        }
+    }
+
+    return false;
+ }
+
 struct FlagUpdateInPlace: public PassWrapper<FlagUpdateInPlace, OperationPass<ModuleOp>>
 {
     //explicit FlagInPlace() {}
     void runOnOperation() final;
 };
 
-void FlagUpdateInPlace::runOnOperation()
-{
+void FlagUpdateInPlace::runOnOperation() {
 
     auto module = getOperation();
 
-    //walk over all operations, check wether allows for update-in-place and check the operand dependency
-    module->walk([&](Operation *op) {
-        llvm::outs() << "\033[1;31m";
+    llvm::outs() << "\033[1;31m";
 
-        op->print(llvm::outs());
-        llvm::outs() << "\n";
+    // Traverse the operations in the module.
+    module.walk([&](Operation *op) {
+        
+        bool qualifiesForUpdateInPlace = false;
 
-        llvm::outs() << "Found a flagged operation: " << op->getName().getStringRef() << "\n";
-        llvm::outs() << "Number of operands: " << op->getNumOperands() << "\n";
-        llvm::outs() << "Number of results: " << op->getNumResults() << "\n";
-        llvm::outs() << "Number of regions: " << op->getNumRegions() << "\n";
-        llvm::outs() << "Number of successors: " << op->getNumSuccessors() << "\n";
+        //TODO: change to checking the possiblity of inplace update
+        //check if result is matrix or frame?
 
-        llvm::outs() << "\033[0m";
+        //EwUnary and EwBinary
 
-        for (int i = 0; i < op->getNumOperands(); ++i) {
-            auto operand = op->getOperand(i);
-            llvm::outs() << "Operand: " << operand << "\n";
-            
-            for (auto *user : operand.getUsers()) {
-                llvm::outs() << "User: " << user << "\n";
-                llvm::outs() << "User name: " << user->getName().getStringRef() << "\n";
-                llvm::outs() << "User has " << user->getNumOperands() << " operands\n";
+        if (op->hasTrait<OpTrait::UpdateInPlace>()) {
+        //if (op->getName().getStringRef() == "daphne.ewAdd" || op->getName().getStringRef() == "daphne.ewSqrt") {
 
-                for (int j = 0; j < user->getNumOperands(); ++j) {
-                    auto userOperand = user->getOperand(j);
-                    llvm::outs() << "User operand: " << userOperand << "\n";
-                    if (userOperand == operand) {
-                        llvm::outs() << "Found a dependency: " << operand << " -> " << user << "\n";
-                    }
+            op->print(llvm::outs());
+            llvm::outs() << "\n op name: " << op->getName().getStringRef() << "\n";
+            llvm::outs() << "hasOneUse: " << op->hasOneUse() << "\n";
+
+            //Check EwUnary, need to gurantee that atleast one operand exists
+            //if (mlir::isa<daphne::EwUnaryOp>(op)) {
+            if(op->getName().getStringRef() == "daphne.ewSqrt") {
+                
+                // Check if the operation has only one use
+                //TODO: if the variable is not used ever -> hasOneUse == 0
+                //TODO: hasNoUse after
+
+                auto value = op->getOperand(0);
+                if (value.hasOneUse() || hasOneUseAfter(op)) { //&& value.getUsers().begin() == op) { 
+                    // Check if the input data object is not used in any future operations
+                    // Value input = op->getOperand(0);
+                    // input.print(llvm::outs());
+                    // llvm::outs() << " value \n";
+                    // for (Operation *userOp : input.getUsers()) {
+                    // llvm::outs() << "userOp:" << userOp  << "\n";
+                    // }
+                    
+                    // 
+                    //TODO: DataBuffer Dependency
+                    //
+
+                    qualifiesForUpdateInPlace = true;
                 }
             }
+
+            // if (mlir::daphne::Daphne_EwUnaryOp addOp = dynamic_cast<mlir::AddOp>(op)) {
+            //     // The operation is an addition operation
+            //     // Handle accordingly
+            // }
+            // else if (mlir::SubOp subOp = dynamic_cast<mlir::SubOp>(op)) {
+            //     // The operation is a subtraction operation
+            //     // Handle accordingly
+            // }
+            
+        }
+    
+        //Flag the operation indicating that update-in-place optimization can be applied.
+        if (qualifiesForUpdateInPlace) {
+            OpBuilder builder(op);
+            op->setAttr(ATTR_UPDATEINPLACE, builder.getBoolAttr(true));
+            //change operand to a wrapper type?
         }
 
     });
-    
+    llvm::outs() << "\033[0m";
 }
 
 std::unique_ptr<Pass> daphne::createFlagUpdateInPlace() {

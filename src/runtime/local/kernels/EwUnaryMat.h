@@ -17,6 +17,7 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_EWUNARYMAT_H
 #define SRC_RUNTIME_LOCAL_KERNELS_EWUNARYMAT_H
 
+#include <iostream>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -60,6 +61,9 @@ struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
         
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+
+        //
+        std::cout << res << std::endl;
         
         const VT * valuesArg = arg->getValues();
         VT * valuesRes = res->getValues();

@@ -23,6 +23,8 @@
 
 using namespace mlir;
 
+const std::string ATTR_UPDATEINPLACE = "updateInPlace";
+
 /**
  * @brief Inserts DaphneIR operations for managing the reference counters of
  * runtime data objects.
@@ -199,7 +201,8 @@ void processBlock(OpBuilder builder, Block * b) {
                 incRefArgs(op, builder);
         }
         // Loops and function calls.
-        else if(isa<scf::WhileOp, scf::ForOp, func::CallOp, daphne::GenericCallOp>(op))
+        // TODO: good idea, implement binary
+        else if(isa<scf::WhileOp, scf::ForOp, func::CallOp, daphne::GenericCallOp>(op) || op.hasAttr(ATTR_UPDATEINPLACE))
             incRefArgs(op, builder);
         // YieldOp of IfOp.
         else if(isa<scf::YieldOp>(op) && isa<scf::IfOp>(op.getParentOp())) {

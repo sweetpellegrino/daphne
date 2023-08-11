@@ -79,6 +79,13 @@ namespace mlir::OpTrait {
     };
 }
 
+namespace mlir::OpTrait {
+    template<class ConcreteOp>
+    class UpdateInPlace : public TraitBase<ConcreteOp, UpdateInPlace> {
+    };
+}
+
+
 namespace mlir::daphne {
     enum class MatrixRepresentation {
         Dense = 0,

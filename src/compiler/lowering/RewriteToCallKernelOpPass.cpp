@@ -375,7 +375,16 @@ namespace
                     newOperands,
                     op->getResultTypes()
                     );
+            
+            //progate updateInPlace attribute to new operation
+            //TODO: check if it is better to change the builder
+            //TODO Use ATTR_UPDATEINPLACE from LowerToLLVMPass.cpp OR FlagUpdateInPlace.cpp
+            if (op->hasAttr("updateInPlace")) {
+                kernel->setAttr("updateInPlace", rewriter.getBoolAttr(true));
+            }
+
             rewriter.replaceOp(op, kernel.getResults());
+
             return success();
         }
     };

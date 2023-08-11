@@ -30,7 +30,8 @@
 class Structure
 {
 private:
-    mutable size_t refCounter;
+    //mutable size_t refCounter;
+    mutable int refCounter;
     mutable std::mutex refCounterMutex;
     
     template<class DataType>
