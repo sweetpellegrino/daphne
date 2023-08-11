@@ -7,14 +7,12 @@ m4 = rand(3, 1, 100, 200, 1, -1);
 h = createFrame(m3, m4, "d", "c");
 
 print(h);
-
 m5 = sqrt(m3 + 1.0);
-
 print(h);
-
 m6 = sqrt(m5);
-
 print(h);
+
+print(diagVector(m5));
 
 print(m3);
 print(m6);
