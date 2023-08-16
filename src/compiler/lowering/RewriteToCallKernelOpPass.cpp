@@ -24,6 +24,9 @@
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/IR/IRMapping.h"
 
+
+#include "compiler/lowering/AttributeDefinitions.h"
+
 #include <memory>
 #include <utility>
 #include <iostream>
@@ -378,9 +381,8 @@ namespace
             
             //progate updateInPlace attribute to new operation
             //TODO: check if it is better to change the builder
-            //TODO Use ATTR_UPDATEINPLACE from LowerToLLVMPass.cpp OR FlagUpdateInPlace.cpp
-            if (op->hasAttr("updateInPlace")) {
-                kernel->setAttr("updateInPlace", rewriter.getBoolAttr(true));
+            if (op->hasAttr(ATTR_UPDATEINPLACE_KEY)) {
+                kernel->setAttr(ATTR_UPDATEINPLACE_KEY, rewriter.getI64IntegerAttr(op->getAttr(ATTR_UPDATEINPLACE_KEY).cast<IntegerAttr>().getInt()));
             }
 
             rewriter.replaceOp(op, kernel.getResults());
@@ -479,8 +481,8 @@ namespace
                     newOperands,
                     op.getOutputs().getTypes()
             );
-            // TODO Use ATTR_HASVARIADICRESULTS from LowerToLLVMPass.cpp.
-            cko->setAttr("hasVariadicResults", rewriter.getBoolAttr(true));
+
+            cko->setAttr(ATTR_HASVARIADICRESULTS, rewriter.getBoolAttr(true));
       
             return success();
         }

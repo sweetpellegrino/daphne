@@ -1,0 +1,10 @@
+m0 = fill(1.0,2,2);
+m1 = fill(1.0,2,2);
+
+m2 = m0 + m1;
+
+print(m0);
+
+m = sqrt(m2);
+
+print(m);

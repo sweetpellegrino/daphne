@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACETRAITS_TD
-#define SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACETRAITS_TD
+#ifndef SRC_COMPILER_LOWERING_ATTRIBUTEDEFINITIONS_H
+#define SRC_COMPILER_LOWERING_ATTRIBUTEDEFINITIONS_H
 
-include "mlir/IR/OpBase.td"
+#include "mlir/IR/BuiltinAttributes.h"
+#include "mlir/IR/Attributes.h"
+#include <string>
+
+//using namespace mlir::daphne;
+
+const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
+const std::string ATTR_UPDATEINPLACE_KEY = "updateInPlace";
+
+enum class ATTR_UPDATEINPLACE_TYPE {
+    NONE,
+    LHS,
+    RHS,
+    BOTH,
+ };
+
+//TODO: Define a custom trait?
 
 
-def UIPUnary : NativeOpTrait<"UIPUnary">; //boolean
-def UIPBinary : NativeOpTrait<"UIPBinary">; //boolean
-def UIPCustom : NativeOpTrait<"UIPCustom">; //list of position of the operands
-
-
-
-#endif //SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACETRAITS_TD
+#endif //SRC_COMPILER_LOWERING_ATTRIBUTEDEFINITIONS_H

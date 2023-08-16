@@ -17,6 +17,7 @@
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
 #include "compiler/utils/CompilerUtils.h"
+#include "compiler/lowering/AttributeDefinitions.h"
 
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
@@ -28,9 +29,11 @@
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Func/Transforms/FuncConversions.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -40,8 +43,7 @@ using namespace mlir;
 
 // Optional attribute of CallKernelOp, which indicates that all results shall
 // be combined into a single variadic result.
-const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
-const std::string ATTR_UPDATEINPLACE = "updateInPlace";
+
 
 #if 0
 // At the moment, all of these operations are lowered to kernel calls.
@@ -312,8 +314,13 @@ public:
                 ? op->getAttr(ATTR_HASVARIADICRESULTS).dyn_cast<BoolAttr>().getValue()
                 : false;
         
-        const bool updateInPlace = op->hasAttr(ATTR_UPDATEINPLACE);
-        auto updateInPlaceValue = op->getAttr(ATTR_UPDATEINPLACE);
+        const bool updateInPlace = op->hasAttr(ATTR_UPDATEINPLACE_KEY);
+        
+        int64_t updateInPlaceValue = 0;
+        if (updateInPlace) {
+            updateInPlaceValue = op->getAttr(ATTR_UPDATEINPLACE_KEY).dyn_cast<mlir::IntegerAttr>().getInt();
+        }
+        
 
         //llvm::outs() << "hasVarRes: " << hasVarRes << "\n";
         //llvm::outs() << "updateInPlace: " << updateInPlace << "\n";
@@ -344,7 +351,7 @@ public:
         
         //llvm::outs() << "kernelRef: " << kernelRef << "\n";
 
-        auto kernelOperands = allocOutputReferences(loc, rewriter, adaptor.getOperands(), inputOutputTypes, op->getNumResults(), hasVarRes, updateInPlace);
+        auto kernelOperands = allocOutputReferences(loc, rewriter, adaptor.getOperands(), inputOutputTypes, op->getNumResults(), hasVarRes, updateInPlaceValue);
 
         //llvm::outs() << "kernelOperands:\n";
         /*for(auto op : kernelOperands) {
@@ -419,7 +426,7 @@ private:
     std::vector<Value>
     allocOutputReferences(Location &loc, PatternRewriter &rewriter,
                           ValueRange operands,
-                          std::vector<Type> inputOutputTypes, size_t numRes, bool hasVarRes, bool updateInPlace) const
+                          std::vector<Type> inputOutputTypes, size_t numRes, bool hasVarRes, int updateInPlaceValue) const
     {
 
         std::vector<Value> kernelOperands;
@@ -467,7 +474,7 @@ private:
         else { // typical case
             // Constant of 1 for AllocaOp of output.
 
-            if(!updateInPlace) {
+            if(updateInPlaceValue == 0) {
                 Value cst1 = rewriter.create<arith::ConstantOp>(loc, rewriter.getI64IntegerAttr(1));
                 
                 for (size_t i = 0; i < numRes; i++) {
@@ -496,14 +503,11 @@ private:
                     }
                 }
             }
-            else {
-
-                /*llvm::outs() << "###########" << "\n";
-                operands[0].print(llvm::outs());
-                operands[0].getDefiningOp()->getOperands()[0].print(llvm::outs());                
-                llvm::outs() << "##########" << "\n";*/
-
+            else if (updateInPlaceValue == 1 || updateInPlaceValue == 3) {
                 kernelOperands.push_back(operands[0].getDefiningOp()->getOperands()[0]);
+            }
+            else if (updateInPlaceValue == 2) {
+                kernelOperands.push_back(operands[1].getDefiningOp()->getOperands()[0]);
             }
         }
         

@@ -77,13 +77,19 @@ namespace mlir::OpTrait {
     template<class ConcreteOp>
     class FPGAOPENCLSupport : public TraitBase<ConcreteOp, FPGAOPENCLSupport> {
     };
+
+    template<class ConcreteOp>
+    class UIPUnary : public TraitBase<ConcreteOp, UIPUnary> {
+    };
+    template<class ConcreteOp>
+    class UIPBinary : public TraitBase<ConcreteOp, UIPBinary> {
+    };
+    template<class ConcreteOp>
+    class UIPCustom : public TraitBase<ConcreteOp, UIPCustom> {
+    };
+
 }
 
-namespace mlir::OpTrait {
-    template<class ConcreteOp>
-    class UpdateInPlace : public TraitBase<ConcreteOp, UpdateInPlace> {
-    };
-}
 
 
 namespace mlir::daphne {

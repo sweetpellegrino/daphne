@@ -90,6 +90,7 @@ struct Quantize<DenseMatrix<uint8_t>, DenseMatrix<float>> {
         const size_t nr1 = arg->getNumRows();
         const size_t nc1 = arg->getNumCols();
 
+        // WHY?
         if(res == nullptr) {
             res = DataObjectFactory::create<DenseMatrix<uint8_t>>(nr1, nc1, false);
         }

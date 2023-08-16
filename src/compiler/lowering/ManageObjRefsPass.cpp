@@ -18,12 +18,12 @@
 #include <ir/daphneir/Daphne.h>
 #include <ir/daphneir/Passes.h>
 
+#include "compiler/lowering/AttributeDefinitions.h"
+
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/Pass/Pass.h>
 
 using namespace mlir;
-
-const std::string ATTR_UPDATEINPLACE = "updateInPlace";
 
 /**
  * @brief Inserts DaphneIR operations for managing the reference counters of
@@ -202,7 +202,7 @@ void processBlock(OpBuilder builder, Block * b) {
         }
         // Loops and function calls.
         // TODO: good idea, implement binary
-        else if(isa<scf::WhileOp, scf::ForOp, func::CallOp, daphne::GenericCallOp>(op) || op.hasAttr(ATTR_UPDATEINPLACE))
+        else if(isa<scf::WhileOp, scf::ForOp, func::CallOp, daphne::GenericCallOp>(op) || op.hasAttr(ATTR_UPDATEINPLACE_KEY))
             incRefArgs(op, builder);
         // YieldOp of IfOp.
         else if(isa<scf::YieldOp>(op) && isa<scf::IfOp>(op.getParentOp())) {

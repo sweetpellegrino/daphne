@@ -38,7 +38,7 @@ void createFrame(Frame *& res, Structure ** colMats, size_t numColMats, const ch
     std::string * labelsStr = numLabels ? new std::string[numLabels] : nullptr;
     for(size_t c = 0; c < numLabels; c++)
         labelsStr[c] = labels[c];
-    
+
     res = DataObjectFactory::create<Frame>(colMatsVec, labelsStr);
     
     if(numLabels)

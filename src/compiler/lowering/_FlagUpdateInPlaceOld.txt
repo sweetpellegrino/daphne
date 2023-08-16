@@ -41,7 +41,6 @@ using namespace mlir;
  * @brief XXXXXXXXXXX
  */
 
-/*
 bool hasAnyUseBeforeDBDep(mlir::Operation *op, bool checkLhs = true) {
 
     //Check if operand is used after the current operation op
@@ -55,7 +54,6 @@ bool hasAnyUseBeforeDBDep(mlir::Operation *op, bool checkLhs = true) {
 
     return false;
  }
-*/
 
 bool hasAnyUseAfterCurrentOp(mlir::Operation *op, bool checkLhs = true) {
 
@@ -107,7 +105,7 @@ void FlagUpdateInPlace::runOnOperation() {
         //     // Handle accordingly
         // }
 
-        if (op->hasTrait<OpTrait::UIPUnary>() || op->hasTrait<OpTrait::UIPBinary>()) {
+        if (op->hasTrait<OpTrait::UpdateInPlace>()) {
         //if (op->getName().getStringRef() == "daphne.ewAdd" || op->getName().getStringRef() == "daphne.ewSqrt") {
 
              //change to internal function with getArg?; for binary getLhs, getRhs
@@ -116,6 +114,7 @@ void FlagUpdateInPlace::runOnOperation() {
             llvm::outs() << "\n op name: " << op->getName().getStringRef() << "\n";
             llvm::outs() << "hasOneUse: " << op->hasOneUse() << "\n";
             llvm::outs() << "hasOneUseAfter: " << hasAnyUseAfterCurrentOp(op) << "\n";
+            llvm::outs() << "hasOneUseAfter: " << hasAnyUseBeforeDBDep(op) << "\n";
             llvm::outs() << "op type: ";
             op->getOperand(0).getType().print(llvm::outs());
             llvm::outs() << "\n result type: "; 
@@ -124,7 +123,7 @@ void FlagUpdateInPlace::runOnOperation() {
 
             //Check EwUnary, need to gurantee that atleast one operand exists
             //if (mlir::isa<daphne::EwUnaryOp>(op)) {
-            if(op->hasTrait<OpTrait::UIPUnary>()) {
+            if(op->getName().getStringRef() == "daphne.ewSqrt") {
                 
                 // Check if the operation has only one use
                 //TODO: if the variable is not used ever -> hasOneUse == 0
@@ -137,12 +136,14 @@ void FlagUpdateInPlace::runOnOperation() {
                         // 
                         //TODO: DataBuffer Dependency
                         //
-                        operandUpdateInPlace = ATTR_UPDATEINPLACE_TYPE::LHS;
+                        if(!hasAnyUseBeforeDBDep(op)) {
+                            operandUpdateInPlace = ATTR_UPDATEINPLACE_TYPE::LHS;
+                        }
                     }
                 }
             }
             //TODO: change to checking if op is EwBinaryOp
-            else if (op->hasTrait<OpTrait::UIPBinary>()) {
+            else if (op->getName().getStringRef() == "daphne.ewAdd") {
 
                 bool lhsQualifies = isValidMatrixOrFrameType(op, true)  && !hasAnyUseAfterCurrentOp(op, true);
                 bool rhsQualifies = isValidMatrixOrFrameType(op, false) && !hasAnyUseAfterCurrentOp(op, false);

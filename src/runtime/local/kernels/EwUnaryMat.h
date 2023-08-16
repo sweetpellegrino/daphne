@@ -62,9 +62,6 @@ struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
 
-        //
-        std::cout << res << std::endl;
-        
         const VT * valuesArg = arg->getValues();
         VT * valuesRes = res->getValues();
         

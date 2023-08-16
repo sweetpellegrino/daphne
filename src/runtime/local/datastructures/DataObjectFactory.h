@@ -17,6 +17,8 @@
 #ifndef SRC_RUNTIME_LOCAL_DATASTRUCTURES_DATAOBJECTFACTORY_H
 #define SRC_RUNTIME_LOCAL_DATASTRUCTURES_DATAOBJECTFACTORY_H
 
+#include "runtime/local/datastructures/MetaDataObject.h"
+#include <iostream>
 #include <stdexcept>
 
 struct DataObjectFactory {
@@ -57,6 +59,10 @@ struct DataObjectFactory {
                     "DataObjectFactory::destroy() must not be called with nullptr"
             );
         
+        /*auto test = obj->getMDOPtr();
+        std::cout << test << std::endl;
+        std::cout << test.use_count() << std::endl;*/
+
         obj->refCounterMutex.lock();
         obj->refCounter--;
         if(obj->refCounter == 0) {

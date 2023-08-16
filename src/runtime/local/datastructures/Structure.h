@@ -43,11 +43,11 @@ protected:
     size_t numRows;
     size_t numCols;
 
+    mutable std::shared_ptr<MetaDataObject> mdo;
+
     Structure(size_t numRows, size_t numCols) : refCounter(1), numRows(numRows), numCols(numCols) {
         mdo = std::make_shared<MetaDataObject>();
     };
-
-    mutable std::shared_ptr<MetaDataObject> mdo;
 
 public:
     virtual ~Structure() = default;
@@ -67,6 +67,12 @@ public:
     MetaDataObject* getMetaDataObject() const {
         return mdo.get();
     }
+
+    //get shared pointer to MetaDataObject
+    std::shared_ptr<MetaDataObject> getMDOPtr() const {
+        return mdo;
+    }
+
 
     /**
      * @brief Increases the reference counter of this data object.

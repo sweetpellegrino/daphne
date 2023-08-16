@@ -56,8 +56,6 @@ struct Fill<DenseMatrix<VT>, VT> {
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, arg == 0);
 
-        std::cout << "Filling DenseMatrix with " << arg << std::endl;
-
         if(arg != 0) {
             VT *valuesRes = res->getValues();
             for(auto i = 0ul; i < res->getNumItems(); ++i)

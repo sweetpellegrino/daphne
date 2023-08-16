@@ -88,9 +88,8 @@ template <typename VT> struct ReadCsvFile<DenseMatrix<VT>> {
     assert(numRows > 0 && "numRows must be > 0");
     assert(numCols > 0 && "numCols must be > 0");
 
-    if (res == nullptr) {
+    if(res == nullptr)
       res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
-    }
 
     char *line;
     size_t cell = 0;

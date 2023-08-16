@@ -69,6 +69,7 @@ struct AggCum<DenseMatrix<VTRes>, DenseMatrix<VTArg>> {
         );
 
         // First row: copy from arg to res.
+        // TODO: In case of UIP necessary?
         for(size_t c = 0; c < numCols; c++)
             valuesResCur[c] = valuesArg[c];
         valuesArg += arg->getRowSkip();
