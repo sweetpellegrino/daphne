@@ -17,7 +17,6 @@
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
 #include "compiler/utils/CompilerUtils.h"
-#include "ir/daphneir/DaphneUpdateInPlaceAttributes.h"
 
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"

@@ -44,8 +44,6 @@
 #include "mlir/Interfaces/VectorInterfaces.h"
 #include "mlir/Interfaces/ViewLikeInterface.h"
 
-#include "ir/daphneir/DaphneUpdateInPlaceAttributes.h"
-
 #include <llvm/ADT/BitVector.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/APSInt.h>
@@ -60,7 +58,6 @@ void mlir::daphne::DaphneDialect::initialize() {
 #define GET_TYPEDEF_LIST
 #include <ir/daphneir/DaphneOpsTypes.cpp.inc>
       >();
-  addAttributes<mlir::daphne::UpdateInPlaceAttr>();
 }
 
 mlir::Operation *mlir::daphne::DaphneDialect::materializeConstant(OpBuilder &builder,
@@ -195,20 +192,6 @@ std::string unknownStrIf(ssize_t val) {
 
 std::string unknownStrIf(double val) {
     return (val == -1.0) ? "?" : std::to_string(val);
-}
-
-/*
-
-PRINT
-
-*/
-
-void mlir::daphne::DaphneDialect::printAttribute(mlir::Attribute attr, 
-                                                 mlir::DialectAsmPrinter &os) const {
-    
-    if (auto a = attr.dyn_cast<mlir::daphne::UpdateInPlaceAttr>()) {
-        os << "updateInPlace<" << a.getValueAsString() << ">";
-    }
 }
 
 void mlir::daphne::DaphneDialect::printType(mlir::Type type,

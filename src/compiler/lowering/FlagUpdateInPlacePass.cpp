@@ -25,9 +25,8 @@
 #include <ir/daphneir/Daphne.h>
 #include <ir/daphneir/Passes.h>
 
-#include "ir/daphneir/DaphneUpdateInPlaceAttributes.h"
-
 #include <ir/daphneir/DaphneOps.h.inc>
+#include <ir/daphneir/DaphneOpsEnums.h.inc>
 
 #include <mlir/Pass/Pass.h>
 
@@ -77,7 +76,7 @@ void FlagUpdateInPlacePass::runOnOperation() {
     // Traverse the operations in the module.
     module.walk([&](Operation *op) {
         
-        mlir::daphne::UpdateInPlaceAttrValue operandUpdateInPlace = mlir::daphne::UpdateInPlaceAttrValue::NONE;
+        mlir::daphne::InPlaceAttr inPlaceAttr = mlir::daphne::InPlaceAttr::NONE;
 
         //TODO: change to checking the possiblity of inplace update
         //check if result is matrix or frame? e.g what happens if sqrt of scalar

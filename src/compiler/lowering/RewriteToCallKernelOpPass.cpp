@@ -17,7 +17,7 @@
 #include "compiler/utils/CompilerUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
-#include "ir/daphneir/DaphneUpdateInPlaceAttributes.h"
+#include <ir/daphneir/DaphneOpsEnums.h.inc>
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
