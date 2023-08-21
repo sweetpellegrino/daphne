@@ -17,6 +17,7 @@
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
 #include "compiler/utils/CompilerUtils.h"
+#include "ir/daphneir/DaphneUpdateInPlaceAttributes.h"
 
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
@@ -37,9 +38,10 @@
 
 using namespace mlir;
 
+const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
+
 // Optional attribute of CallKernelOp, which indicates that all results shall
 // be combined into a single variadic result.
-const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
 
 #if 0
 // At the moment, all of these operations are lowered to kernel calls.

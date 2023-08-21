@@ -938,6 +938,14 @@
                 {
                     "type": "const DTRhs *",
                     "name": "rhs"
+                },
+                {
+                    "type": "bool",
+                    "name": "hasFutureUseLHS"
+                },
+                {
+                    "type": "bool",
+                    "name": "hasFutureUseRHS"
                 }
             ]
         },
@@ -2559,6 +2567,10 @@
                 {
                     "type": "const DTArg *",
                     "name": "arg"
+                },
+                {
+                    "type": "bool",
+                    "name": "hasFutureUseARG"
                 }
             ]
         },

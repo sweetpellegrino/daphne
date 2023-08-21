@@ -32,7 +32,7 @@
 
 template<class DTRes, class DTArg>
 struct EwUnaryMat {
-    static void apply(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, DCTX(ctx)) = delete;
+    static void apply(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, bool hasFutureUseARG, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -40,8 +40,8 @@ struct EwUnaryMat {
 // ****************************************************************************
 
 template<class DTRes, class DTArg>
-void ewUnaryMat(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, DCTX(ctx)) {
-    EwUnaryMat<DTRes, DTArg>::apply(opCode, res, arg, ctx);
+void ewUnaryMat(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, bool hasFutureUseARG, DCTX(ctx)) {
+    EwUnaryMat<DTRes, DTArg>::apply(opCode, res, arg, hasFutureUseARG, ctx);
 }
 
 // ****************************************************************************
@@ -54,7 +54,7 @@ void ewUnaryMat(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, DCTX(ctx)) 
 
 template<typename VT>
 struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
-    static void apply(UnaryOpCode opCode, DenseMatrix<VT> *& res, const DenseMatrix<VT> * arg, DCTX(ctx)) {
+    static void apply(UnaryOpCode opCode, DenseMatrix<VT> *& res, const DenseMatrix<VT> * arg, bool hasFutureUseARG, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
         

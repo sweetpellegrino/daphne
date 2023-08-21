@@ -17,6 +17,7 @@
 #include "compiler/utils/CompilerUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
+#include "ir/daphneir/DaphneUpdateInPlaceAttributes.h"
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
@@ -33,6 +34,8 @@
 #include <vector>
 
 using namespace mlir;
+
+const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
 
 namespace
 {
@@ -362,6 +365,31 @@ namespace
                 newOperands.push_back(rewriteStr);
             }
 
+            if (op->hasAttr(mlir::daphne::UpdateInPlaceAttr::getAttrName())) {
+                auto updateInPlaceAttr = op->getAttrOfType<mlir::daphne::UpdateInPlaceAttr>(mlir::daphne::UpdateInPlaceAttr::getAttrName());
+                llvm::outs() << updateInPlaceAttr.getValueAsString() << "\n";
+                updateInPlaceAttr.print(llvm::outs());
+            }
+
+            //if operation of type ewBinary, add two new operands for denoting update-in-place
+            if(auto ewAdd = llvm::dyn_cast<daphne::EwAddOp>(op)) {
+                callee << "__bool__bool";
+                llvm::outs() << "ewAdd\n";
+                ewAdd->print(llvm::outs());
+
+                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                        loc, static_cast<bool>(true)));
+                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                        loc, static_cast<bool>(true)));
+            } else if (auto ewSqrt = llvm::dyn_cast<daphne::EwSqrtOp>(op)) {
+                callee << "__bool";
+                llvm::outs() << "ewSqrt\n";
+                ewSqrt->print(llvm::outs());
+
+                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                        loc, static_cast<bool>(true)));
+            }
+
             // Inject the current DaphneContext as the last input parameter to
             // all kernel calls, unless it's a CreateDaphneContextOp.
             if(!llvm::isa<daphne::CreateDaphneContextOp>(op))
@@ -470,8 +498,7 @@ namespace
                     newOperands,
                     op.getOutputs().getTypes()
             );
-            // TODO Use ATTR_HASVARIADICRESULTS from LowerToLLVMPass.cpp.
-            cko->setAttr("hasVariadicResults", rewriter.getBoolAttr(true));
+            cko->setAttr(ATTR_HASVARIADICRESULTS, rewriter.getBoolAttr(true));
       
             return success();
         }
