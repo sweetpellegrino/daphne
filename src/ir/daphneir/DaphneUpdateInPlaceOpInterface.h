@@ -14,20 +14,11 @@
  *  limitations under the License.
  */
 
-#ifndef SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEENUM_TD
-#define SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEENUM_TD
+#ifndef SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEOPINTERFACE_H
+#define SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEOPINTERFACE_H
 
-include "mlir/IR/EnumAttr.td"
-include "mlir/IR/OpBase.td"
-include "mlir/IR/AttrTypeBase.td"
-
-def INPLACE_NONE : I64EnumAttrCase<"NONE", 0>;
-def INPLACE_LHS : I64EnumAttrCase<"LHS", 1>;
-def INPLACE_RHS : I64EnumAttrCase<"RHS", 2>;
-def INPLACE_BOTH : I64EnumAttrCase<"BOTH", 3>;
-
-def InPlaceAttr : I64EnumAttr<"InPlace", "", [INPLACE_NONE, INPLACE_LHS, INPLACE_RHS, INPLACE_BOTH]> {
-    let cppNamespace = "::mlir::daphne";
+namespace mlir::daphne {
+#include <ir/daphneir/DaphneUpdateInPlaceOpInterface.h.inc>
 }
 
-#endif // SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEENUM_TD
+#endif // SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEOPINTERFACE_H

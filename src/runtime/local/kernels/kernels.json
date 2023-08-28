@@ -938,14 +938,14 @@
                 {
                     "type": "const DTRhs *",
                     "name": "rhs"
+                }, 
+                {
+                    "type": "bool",
+                    "name": "hasFutureUseLhs"
                 },
                 {
                     "type": "bool",
-                    "name": "hasFutureUseLHS"
-                },
-                {
-                    "type": "bool",
-                    "name": "hasFutureUseRHS"
+                    "name": "hasFutureUseRhs"   
                 }
             ]
         },
@@ -1013,6 +1013,10 @@
                 {
                     "type": "VTRhs",
                     "name": "rhs"
+                },
+                {
+                    "type": "bool",
+                    "name": "hasFutureUseLhs"
                 }
             ]
         },
@@ -2570,7 +2574,7 @@
                 },
                 {
                     "type": "bool",
-                    "name": "hasFutureUseARG"
+                    "name": "hasFutureUseArg"
                 }
             ]
         },

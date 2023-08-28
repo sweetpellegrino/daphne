@@ -34,7 +34,7 @@ include "ir/daphneir/DaphneTypeInferenceTraits.td"
 include "ir/daphneir/CUDASupport.td"
 include "ir/daphneir/FPGAOPENCLSupport.td"
 
-include "ir/daphneir/DaphneUpdateInPlaceEnum.td"
+include "ir/daphneir/DaphneUpdateInPlaceOpInterface.td"
 
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
@@ -175,10 +175,18 @@ def Daphne_MatMulOp : Daphne_Op<"matMul", [
 class Daphne_EwUnaryOp<string name, Type scalarType, list<Trait> traits = []> : Daphne_Op<name, !listconcat(traits, [
     DataTypeFromFirstArg,
     ShapeFromArg,
-    CastArgsToResType
+    CastArgsToResType,
+    InPlaceUnaryOp,
+    //InPlaceOperands<[0]>,
+    InPlaceOpInterface
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$arg);
     let results = (outs AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$res);
+    
+    let extraClassDeclaration = [{
+    // InPlaceOpInterface:
+    std::vector<int> GetInPlaceOperands() { return {0}; }
+    }];
 }
 
 // ----------------------------------------------------------------------------
@@ -231,6 +239,8 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
     DeclareOpInterfaceMethods<VectorizableOpInterface>,
     ShapeEwBinary,
     CastArgsToResType,
+    InPlaceBinaryOp,
+    InPlaceOpInterface
     
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$lhs, AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$rhs);
@@ -244,6 +254,11 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
         }]>
     ];
     let hasFolder = 1;
+
+    let extraClassDeclaration = [{
+    // InPlaceOpInterface:
+    std::vector<int> GetInPlaceOperands() { return {0, 1}; }
+    }];
 }
 
 // ----------------------------------------------------------------------------

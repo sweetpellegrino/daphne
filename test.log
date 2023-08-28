@@ -1,0 +1,39 @@
+building DEBUG version
+[DAPHNE]..No need to build PAPI again................................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build Antlr4 again..............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to download Catch2 again...........................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build OpenBlas again............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to download nlohmannjson again.....................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build Abseil again..............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build OpenMPI again.............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build GRPC again................................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build Arrow again...............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build spdlog again..............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build eigen again...............................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build MLIR/LLVM again...........................................................[27.08.23 21:46:52]
+[DAPHNE]..Build Daphne...............................................................................[27.08.23 21:46:52]
+-- Using MLIRConfig.cmake in: /home/niklas/daphne/thirdparty/installed/lib/cmake/mlir
+-- Using LLVMConfig.cmake in: /home/niklas/daphne/thirdparty/installed/lib/cmake/llvm
+-- Building with -fPIC
+-- CMAKE_PREFIX_PATH:  /home/niklas/daphne/thirdparty/installed
+-- Arrow version: 12.0.0
+-- Found the Arrow shared library: /home/niklas/daphne/thirdparty/installed/lib/libarrow.so.1200.0.0
+-- Found the Arrow import library: ARROW_IMPORT_LIB-NOTFOUND
+-- Found the Arrow static library: /home/niklas/daphne/thirdparty/installed/lib/libarrow.a
+-- Parquet version: 12.0.0
+-- Found the Parquet shared library: /home/niklas/daphne/thirdparty/installed/lib/libparquet.so.1200.0.0
+-- Found the Parquet import library: PARQUET_IMPORT_LIB-NOTFOUND
+-- Found the Parquet static library: /home/niklas/daphne/thirdparty/installed/lib/libparquet.a
+-- ANTLR4_JAR_LOCATION is /home/niklas/daphne/thirdparty/installed/share/antlr4/antlr-4.9.2-complete.jar
+-- Antlr4 DaphneDSLGrammar - Building Common Include-, Source- and Tokenfiles, Visitor Include- and Sourcefiles
+-- Antlr4 SQLGrammar - Building Common Include-, Source- and Tokenfiles, Visitor Include- and Sourcefiles
+-- ANTLR4_SQL_DIR is /home/niklas/daphne/build/antlr4_generated_src/SQLGrammar
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/niklas/daphne/build
+[1/45] Linking CXX static library src/compiler/utils/libCompilerUtils.a
+[2/45] Linking CXX static library src/runtime/distributed/proto/libCallData.a
+[3/45] Linking CXX static library src/parser/sql/libSQLParser.a
+[4/45] Linking CXX static library lib/libMLIRDaphne.a
+[5/45] Linking CXX static library lib/libMLIRDaphneInference.a
+ninja: build stopped: interrupted by user.

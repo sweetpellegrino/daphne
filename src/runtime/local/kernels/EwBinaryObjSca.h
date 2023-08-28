@@ -36,7 +36,7 @@
 
 template<class DTRes, class DTLhs, typename VTRhs>
 struct EwBinaryObjSca {
-    static void apply(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs rhs, DCTX(ctx)) = delete;
+    static void apply(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs rhs, bool hasFutureUseLhs, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -44,8 +44,8 @@ struct EwBinaryObjSca {
 // ****************************************************************************
 
 template<class DTRes, class DTLhs, typename VTRhs>
-void ewBinaryObjSca(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs rhs, DCTX(ctx)) {
-    EwBinaryObjSca<DTRes, DTLhs, VTRhs>::apply(opCode, res, lhs, rhs, ctx);
+void ewBinaryObjSca(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs rhs, bool hasFutureUseLhs, DCTX(ctx)) {
+    EwBinaryObjSca<DTRes, DTLhs, VTRhs>::apply(opCode, res, lhs, rhs, hasFutureUseLhs, ctx);
 }
 
 // ****************************************************************************
@@ -58,7 +58,7 @@ void ewBinaryObjSca(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs 
 
 template<typename VT>
 struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
-    static void apply(BinaryOpCode opCode, DenseMatrix<VT> *& res, const DenseMatrix<VT> * lhs, VT rhs, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, DenseMatrix<VT> *& res, const DenseMatrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         
@@ -85,7 +85,7 @@ struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
 
 template<typename VT>
 struct EwBinaryObjSca<Matrix<VT>, Matrix<VT>, VT> {
-    static void apply(BinaryOpCode opCode, Matrix<VT> *& res, const Matrix<VT> * lhs, VT rhs, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, Matrix<VT> *& res, const Matrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         
@@ -109,15 +109,15 @@ struct EwBinaryObjSca<Matrix<VT>, Matrix<VT>, VT> {
 // ----------------------------------------------------------------------------
 
 template<typename VT>
-void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, const Frame * lhs, VT rhs, size_t c, DCTX(ctx)) {
+void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, const Frame * lhs, VT rhs, size_t c, bool hasFutureUseLhs, DCTX(ctx)) {
     auto * col_res = res->getColumn<VT>(c);
     auto * col_lhs = lhs->getColumn<VT>(c);
-    ewBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT>(opCode, col_res, col_lhs, rhs, ctx);
+    ewBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT>(opCode, col_res, col_lhs, rhs, hasFutureUseLhs, ctx);
 }
 
 template<typename VT>
 struct EwBinaryObjSca<Frame, Frame, VT> {
-    static void apply(BinaryOpCode opCode, Frame *& res, const Frame * lhs, VT rhs, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, Frame *& res, const Frame * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
 
@@ -127,14 +127,14 @@ struct EwBinaryObjSca<Frame, Frame, VT> {
         for (size_t c = 0; c < numCols; c++) {
             switch(lhs->getColumnType(c)) {
                 // For all value types:
-                case ValueTypeCode::F64: ewBinaryFrameColSca<double>(opCode, res, lhs, rhs, c, ctx); break;
-                case ValueTypeCode::F32: ewBinaryFrameColSca<float>(opCode, res, lhs, rhs, c, ctx); break;
-                case ValueTypeCode::SI64: ewBinaryFrameColSca<int64_t>(opCode, res, lhs, rhs, c, ctx); break;
-                case ValueTypeCode::SI32: ewBinaryFrameColSca<int32_t>(opCode, res, lhs, rhs, c, ctx); break;
-                case ValueTypeCode::SI8 : ewBinaryFrameColSca<int8_t>(opCode, res, lhs, rhs, c, ctx); break;
-                case ValueTypeCode::UI64: ewBinaryFrameColSca<uint64_t>(opCode, res, lhs, rhs, c, ctx); break;
-                case ValueTypeCode::UI32: ewBinaryFrameColSca<uint32_t>(opCode, res, lhs, rhs, c, ctx); break; 
-                case ValueTypeCode::UI8 : ewBinaryFrameColSca<uint8_t>(opCode, res, lhs, rhs, c, ctx); break;
+                case ValueTypeCode::F64: ewBinaryFrameColSca<double>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
+                case ValueTypeCode::F32: ewBinaryFrameColSca<float>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
+                case ValueTypeCode::SI64: ewBinaryFrameColSca<int64_t>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
+                case ValueTypeCode::SI32: ewBinaryFrameColSca<int32_t>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
+                case ValueTypeCode::SI8 : ewBinaryFrameColSca<int8_t>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
+                case ValueTypeCode::UI64: ewBinaryFrameColSca<uint64_t>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
+                case ValueTypeCode::UI32: ewBinaryFrameColSca<uint32_t>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break; 
+                case ValueTypeCode::UI8 : ewBinaryFrameColSca<uint8_t>(opCode, res, lhs, rhs, c, hasFutureUseLhs, ctx); break;
                 default: throw std::runtime_error("EwBinaryObjSca::apply: unknown value type code");
             }
         }   

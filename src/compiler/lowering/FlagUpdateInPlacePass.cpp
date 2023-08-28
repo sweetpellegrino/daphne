@@ -25,8 +25,7 @@
 #include <ir/daphneir/Daphne.h>
 #include <ir/daphneir/Passes.h>
 
-#include <ir/daphneir/DaphneOps.h.inc>
-#include <ir/daphneir/DaphneOpsEnums.h.inc>
+#include "compiler/utils/CompilerUtils.h"
 
 #include <mlir/Pass/Pass.h>
 
@@ -53,11 +52,9 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, bool checkLhs = true) {
     return false;
  }
 
- bool isValidMatrixOrFrameType(mlir::Operation *op, bool checkLhs = true) {
-    //check if data type is matrix or frame
-    //what kind of type is this: !daphne.Matrix<2x2xf64:sp[1.000000e+00]>
-    mlir::Value arg = checkLhs ? op->getOperand(0) : op->getOperand(1);
-    return (arg.getType().isa<daphne::MatrixType>() || arg.getType().isa<daphne::FrameType>()) && (arg.getType() == op->getResult(0).getType());
+template<typename T>
+ bool isValidType(T arg) {
+     return arg.getType().template isa<daphne::MatrixType>() || arg.getType().template isa<daphne::FrameType>();
  }
 
 struct FlagUpdateInPlacePass: public PassWrapper<FlagUpdateInPlacePass, OperationPass<ModuleOp>>
@@ -73,85 +70,101 @@ void FlagUpdateInPlacePass::runOnOperation() {
     llvm::outs() << "\033[1;31m";
     llvm::outs() << "FlagUpdateInPlacePass\n";
 
+    // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
+    //  This requires multi-returns in way more cases, which is not implemented yet.
+
+    // Find vectorizable operations and their inputs of vectorizable operations
+    std::vector<daphne::Vectorizable> vectOps;
+    module->walk([&](daphne::Vectorizable op)
+    {
+        llvm::outs() << "Vectorizable\n";
+      if(CompilerUtils::isMatrixComputation(op))
+          vectOps.emplace_back(op);
+    });
+    std::vector<daphne::Vectorizable> vectorizables(vectOps.begin(), vectOps.end());
+    for(auto v : vectorizables) {
+     v.getVectorSplits();
+    } 
+
+    std::vector<daphne::InPlaceable> vecs;
+     module->walk([&](daphne::InPlaceable op)
+    {
+       vecs.emplace_back(op);
+    });
+
+    for (auto v : vecs) {
+        v.GetInPlaceOperands();
+    }
+
     // Traverse the operations in the module.
-    module.walk([&](Operation *op) {
+    module.walk([&](mlir::Operation *op) {
         
-        mlir::daphne::InPlaceAttr inPlaceAttr = mlir::daphne::InPlaceAttr::NONE;
+        mlir::daphne::InPlaceEnum inPlaceAttr = mlir::daphne::InPlaceEnum::NONE;
 
         //TODO: change to checking the possiblity of inplace update
         //check if result is matrix or frame? e.g what happens if sqrt of scalar
-
-        //EwUnary and EwBinary
-        // if (mlir::daphne::Daphne_EwUnaryOp addOp = dynamic_cast<mlir::AddOp>(op)) {
-        //     // The operation is an addition operation
-        //     // Handle accordingly
-        // }
-        // else if (mlir::SubOp subOp = dynamic_cast<mlir::SubOp>(op)) {
-        //     // The operation is a subtraction operation
-        //     // Handle accordingly
-        // }
 
 
         //In case of loops: if ssa comes from outside loop, we can not update in place
         //if the ssa comes from inside the loop, we can update in place
 
-        if (op->getName().getStringRef() == "daphne.ewAdd" || op->getName().getStringRef() == "daphne.ewSqrt") {
-        //if (op->getName().getStringRef() == "daphne.ewAdd" || op->getName().getStringRef() == "daphne.ewSqrt") {
-
-             //change to internal function with getArg?; for binary getLhs, getRhs
-
-            op->print(llvm::outs());
-            llvm::outs() << "\n op name: " << op->getName().getStringRef() << "\n";
-            llvm::outs() << "hasOneUse: " << op->hasOneUse() << "\n";
-            llvm::outs() << "hasOneUseAfter: " << hasAnyUseAfterCurrentOp(op) << "\n";
-            llvm::outs() << "op type: ";
-            op->getOperand(0).getType().print(llvm::outs());
-            llvm::outs() << "\n result type: "; 
-            op->getResult(0).getType().print(llvm::outs());
-            llvm::outs() << "\n";
-
-            //Check EwUnary, need to gurantee that atleast one operand exists
-            //if (mlir::isa<daphne::EwUnaryOp>(op)) {
-            if(op->getName().getStringRef() == "daphne.ewSqrt") {
-                
-                // Check if the operation has only one use
-                //TODO: if the variable is not used ever -> hasOneUse == 0
-                //TODO: hasNoUse after
-                auto value = op->getOperand(0);
-
-                if (value.hasOneUse() || !hasAnyUseAfterCurrentOp(op)) { //&& value.getUsers().begin() == op) { 
-                    if ((value.getType().isa<daphne::MatrixType>() || value.getType().isa<daphne::FrameType>())) {
-
-                        // 
-                        //TODO: DataBuffer Dependency
-                        //
-                        operandUpdateInPlace = mlir::daphne::UpdateInPlaceAttrValue::LHS;
-                    }
-                }
-            }
-            //TODO: change to checking if op is EwBinaryOp
-            else if (op->getName().getStringRef() == "daphne.ewAdd") {
-
-                bool lhsQualifies = isValidMatrixOrFrameType(op, true)  && !hasAnyUseAfterCurrentOp(op, true);
-                bool rhsQualifies = isValidMatrixOrFrameType(op, false) && !hasAnyUseAfterCurrentOp(op, false);
-
-                if (lhsQualifies && rhsQualifies) {
-                    operandUpdateInPlace = mlir::daphne::UpdateInPlaceAttrValue::BOTH;
-                }
-                else if (lhsQualifies) {
-                    operandUpdateInPlace = mlir::daphne::UpdateInPlaceAttrValue::LHS;
-                }
-                else if (rhsQualifies) {
-                    operandUpdateInPlace = mlir::daphne::UpdateInPlaceAttrValue::RHS;
-                }
-               
+        if(daphne::EwAddOp addOp = llvm::dyn_cast_or_null<daphne::EwAddOp>(op)) {
+            llvm::outs() << "EwAddOp\n";
+            for( auto r :addOp.GetInPlaceOperands()) {
+                llvm::outs() << r << "\n";
             }
         }
 
-        if(operandUpdateInPlace != mlir::daphne::UpdateInPlaceAttrValue::NONE) {
+
+        //get 
+        llvm::outs() << "Operation: " << op->getName() << "\n";
+
+        if (daphne::InPlaceable opWithInterface = llvm::dyn_cast_or_null<daphne::InPlaceable>(op)) {
+           llvm::outs() << "InPlaceOpInterface\n";
+           //std::vector<int> inPlaceOperands = opWithInterface.GetInPlaceOperands();
+        }
+
+        /*
+        if (op->hasTrait<mlir::OpTrait::InPlaceOperands<[0]>::Impl>()) {
+            llvm::outs() << "InPlaceOperand\n";
+        }
+        */
+
+        if (op->hasTrait<mlir::OpTrait::InPlaceUnaryOp>()) {
+
+            llvm::outs() << "InPlaceUnaryOp\n";
+        
+            //Unary operations have only one operand and starts with 0
+            auto value = op->getOperand(0);
+
+            //Simple case
+            if (value.hasOneUse() || !hasAnyUseAfterCurrentOp(op)) {
+                //theoretcially the Result and Operand can be Frame to Matrix, or Matrix to Frame, Frame to Frame, Matrix to Matrix
+                if (isValidType<mlir::Value>(value) && isValidType<mlir::OpResult>(op->getResult(0))) {
+                        inPlaceAttr = mlir::daphne::InPlaceEnum::LHS;
+                }
+            }
+        }
+        else if (op->hasTrait<mlir::OpTrait::InPlaceBinaryOp>()) {
+
+            bool lhsQualifies = isValidType<mlir::Value>(op->getOperand(0)) && !hasAnyUseAfterCurrentOp(op, true);
+            bool rhsQualifies = isValidType<mlir::Value>(op->getOperand(1)) && !hasAnyUseAfterCurrentOp(op, false);
+
+            if (lhsQualifies && rhsQualifies) {
+                inPlaceAttr = mlir::daphne::InPlaceEnum::BOTH;
+            }
+            else if (lhsQualifies) {
+                inPlaceAttr = mlir::daphne::InPlaceEnum::LHS;
+            }
+            else if (rhsQualifies) {
+                inPlaceAttr = mlir::daphne::InPlaceEnum::RHS;
+            }
+        }
+
+        if(inPlaceAttr != mlir::daphne::InPlaceEnum::NONE) {
             OpBuilder builder(op);
-            //op->setAttr(ATTR_UPDATEINPLACE_KEY, builder.getI64IntegerAttr(static_cast<int64_t>(operandUpdateInPlace)));
-            op->setAttr(mlir::daphne::UpdateInPlaceAttr::getAttrName(), mlir::daphne::UpdateInPlaceAttr::get(builder.getContext(), operandUpdateInPlace));
+            op->setAttr("updateInPlace", builder.getI64IntegerAttr(static_cast<int64_t>(inPlaceAttr)));
+            //op->setAttr("updateInPlace", mlir::daphne::UpdateInPlaceAttr::get(builder.getContext(), operandUpdateInPlaceAttr)
         }
 
     });

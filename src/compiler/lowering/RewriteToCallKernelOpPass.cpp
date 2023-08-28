@@ -17,11 +17,11 @@
 #include "compiler/utils/CompilerUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
-#include <ir/daphneir/DaphneOpsEnums.h.inc>
 
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/IR/IRMapping.h"
 
@@ -365,29 +365,67 @@ namespace
                 newOperands.push_back(rewriteStr);
             }
 
-            if (op->hasAttr(mlir::daphne::UpdateInPlaceAttr::getAttrName())) {
-                auto updateInPlaceAttr = op->getAttrOfType<mlir::daphne::UpdateInPlaceAttr>(mlir::daphne::UpdateInPlaceAttr::getAttrName());
-                llvm::outs() << updateInPlaceAttr.getValueAsString() << "\n";
-                updateInPlaceAttr.print(llvm::outs());
-            }
+            if (op->hasAttr("updateInPlace")) {
+                auto updateInPlaceAttr = op->getAttrOfType<mlir::IntegerAttr>("updateInPlace");
+                llvm::outs() << updateInPlaceAttr.getInt() << "\n";
+                op->print(llvm::outs());
 
-            //if operation of type ewBinary, add two new operands for denoting update-in-place
-            if(auto ewAdd = llvm::dyn_cast<daphne::EwAddOp>(op)) {
-                callee << "__bool__bool";
-                llvm::outs() << "ewAdd\n";
-                ewAdd->print(llvm::outs());
+                if(op->hasTrait<mlir::OpTrait::InPlaceUnaryOp>()) {
+                    if (op->getOperand(0).getType().isa<daphne::MatrixType>() || op->getOperand(0).getType().isa<daphne::FrameType>()) {
+                        callee << "__bool";
+                        if(updateInPlaceAttr.getInt() == 1) {
+                                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                        loc, static_cast<bool>(false)));
+                        }
+                        else {
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                            loc, static_cast<bool>(true)));
+                        }
+                    }
+                }
+                else if(op->hasTrait<mlir::OpTrait::InPlaceBinaryOp>()) {
 
-                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                        loc, static_cast<bool>(true)));
-                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                        loc, static_cast<bool>(true)));
-            } else if (auto ewSqrt = llvm::dyn_cast<daphne::EwSqrtOp>(op)) {
-                callee << "__bool";
-                llvm::outs() << "ewSqrt\n";
-                ewSqrt->print(llvm::outs());
+                    //check operand types is matrix or frame for operand 0 and 1
+                    bool op0 = op->getOperand(0).getType().isa<daphne::MatrixType>() || op->getOperand(0).getType().isa<daphne::FrameType>();
+                    bool op1 = op->getOperand(1).getType().isa<daphne::MatrixType>() || op->getOperand(1).getType().isa<daphne::FrameType>();
 
-                newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                        loc, static_cast<bool>(true)));
+                    llvm::outs() << op0 << "\n";
+                    llvm::outs() << op1 << "\n";
+
+                    if(op0 && op1) {
+                        callee << "__bool__bool";
+                        if (updateInPlaceAttr.getInt() == 1) {
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(false)));
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(true)));
+                        }
+                        else if (updateInPlaceAttr.getInt() == 2) {
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(true)));
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(false)));
+                        }
+                        else {
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(true)));
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(true)));
+                        }
+                    }
+                    else if(op0 || op1) {
+                        callee << "__bool";
+                        if (updateInPlaceAttr.getInt() == 1 || updateInPlaceAttr.getInt() == 2) {
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(false)));
+                        }
+                        else {
+                            newOperands.push_back(rewriter.create<daphne::ConstantOp>(
+                                    loc, static_cast<bool>(true)));
+                        }
+                    }
+                }
+
             }
 
             // Inject the current DaphneContext as the last input parameter to
