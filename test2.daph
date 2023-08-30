@@ -1,0 +1,6 @@
+X = readMatrix("X.csv");
+Y = readMatrix("Y.csv");
+
+print("test1");
+Z = sqrt(X + Y);
+print("test2");
