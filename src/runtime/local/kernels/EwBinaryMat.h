@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <mlir/Dialect/SCF/IR/SCF.h>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/CSRMatrix.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
@@ -23,6 +24,8 @@
 #include <runtime/local/datastructures/Matrix.h>
 #include <runtime/local/kernels/BinaryOpCode.h>
 #include <runtime/local/kernels/EwBinarySca.h>
+
+#include "runtime/local/kernels/InPlaceUtils.h"
 
 #include <cassert>
 #include <cstddef>
@@ -33,7 +36,7 @@
 
 template<class DTRes, class DTLhs, class DTRhs>
 struct EwBinaryMat {
-    static void apply(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, const DTRhs * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) = delete;
+    static void apply(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -41,7 +44,7 @@ struct EwBinaryMat {
 // ****************************************************************************
 
 template<class DTRes, class DTLhs, class DTRhs>
-void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, const DTRhs * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
+void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
     EwBinaryMat<DTRes, DTLhs, DTRhs>::apply(opCode, res, lhs, rhs, hasFutureUseLHS, hasFutureUseRHS, ctx);
 }
 
@@ -55,11 +58,25 @@ void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, const DTR
 
 template<typename VTres, typename VTlhs, typename VTrhs>
 struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
-    static void apply(BinaryOpCode opCode, DenseMatrix<VTres> *& res, const DenseMatrix<VTlhs> * lhs, const DenseMatrix<VTrhs> * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, DenseMatrix<VTres> *& res, DenseMatrix<VTlhs> * lhs, DenseMatrix<VTrhs> * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
         const size_t numRowsLhs = lhs->getNumRows();
         const size_t numColsLhs = lhs->getNumCols();
         const size_t numRowsRhs = rhs->getNumRows();
         const size_t numColsRhs = rhs->getNumCols();
+
+        if(!hasFutureUseLHS) {
+            if(lhs->getRefCounter() == 1 && lhs->getUseCountOfMdo() == 1) { 
+                lhs->increaseRefCounter();
+                std::cout << lhs << std::endl;
+                res = lhs;
+            }
+        }
+        else if(!hasFutureUseRHS) {
+            if(rhs->getRefCounter() == 1 && rhs->getUseCountOfMdo() == 1){
+                rhs->increaseRefCounter();
+                res = rhs;
+            }
+        }
 
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);

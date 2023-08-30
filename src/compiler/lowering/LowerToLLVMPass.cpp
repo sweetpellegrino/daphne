@@ -786,6 +786,7 @@ public:
             }
         }
         else {
+            op->print(llvm::outs());
             throw std::runtime_error("vectorizedPipelineOp without outputs not supported at the moment!");
         }
 

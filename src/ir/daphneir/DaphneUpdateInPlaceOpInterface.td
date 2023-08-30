@@ -20,6 +20,7 @@
 include "mlir/IR/EnumAttr.td"
 include "mlir/IR/OpBase.td"
 include "mlir/IR/AttrTypeBase.td"
+include "mlir/IR/BuiltinAttributeInterfaces.td"
 
 /*def INPLACE_ONE : I64EnumAttrCase<"ONE", 0>;
 def INPLACE_ARG : I64EnumAttrCase<"ARG", 0>;
@@ -38,57 +39,31 @@ def InPlaceOperand : I64EnumAttr<"InPlace", "", [INPLACE_ONE, INPLACE_TWO, INPLA
     let cppNamespace = "::mlir::daphne";
 }*/
 
-def INPLACE_NONE : I64EnumAttrCase<"NONE", -1>;
-def INPLACE_ARG : I64EnumAttrCase<"ARG", 1>;
-def INPLACE_LHS : I64EnumAttrCase<"LHS", 2>;
-def INPLACE_RHS : I64EnumAttrCase<"RHS", 3>;
-def INPLACE_BOTH : I64EnumAttrCase<"BOTH", 4>;
-
-def InPlaceEnum : I64EnumAttr<"InPlaceEnum", "", [INPLACE_NONE, INPLACE_ARG, INPLACE_LHS, INPLACE_RHS, INPLACE_BOTH]> {
+/*def InPlaceAttr : ArrayAttr {
     let cppNamespace = "::mlir::daphne";
-}
+    let valueType = "InPlaceEnum";
+}*/
 
-def InPlaceUnaryOp : NativeOpTrait<"InPlaceUnaryOp">;
-def InPlaceBinaryOp : NativeOpTrait<"InPlaceBinaryOp">;
+/*
+def InPlaceAttrKey : StringAttr<"InPlaceFutureUse"> {
+    let cppNamespace = "::mlir::daphne";
+};
+*/
 
-class InPlaceOperands<list<int> positions> : ParamNativeOpTrait<"InPlaceOperands", !cast<string>(!head(positions))>;
-
+//Different approach:
 //https://github.com/tensorflow/tensorflow/blob/fd8d0c80373f6a011cfab909ee23ce4b9c42e0c2/tensorflow/compiler/mlir/lite/ir/tfl_op_interfaces.td#L59
+//Problem -> undefined reference by linking the executable
 def InPlaceOpInterface : OpInterface<"InPlaceable"> {
     let description = [{
-        Interface for ops that are stateful and need to identify stateful operands.
-
-        Stateful operands correspond to TF's variables semantics. An op that has 1
-        or more stateful operands is a stateful op.
+        Interface for ops that allow for update in place of some operands.
     }];
   
     let methods = [
         InterfaceMethod<
-        [{Returns the indices of potential candidates of operands that should allow for update in place.}],
-        "std::vector<int>", "GetInPlaceOperands", (ins)
+        [{Returns the indices of potential operands that could be updated in place.}],
+        "std::vector<int>", "getInPlaceOperands", (ins)
         >,
     ];
 }
-
-def TFL_StatefulOp : OpInterface<"StatefulOpInterface"> {
-  let description = [{
-    Interface for ops that are stateful and need to identify stateful operands.
-
-    Stateful operands correspond to TF's variables semantics. An op that has 1
-    or more stateful operands is a stateful op.
-  }];
-
-  let methods = [
-    InterfaceMethod<
-      [{Returns the indices of stateful operands.}],
-      "std::vector<int>", "GetStatefulOperands", (ins)
-    >,
-  ];
-}
-
-
-//class MyParametricTrait<int... prop> : NativeOpTrait<"MyParametricTrait", !cast<string>(!head(parameters))>;
-
-//def MyParametricTrait2 : NativeOpTrait<"MyParametricTrait2">;
 
 #endif // SRC_IR_DAPHNEIR_DAPHNEUPDATEINPLACEENUM_TD

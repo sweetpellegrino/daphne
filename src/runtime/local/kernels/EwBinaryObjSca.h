@@ -36,7 +36,7 @@
 
 template<class DTRes, class DTLhs, typename VTRhs>
 struct EwBinaryObjSca {
-    static void apply(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs rhs, bool hasFutureUseLhs, DCTX(ctx)) = delete;
+    static void apply(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, VTRhs rhs, bool hasFutureUseLhs, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -44,7 +44,7 @@ struct EwBinaryObjSca {
 // ****************************************************************************
 
 template<class DTRes, class DTLhs, typename VTRhs>
-void ewBinaryObjSca(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs rhs, bool hasFutureUseLhs, DCTX(ctx)) {
+void ewBinaryObjSca(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, VTRhs rhs, bool hasFutureUseLhs, DCTX(ctx)) {
     EwBinaryObjSca<DTRes, DTLhs, VTRhs>::apply(opCode, res, lhs, rhs, hasFutureUseLhs, ctx);
 }
 
@@ -58,10 +58,15 @@ void ewBinaryObjSca(BinaryOpCode opCode, DTRes *& res, const DTLhs * lhs, VTRhs 
 
 template<typename VT>
 struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
-    static void apply(BinaryOpCode opCode, DenseMatrix<VT> *& res, const DenseMatrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, DenseMatrix<VT> *& res, DenseMatrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         
+
+        if(!hasFutureUseLhs && lhs->getValuesSharedPtr().use_count() == 1) {
+            res = lhs;
+        }
+
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
         
@@ -85,7 +90,7 @@ struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
 
 template<typename VT>
 struct EwBinaryObjSca<Matrix<VT>, Matrix<VT>, VT> {
-    static void apply(BinaryOpCode opCode, Matrix<VT> *& res, const Matrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, Matrix<VT> *& res, Matrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         
@@ -109,7 +114,7 @@ struct EwBinaryObjSca<Matrix<VT>, Matrix<VT>, VT> {
 // ----------------------------------------------------------------------------
 
 template<typename VT>
-void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, const Frame * lhs, VT rhs, size_t c, bool hasFutureUseLhs, DCTX(ctx)) {
+void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, Frame * lhs, VT rhs, size_t c, bool hasFutureUseLhs, DCTX(ctx)) {
     auto * col_res = res->getColumn<VT>(c);
     auto * col_lhs = lhs->getColumn<VT>(c);
     ewBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT>(opCode, col_res, col_lhs, rhs, hasFutureUseLhs, ctx);
@@ -117,7 +122,7 @@ void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, const Frame * lhs, V
 
 template<typename VT>
 struct EwBinaryObjSca<Frame, Frame, VT> {
-    static void apply(BinaryOpCode opCode, Frame *& res, const Frame * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, Frame *& res, Frame * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
 

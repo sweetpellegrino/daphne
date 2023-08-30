@@ -176,17 +176,17 @@ class Daphne_EwUnaryOp<string name, Type scalarType, list<Trait> traits = []> : 
     DataTypeFromFirstArg,
     ShapeFromArg,
     CastArgsToResType,
-    InPlaceUnaryOp,
     //InPlaceOperands<[0]>,
-    InPlaceOpInterface
+    DeclareOpInterfaceMethods<InPlaceOpInterface>
+    //InPlaceOpInterface
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$arg);
     let results = (outs AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$res);
     
-    let extraClassDeclaration = [{
+    /*let extraClassDeclaration = [{
     // InPlaceOpInterface:
     std::vector<int> GetInPlaceOperands() { return {0}; }
-    }];
+    }];*/
 }
 
 // ----------------------------------------------------------------------------
@@ -239,8 +239,7 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
     DeclareOpInterfaceMethods<VectorizableOpInterface>,
     ShapeEwBinary,
     CastArgsToResType,
-    InPlaceBinaryOp,
-    InPlaceOpInterface
+    DeclareOpInterfaceMethods<InPlaceOpInterface>
     
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$lhs, AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$rhs);
@@ -255,10 +254,10 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
     ];
     let hasFolder = 1;
 
-    let extraClassDeclaration = [{
+    /*let extraClassDeclaration = [{
     // InPlaceOpInterface:
     std::vector<int> GetInPlaceOperands() { return {0, 1}; }
-    }];
+    }];*/
 }
 
 // ----------------------------------------------------------------------------
@@ -663,6 +662,7 @@ def Daphne_ReshapeOp : Daphne_Op<"reshape", [
 def Daphne_TransposeOp : Daphne_Op<"transpose", [
     TypeFromFirstArg,
     DeclareOpInterfaceMethods<VectorizableOpInterface>,
+    DeclareOpInterfaceMethods<InPlaceOpInterface>,
     NumRowsFromArgNumCols, NumColsFromArgNumRows, SparsityFromArg, CUDASupport,
     Pure
 ]> {
