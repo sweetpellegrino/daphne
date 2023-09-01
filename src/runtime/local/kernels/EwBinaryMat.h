@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/CSRMatrix.h>
@@ -64,19 +65,7 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const size_t numRowsRhs = rhs->getNumRows();
         const size_t numColsRhs = rhs->getNumCols();
 
-        if(!hasFutureUseLHS) {
-            if(lhs->getRefCounter() == 1 && lhs->getUseCountOfMdo() == 1) { 
-                lhs->increaseRefCounter();
-                std::cout << lhs << std::endl;
-                res = lhs;
-            }
-        }
-        else if(!hasFutureUseRHS) {
-            if(rhs->getRefCounter() == 1 && rhs->getUseCountOfMdo() == 1){
-                rhs->increaseRefCounter();
-                res = rhs;
-            }
-        }
+        res = InPlaceUtils::getResultsPointer(lhs, hasFutureUseLHS, rhs, hasFutureUseRHS);
 
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
@@ -84,6 +73,10 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const VTlhs * valuesLhs = lhs->getValues();
         const VTrhs * valuesRhs = rhs->getValues();
         VTres * valuesRes = res->getValues();
+
+        std::cout << valuesLhs << std::endl;
+        std::cout << valuesRhs << std::endl;
+        std::cout << valuesRes << std::endl;
         
         EwBinaryScaFuncPtr<VTres, VTlhs, VTrhs> func = getEwBinaryScaFuncPtr<VTres, VTlhs, VTrhs>(opCode);
         

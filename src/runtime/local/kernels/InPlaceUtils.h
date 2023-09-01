@@ -18,6 +18,7 @@
 #ifndef SRC_RUNTIME_LOCAL_UTILS_RUNTIMEUTILS_H
 #define SRC_RUNTIME_LOCAL_UTILS_RUNTIMEUTILS_H
 
+#include "runtime/local/datastructures/DenseMatrix.h"
 #include <ir/daphneir/Daphne.h>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
@@ -25,6 +26,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <iostream>
 
 class InPlaceUtils {
 public:
@@ -34,6 +36,22 @@ public:
             return false;
         }
         return true;
+    }
+
+    template<typename VTArg, typename... Args>
+    static DenseMatrix<VTArg>* getResultsPointer(DenseMatrix<VTArg> *arg, bool hasFutureUseArg, Args... args) {
+        if (!hasFutureUseArg) {
+            if (arg->getRefCounter() == 1 && arg->getValuesUseCount() == 1) {
+                arg->increaseRefCounter();
+                return arg;
+            }
+        }
+
+        if constexpr (sizeof...(Args) == 0) {
+            return nullptr;
+        } else {
+            return getResultsPointer(args...);
+        }
     }
 
 };

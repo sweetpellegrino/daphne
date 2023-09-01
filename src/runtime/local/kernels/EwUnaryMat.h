@@ -17,6 +17,7 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_EWUNARYMAT_H
 #define SRC_RUNTIME_LOCAL_KERNELS_EWUNARYMAT_H
 
+#include "runtime/local/kernels/InPlaceUtils.h"
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -32,7 +33,7 @@
 
 template<class DTRes, class DTArg>
 struct EwUnaryMat {
-    static void apply(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, bool hasFutureUseARG, DCTX(ctx)) = delete;
+    static void apply(UnaryOpCode opCode, DTRes *& res, DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -40,8 +41,8 @@ struct EwUnaryMat {
 // ****************************************************************************
 
 template<class DTRes, class DTArg>
-void ewUnaryMat(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, bool hasFutureUseARG, DCTX(ctx)) {
-    EwUnaryMat<DTRes, DTArg>::apply(opCode, res, arg, hasFutureUseARG, ctx);
+void ewUnaryMat(UnaryOpCode opCode, DTRes *& res, DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) {
+    EwUnaryMat<DTRes, DTArg>::apply(opCode, res, arg, hasFutureUseArg, ctx);
 }
 
 // ****************************************************************************
@@ -54,9 +55,11 @@ void ewUnaryMat(UnaryOpCode opCode, DTRes *& res, const DTArg * arg, bool hasFut
 
 template<typename VT>
 struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
-    static void apply(UnaryOpCode opCode, DenseMatrix<VT> *& res, const DenseMatrix<VT> * arg, bool hasFutureUseARG, DCTX(ctx)) {
+    static void apply(UnaryOpCode opCode, DenseMatrix<VT> *& res, DenseMatrix<VT> * arg, bool hasFutureUseArg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
+
+        res = InPlaceUtils::getResultsPointer(arg, hasFutureUseArg);
         
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);

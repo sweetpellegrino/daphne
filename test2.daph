@@ -1,5 +1,5 @@
-X = readMatrix("X.csv");
-Y = readMatrix("Y.csv");
+X = [1,1,1,1,1,1,1];
+Y = [1,1,1,1,1,1,1];
 
 print("test1");
 Z = sqrt(X + Y);
