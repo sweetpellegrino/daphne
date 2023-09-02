@@ -21,6 +21,8 @@
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
 
+#include <runtime/local/kernels/InPlaceUtils.h>
+
 #include <cstddef>
 
 // ****************************************************************************
@@ -29,7 +31,7 @@
 
 template<class DTRes, class DTArg>
 struct Transpose {
-    static void apply(DTRes *& res, const DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) = delete;
+    static void apply(DTRes *& res, DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -37,7 +39,7 @@ struct Transpose {
 // ****************************************************************************
 
 template<class DTRes, class DTArg>
-void transpose(DTRes *& res, const DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) {
+void transpose(DTRes *& res, DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) {
     Transpose<DTRes, DTArg>::apply(res, arg, hasFutureUseArg, ctx);
 }
 
@@ -51,7 +53,7 @@ void transpose(DTRes *& res, const DTArg * arg, bool hasFutureUseArg, DCTX(ctx))
 
 template<typename VT>
 struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
-    static void apply(DenseMatrix<VT> *& res, const DenseMatrix<VT> * arg, bool hasFutureUseArg, DCTX(ctx)) {
+    static void apply(DenseMatrix<VT> *& res, DenseMatrix<VT> * arg, bool hasFutureUseArg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
         
@@ -63,10 +65,9 @@ struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
         }
         else
         {
-
-            if(!hasFutureUseArg && arg->getValuesSharedPtr().use_count() == 1) {
-                res = const_cast<DenseMatrix<VT> *>(arg);
-            }
+ 
+            //std::cout << hasFutureUseArg << std::endl;
+            //res = InPlaceUtils::getResultsPointer(arg, hasFutureUseArg);
 
             if (res == nullptr)
                 res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, false);
@@ -92,7 +93,7 @@ struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
 
 template<typename VT>
 struct Transpose<CSRMatrix<VT>, CSRMatrix<VT>> {
-    static void apply(CSRMatrix<VT> *& res, const CSRMatrix<VT> * arg, bool hasFutureUseArg, DCTX(ctx)) {
+    static void apply(CSRMatrix<VT> *& res, CSRMatrix<VT> * arg, bool hasFutureUseArg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
         

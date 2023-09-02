@@ -21,6 +21,7 @@
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/IR/Attributes.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/IR/IRMapping.h"
@@ -372,17 +373,20 @@ namespace
                 auto inPlaceOperands = inPlaceOp.getInPlaceOperands();
                 auto inPlaceFutureUse = op->getAttrOfType<ArrayAttr>("inPlaceFutureUse");
 
+                auto sTRUE = static_cast<bool>(true);
+                auto sFALSE = static_cast<bool>(false);
+
                 for (auto inPlaceOperand : inPlaceOperands) {
                     if(op->getOperand(inPlaceOperand).getType().isa<daphne::MatrixType>() || op->getOperand(inPlaceOperand).getType().isa<daphne::FrameType>()) {
                         if (!inPlaceFutureUse || inPlaceFutureUse[inPlaceOperand].cast<BoolAttr>().getValue()) {
                             callee << "__bool";
                             newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                                    loc, static_cast<bool>(true)));
+                                    loc, sTRUE));
                         }
                         else {
                             callee << "__bool";
                             newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                                    loc, static_cast<bool>(false)));
+                                    loc, sFALSE));
                         }
                     }
                 }

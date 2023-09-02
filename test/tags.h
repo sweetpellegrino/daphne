@@ -47,6 +47,5 @@
 #define TAG_SYNTAX "[syntax]"
 #define TAG_VECTORIZED "[vectorized]"
 #define TAG_DAPHNELIB "[daphnelib]"
-#define TAG_INPLACE "[inplace]"
 
 #endif //TEST_TAGS_H

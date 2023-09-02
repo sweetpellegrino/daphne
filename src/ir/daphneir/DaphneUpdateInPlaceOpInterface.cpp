@@ -26,6 +26,7 @@ namespace mlir::daphne
 
 using namespace mlir;
 
+
 #define IMPL_IN_PLACE_OPERANDS_BINARYOP(OP) \
     std::vector<int> daphne::OP::getInPlaceOperands() { \
         return {0, 1}; \
@@ -64,11 +65,11 @@ IMPL_IN_PLACE_OPERANDS_BINARYOP(EwGeOp)
 
 // ****************************************************************************
 
+/*
 #define IMPL_IN_PLACE_OPERANDS_UNARYOP(OP) \
     std::vector<int> daphne::OP::getInPlaceOperands() { \
         return {0}; \
     }
-
 
 //elementwise unary ops
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwAbsOp)
@@ -92,7 +93,9 @@ IMPL_IN_PLACE_OPERANDS_UNARYOP(EwTanOp)
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwTanhOp)
 
 //transpose
-IMPL_IN_PLACE_OPERANDS_UNARYOP(TransposeOp)
+//IMPL_IN_PLACE_OPERANDS_UNARYOP(TransposeOp)
+
+*/
 
 #undef IMPL_IN_PLACE_OPERANDS_UNARYOP
 

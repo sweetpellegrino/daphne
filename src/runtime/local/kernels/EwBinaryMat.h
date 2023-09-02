@@ -37,7 +37,7 @@
 
 template<class DTRes, class DTLhs, class DTRhs>
 struct EwBinaryMat {
-    static void apply(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) = delete;
+    static void apply(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
@@ -45,8 +45,8 @@ struct EwBinaryMat {
 // ****************************************************************************
 
 template<class DTRes, class DTLhs, class DTRhs>
-void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
-    EwBinaryMat<DTRes, DTLhs, DTRhs>::apply(opCode, res, lhs, rhs, hasFutureUseLHS, hasFutureUseRHS, ctx);
+void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
+    EwBinaryMat<DTRes, DTLhs, DTRhs>::apply(opCode, res, lhs, rhs, hasFutureUseLhs, hasFutureUseRhs, ctx);
 }
 
 // ****************************************************************************
@@ -59,13 +59,14 @@ void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bo
 
 template<typename VTres, typename VTlhs, typename VTrhs>
 struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
-    static void apply(BinaryOpCode opCode, DenseMatrix<VTres> *& res, DenseMatrix<VTlhs> * lhs, DenseMatrix<VTrhs> * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, DenseMatrix<VTres> *& res, DenseMatrix<VTlhs> * lhs, DenseMatrix<VTrhs> * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
         const size_t numRowsLhs = lhs->getNumRows();
         const size_t numColsLhs = lhs->getNumCols();
         const size_t numRowsRhs = rhs->getNumRows();
         const size_t numColsRhs = rhs->getNumCols();
 
-        res = InPlaceUtils::getResultsPointer(lhs, hasFutureUseLHS, rhs, hasFutureUseRHS);
+        res = InPlaceUtils::getResultsPointer(lhs, hasFutureUseLhs, rhs, hasFutureUseRhs);
+        InPlaceUtils::isValidType(lhs, rhs);
 
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
@@ -74,10 +75,6 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const VTrhs * valuesRhs = rhs->getValues();
         VTres * valuesRes = res->getValues();
 
-        std::cout << valuesLhs << std::endl;
-        std::cout << valuesRhs << std::endl;
-        std::cout << valuesRes << std::endl;
-        
         EwBinaryScaFuncPtr<VTres, VTlhs, VTrhs> func = getEwBinaryScaFuncPtr<VTres, VTlhs, VTrhs>(opCode);
         
         if(numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
@@ -123,7 +120,7 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
 
 template<typename VT>
 struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, CSRMatrix<VT>> {
-    static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, const CSRMatrix<VT> * lhs, const CSRMatrix<VT> * rhs, const bool hasFutureUseLHS, const bool hasFutureUseRHS, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, CSRMatrix<VT> * lhs, CSRMatrix<VT> * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         if( numRows != rhs->getNumRows() || numCols != rhs->getNumCols() )
@@ -264,7 +261,7 @@ struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, CSRMatrix<VT>> {
 
 template<typename VT>
 struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, DenseMatrix<VT>> {
-    static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, const CSRMatrix<VT> * lhs, const DenseMatrix<VT> * rhs, const bool hasFutureUseLHS, const bool hasFutureUseRHS, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, CSRMatrix<VT> * lhs, DenseMatrix<VT> * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         // TODO: lhs broadcast
@@ -333,7 +330,7 @@ struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, DenseMatrix<VT>> {
 
 template<typename VT>
 struct EwBinaryMat<Matrix<VT>, Matrix<VT>, Matrix<VT>> {
-    static void apply(BinaryOpCode opCode, Matrix<VT> *& res, const Matrix<VT> * lhs, const Matrix<VT> * rhs, const bool hasFutureUseLHS, const bool hasFutureUseRHS, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, Matrix<VT> *& res, Matrix<VT> * lhs, Matrix<VT> * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         if( numRows != rhs->getNumRows() || numCols != rhs->getNumCols() )

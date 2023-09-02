@@ -27,15 +27,21 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+#include <type_traits>
 
 class InPlaceUtils {
 public:
-    //check type of operand is equal to type of result
-    static bool isValidType(mlir::Value arg, mlir::Value res) {
-        if (arg.getType() != res.getType()) {
-            return false;
+
+    //correct type?
+    template<typename VTLhs, typename VTRhs>
+    static bool isValidType(const DenseMatrix<VTLhs> *res, const DenseMatrix<VTRhs> *arg) {
+        if(res->getNumCols() == arg->getNumCols() &&
+           res->getNumRows() == arg->getNumRows() &&
+           std::is_same_v<VTLhs, VTRhs>
+        ) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     template<typename VTArg, typename... Args>

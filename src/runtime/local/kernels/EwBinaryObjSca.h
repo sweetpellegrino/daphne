@@ -25,6 +25,7 @@
 #include <runtime/local/kernels/BinaryOpCode.h>
 #include <runtime/local/kernels/EwBinarySca.h>
 
+#include <runtime/local/kernels/InPlaceUtils.h>
 
 #include <cassert>
 #include <cstddef>
@@ -62,10 +63,7 @@ struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         
-
-        if(!hasFutureUseLhs && lhs->getValuesSharedPtr().use_count() == 1) {
-            res = lhs;
-        }
+        res = InPlaceUtils::getResultsPointer(lhs, hasFutureUseLhs);
 
         if(res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);

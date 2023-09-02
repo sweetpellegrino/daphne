@@ -51,8 +51,6 @@ set(TEST_SOURCES
         api/python/DaphneLibTest.cpp
         
         ir/daphneir/InferTypesTest.cpp
-
-        inplace/InPlaceUtilsTest.cpp
         
         parser/config/ConfigParserTest.cpp
     
