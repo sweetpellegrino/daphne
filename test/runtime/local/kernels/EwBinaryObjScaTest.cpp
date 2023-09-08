@@ -519,5 +519,5 @@ TEMPLATE_PRODUCT_TEST_CASE(TEST_NAME("some invalid op-code"), TAG_KERNELS, (DATA
     using DT = TestType;
     DT * res = nullptr;
     auto m = genGivenVals<DT>(1, {1});
-    CHECK_THROWS(ewBinaryObjSca<DT, DT, typename DT::VT>(static_cast<BinaryOpCode>(999), res, m, 1, true, nullptr));
+    CHECK_THROWS(ewBinaryObjSca<DT, DT, typename DT::VT>(static_cast<BinaryOpCode>(999), res, m, 1,true,  nullptr));
 }

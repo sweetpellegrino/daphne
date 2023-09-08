@@ -59,11 +59,14 @@ struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
 
-        res = InPlaceUtils::getResultsPointer(arg, hasFutureUseArg);
-        InPlaceUtils::isValidType(arg, res);
-        
-        if(res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+        if(res == nullptr) {
+            if(InPlaceUtils::isInPlaceable(arg, hasFutureUseArg)) {
+                res = arg;
+                res->increaseRefCounter();
+            }
+            else
+                res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+        }
         
         const VT * valuesArg = arg->getValues();
         VT * valuesRes = res->getValues();

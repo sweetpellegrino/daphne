@@ -49,6 +49,8 @@ void ewBinaryMat(BinaryOpCode opCode, DTRes *& res, DTLhs * lhs, DTRhs * rhs, bo
     EwBinaryMat<DTRes, DTLhs, DTRhs>::apply(opCode, res, lhs, rhs, hasFutureUseLhs, hasFutureUseRhs, ctx);
 }
 
+
+
 // ****************************************************************************
 // (Partial) template specializations for different data/value types
 // ****************************************************************************
@@ -65,12 +67,25 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const size_t numRowsRhs = rhs->getNumRows();
         const size_t numColsRhs = rhs->getNumCols();
 
-        res = InPlaceUtils::getResultsPointer(lhs, hasFutureUseLhs, rhs, hasFutureUseRhs);
-        InPlaceUtils::isValidType(lhs, rhs);
+        if(res == nullptr) {
+            // Check if we can utilize the allocated memory of the lhs matrix for the result.
+            // We assume that the result has the same type as lhs (no need to check isValidType).
+            if(InPlaceUtils::isInPlaceable(lhs, hasFutureUseLhs)) {
+                res = lhs;
+                res->increaseRefCounter();
+            }
+            // Check if we can utilize the allocated memory of the rhs matrix for the result.
+            // Here we need to check if rhs has a valid type, as it could differ from the result type.
+            // E.g. lhs is rectangular and rhs is a column/row vector, the result will be rectangular (rhs cannot store the result).
+            else if(InPlaceUtils::isInPlaceable(rhs, hasFutureUseRhs) && InPlaceUtils::isValidType(lhs, rhs)) {
+                res = rhs;
+                res->increaseRefCounter();
+            }
+            // Otherwise we create a new matrix based on the dimensions of the lhs matrix.
+            else
+                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
+        }
 
-        if(res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
-        
         const VTlhs * valuesLhs = lhs->getValues();
         const VTrhs * valuesRhs = rhs->getValues();
         VTres * valuesRes = res->getValues();

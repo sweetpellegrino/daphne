@@ -71,14 +71,15 @@ void FlagUpdateInPlacePass::runOnOperation() {
 
     auto module = getOperation();
 
-    llvm::outs() << "\033[1;31m";
-    llvm::outs() << "FlagUpdateInPlacePass\n";
+    //llvm::errs() << "\033[1;31m";
+    //llvm::errs() << "FlagUpdateInPlacePass\n";
 
     // Traverse the operations in the module, if InPlaceable.
     module.walk([&](mlir::Operation *op) {
 
         if (auto inPlaceOp = llvm::dyn_cast<daphne::InPlaceable>(op)) {
         
+            //Fetches the operands that can be used in place from the InPlaceable op
             auto inPlaceOperands = inPlaceOp.getInPlaceOperands();
             BoolAttr inPlaceFutureUse[inPlaceOperands.size()];
 
@@ -90,14 +91,15 @@ void FlagUpdateInPlacePass::runOnOperation() {
                     inPlaceFutureUse[inPlaceOperand] = BoolAttr::get(op->getContext(), false);
             }
 
-            //add inPlaceFutureUse to the op as an attribute
+            //Add inPlaceFutureUse to the op as an attribute
+            //InPlaceFutureUse is an array of bools, one for each operand e.g. [false, true]
             llvm::MutableArrayRef<mlir::Attribute> inPlaceFutureUseArray(inPlaceFutureUse, inPlaceOperands.size());
             op->setAttr("inPlaceFutureUse", mlir::ArrayAttr::get(op->getContext(), inPlaceFutureUseArray));
 
         }
 
     });
-    llvm::outs() << "\033[0m";
+    //llvm::errs() << "\033[0m";
 }
 
 std::unique_ptr<Pass> daphne::createFlagUpdateInPlacePass() {

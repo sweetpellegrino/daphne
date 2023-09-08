@@ -65,7 +65,6 @@ IMPL_IN_PLACE_OPERANDS_BINARYOP(EwGeOp)
 
 // ****************************************************************************
 
-/*
 #define IMPL_IN_PLACE_OPERANDS_UNARYOP(OP) \
     std::vector<int> daphne::OP::getInPlaceOperands() { \
         return {0}; \
@@ -95,7 +94,8 @@ IMPL_IN_PLACE_OPERANDS_UNARYOP(EwTanhOp)
 //transpose
 //IMPL_IN_PLACE_OPERANDS_UNARYOP(TransposeOp)
 
-*/
+//IMPL_IN_PLACE_OPERANDS_UNARYOP(InsertColOp)
+//IMPL_IN_PLACE_OPERANDS_UNARYOP(InsertRowOp)
 
 #undef IMPL_IN_PLACE_OPERANDS_UNARYOP
 

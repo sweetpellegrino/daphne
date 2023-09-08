@@ -125,6 +125,10 @@ set(TEST_SOURCES
         runtime/local/vectorized/MultiThreadedKernelTest.cpp
         runtime/local/kernels/CheckEqApproxTest.cpp
 
+        inplace/InPlaceUtilsTest.cpp
+        inplace/InPlaceKernelTest.cpp
+        inplace/InPlaceAPITest.cpp
+
 #        runtime/local/kernels/Morphstore/ProjectTest.cpp
 )
 

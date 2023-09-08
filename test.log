@@ -1,17 +1,16 @@
-building DEBUG version
-[DAPHNE]..No need to build PAPI again................................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build Antlr4 again..............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to download Catch2 again...........................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build OpenBlas again............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to download nlohmannjson again.....................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build Abseil again..............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build OpenMPI again.............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build GRPC again................................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build Arrow again...............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build spdlog again..............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build eigen again...............................................................[27.08.23 21:46:52]
-[DAPHNE]..No need to build MLIR/LLVM again...........................................................[27.08.23 21:46:52]
-[DAPHNE]..Build Daphne...............................................................................[27.08.23 21:46:52]
+[DAPHNE]..No need to build PAPI again................................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build Antlr4 again..............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to download Catch2 again...........................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build OpenBlas again............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to download nlohmannjson again.....................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build Abseil again..............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build OpenMPI again.............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build GRPC again................................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build Arrow again...............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build spdlog again..............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build eigen again...............................................................[02.09.23 18:16:19]
+[DAPHNE]..No need to build MLIR/LLVM again...........................................................[02.09.23 18:16:19]
+[DAPHNE]..Build Daphne...............................................................................[02.09.23 18:16:19]
 -- Using MLIRConfig.cmake in: /home/niklas/daphne/thirdparty/installed/lib/cmake/mlir
 -- Using LLVMConfig.cmake in: /home/niklas/daphne/thirdparty/installed/lib/cmake/llvm
 -- Building with -fPIC
@@ -31,9 +30,1664 @@ building DEBUG version
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /home/niklas/daphne/build
-[1/45] Linking CXX static library src/compiler/utils/libCompilerUtils.a
-[2/45] Linking CXX static library src/runtime/distributed/proto/libCallData.a
-[3/45] Linking CXX static library src/parser/sql/libSQLParser.a
-[4/45] Linking CXX static library lib/libMLIRDaphne.a
-[5/45] Linking CXX static library lib/libMLIRDaphneInference.a
-ninja: build stopped: interrupted by user.
+[1/5] Building CXX object src/parser/config/CMakeFiles/DaphneConfigParser.dir/ConfigParser.cpp.o
+[2/5] Linking CXX static library src/parser/config/libDaphneConfigParser.a
+[3/5] Linking CXX executable /home/niklas/daphne/bin/daphne
+[4/5] Linking CXX shared library /home/niklas/daphne/lib/libdaphnelib.so
+[5/5] Linking CXX executable /home/niklas/daphne/bin/run_tests
+[DAPHNE]..Successfully built Daphne://run_tests (took 25s 907ms 714us 991ns).........................[02.09.23 18:16:45]
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+run_tests is a Catch v2.13.8 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+components
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/algorithms/AlgorithmsTest.cpp:31
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:221: FAILED:
+  CHECK( status == exp )
+with expansion:
+  3 == 0
+
+-------------------------------------------------------------------------------
+componentsSparse
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/algorithms/AlgorithmsTest.cpp:38
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:221: FAILED:
+  CHECK( status == exp )
+with expansion:
+  3 == 0
+
+-------------------------------------------------------------------------------
+kmeans
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/algorithms/AlgorithmsTest.cpp:47
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:221: FAILED:
+  CHECK( status == exp )
+with expansion:
+  3 == 0
+
+-------------------------------------------------------------------------------
+if
+  if_5.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:37
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+if
+  if_7.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:37
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+if
+  if_8.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:37
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+for
+  for_17.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:38
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+for
+  for_18.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:38
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+for
+  for_23.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:38
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+while
+  while_5.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:39
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+while
+  while_6.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:39
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+while
+  while_7.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:39
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+while
+  while_8.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:39
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+while
+  while_15.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:39
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+while
+  while_16.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/controlflow/ControlFlowTest.cpp:39
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+import, success
+  import_success_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/import/ImportTest.cpp:44
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:280: FAILED:
+  CHECK( status == StatusCode::SUCCESS )
+with expansion:
+  3 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:281: FAILED:
+  CHECK( out.str() == exp )
+with expansion:
+  "[error]: Got an abort signal from the execution engine. Most likely an
+  exception in a shared library. Check logs!
+  [error]: Execution error: Returning from signal 6
+  "
+  ==
+  "33
+  333
+  DenseMatrix(2x2, double)
+  0.901783 0.242832
+  0.458003 0.726276
+  "
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "JIT session error: Symbols not found: [
+  _transpose__DenseMatrix_double__DenseMatrix_double__bool ]
+  JIT-Engine invocation failed: Failed to materialize symbols: { (main, { km-1-
+  1, _mlir__mlir_ciface_km-1-1, _mlir__mlir_ciface_main, _mlir_ciface_km-1-1,
+  _mlir_km-1-1, _mlir_ciface_main, _mlir_main, main }) }Program aborted due to
+  an unhandled Error:
+  Failed to materialize symbols: { (main, { km-1-1, _mlir__mlir_ciface_km-1-1,
+  _mlir__mlir_ciface_main, _mlir_ciface_km-1-1, _mlir_km-1-1,
+  _mlir_ciface_main, _mlir_main, main }) }
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+import, success
+  import_success_4.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/import/ImportTest.cpp:44
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:280: FAILED:
+  CHECK( status == StatusCode::SUCCESS )
+with expansion:
+  3 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:281: FAILED:
+  CHECK( out.str() == exp )
+with expansion:
+  "[error]: Got an abort signal from the execution engine. Most likely an
+  exception in a shared library. Check logs!
+  [error]: Execution error: Returning from signal 6
+  "
+  ==
+  "3
+  33
+  333
+  3333
+  DenseMatrix(2x2, double)
+  0.901783 0.242832
+  0.458003 0.726276
+  DenseMatrix(2x2, double)
+  -0.4 0
+  0.5 0
+  444
+  100
+  "
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "JIT session error: Symbols not found: [
+  _transpose__DenseMatrix_double__DenseMatrix_double__bool ]
+  JIT-Engine invocation failed: Failed to materialize symbols: { (main, { km-2-
+  1, km-1-2, _mlir_main, _mlir_km-1-2, _mlir__mlir_ciface_km-1-2,
+  _mlir__mlir_ciface_main, _mlir_km-2-1, main, _mlir_ciface_km-2-1,
+  _mlir__mlir_ciface_km-2-1, _mlir_ciface_km-1-2, _mlir_ciface_main }) }Program
+  aborted due to an unhandled Error:
+  Failed to materialize symbols: { (main, { km-2-1, km-1-2, _mlir_main,
+  _mlir_km-1-2, _mlir__mlir_ciface_km-1-2, _mlir__mlir_ciface_main, _mlir_km-2-
+  1, main, _mlir_ciface_km-2-1, _mlir__mlir_ciface_km-2-1, _mlir_ciface_km-1-2,
+  _mlir_ciface_main }) }
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+right_indexing, success
+  right_indexing_success_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/indexing/IndexingTest.cpp:45
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+right_indexing, success
+  right_indexing_success_2.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/indexing/IndexingTest.cpp:45
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+operator_at
+  operator_at_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/operations/OperationsTest.cpp:46
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:280: FAILED:
+  CHECK( status == StatusCode::SUCCESS )
+with expansion:
+  3 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:281: FAILED:
+  CHECK( out.str() == exp )
+with expansion:
+  "[error]: Got an abort signal from the execution engine. Most likely an
+  exception in a shared library. Check logs!
+  [error]: Execution error: Returning from signal 6
+  "
+  ==
+  "DenseMatrix(4x1, double)
+  1
+  2
+  3
+  4
+  DenseMatrix(2x2, double)
+  1 2
+  3 4
+  DenseMatrix(1x4, double)
+  1 2 3 4
+  DenseMatrix(2x2, double)
+  7 10
+  15 22
+  DenseMatrix(2x2, double)
+  7 15
+  10 22
+  DenseMatrix(2x2, double)
+  7 10
+  15 22
+  DenseMatrix(4x4, double)
+  1 2 3 4
+  2 4 6 8
+  3 6 9 12
+  4 8 12 16
+  DenseMatrix(1x1, double)
+  30
+  DenseMatrix(4x4, double)
+  1 2 3 4
+  2 4 6 8
+  3 6 9 12
+  4 8 12 16
+  DenseMatrix(4x4, double)
+  1 2 3 4
+  2 4 6 8
+  3 6 9 12
+  4 8 12 16
+  "
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "JIT session error: Symbols not found: [
+  _transpose__DenseMatrix_double__DenseMatrix_double__bool ]
+  JIT-Engine invocation failed: Failed to materialize symbols: { (main, {
+  _mlir__mlir_ciface_main, _mlir_main, _mlir_ciface_main, main }) }Program
+  aborted due to an unhandled Error:
+  Failed to materialize symbols: { (main, { _mlir__mlir_ciface_main,
+  _mlir_main, _mlir_ciface_main, main }) }
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+operator_minus
+  operator_minus_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/operations/OperationsTest.cpp:47
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+operator_plus
+  operator_plus_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/operations/OperationsTest.cpp:48
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+operator_slash
+  operator_slash_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/operations/OperationsTest.cpp:49
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+operator_times
+  operator_times_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/operations/OperationsTest.cpp:50
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+sqrt
+  sqrt_1.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/operations/OperationsTest.cpp:55
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:280: FAILED:
+  CHECK( status == StatusCode::SUCCESS )
+with expansion:
+  -1 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:281: FAILED:
+  CHECK( out.str() == exp )
+with expansion:
+  "2
+  1.5
+  "
+  ==
+  "2
+  1.5
+  DenseMatrix(1x1, double)
+  2
+  DenseMatrix(1x1, double)
+  1.5
+  "
+
+-------------------------------------------------------------------------------
+runEwUnary
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/vectorized/MultiThreadedOpsTest.cpp:44
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:280: FAILED:
+  CHECK( status == StatusCode::SUCCESS )
+with expansion:
+  -1 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:281: FAILED:
+  CHECK( out.str() == exp )
+with expansion:
+  ""
+  ==
+  "6.66783e+06
+  "
+
+-------------------------------------------------------------------------------
+runEwBinary
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/vectorized/MultiThreadedOpsTest.cpp:45
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "res: 0
+  res: 0
+  res: res: 00
+  
+res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: res: 00res: 
+  0
+  
+res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  res: 0
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+runReorganization
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/vectorized/MultiThreadedOpsTest.cpp:51
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:280: FAILED:
+  CHECK( status == StatusCode::SUCCESS )
+with expansion:
+  3 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:281: FAILED:
+  CHECK( out.str() == exp )
+with expansion:
+  "[error]: Got an abort signal from the execution engine. Most likely an
+  exception in a shared library. Check logs!
+  [error]: Execution error: Returning from signal 6
+  "
+  ==
+  "5.00153e+06
+  5.10153e+06
+  "
+
+/home/niklas/daphne/test/api/cli/Utils.h:282: FAILED:
+  CHECK( err.str() == "" )
+with expansion:
+  "JIT session error: Symbols not found: [
+  _transpose__DenseMatrix_double__DenseMatrix_double__bool ]
+  JIT-Engine invocation failed: Failed to materialize symbols: { (main, {
+  _vect2, _vect1, main, _mlir__mlir_ciface_main, _mlir_main, _mlir__vect2,
+  _mlir__vect1, _mlir_ciface_main }) }Program aborted due to an unhandled
+  Error:
+  Failed to materialize symbols: { (main, { _vect2, _vect1, main,
+  _mlir__mlir_ciface_main, _mlir_main, _mlir__vect2, _mlir__vect1,
+  _mlir_ciface_main }) }
+  "
+  ==
+  ""
+
+-------------------------------------------------------------------------------
+pipeline
+  test/api/cli/vectorized/pipeline_5.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/vectorized/VectorizedPipelineTest.cpp:68
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/vectorized/VectorizedPipelineTest.cpp:54: FAILED:
+  CHECK( errNN.str() == errVN.str() )
+with expansion:
+  "res: 0
+  "
+  ==
+  "res: res: 0
+  res: 0
+  0
+  "
+
+/home/niklas/daphne/test/api/cli/vectorized/VectorizedPipelineTest.cpp:55: FAILED:
+  CHECK( errNN.str() == errVR.str() )
+with expansion:
+  "res: 0
+  "
+  ==
+  "res: 0
+  res: 0
+  res: 0
+  "
+
+-------------------------------------------------------------------------------
+pipeline
+  test/api/cli/vectorized/pipeline_6.daphne
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/cli/vectorized/VectorizedPipelineTest.cpp:68
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/vectorized/VectorizedPipelineTest.cpp:54: FAILED:
+  CHECK( errNN.str() == errVN.str() )
+with expansion:
+  "res: 0
+  "
+  ==
+  "res: 0
+  res: 0
+  res: 0
+  "
+
+/home/niklas/daphne/test/api/cli/vectorized/VectorizedPipelineTest.cpp:55: FAILED:
+  CHECK( errNN.str() == errVR.str() )
+with expansion:
+  "res: 0
+  "
+  ==
+  "res: res: 0
+  0
+  res: 0
+  "
+
+-------------------------------------------------------------------------------
+random_matrix_functions
+  random_matrix_functions.py
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/api/python/DaphneLibTest.cpp:52
+...............................................................................
+
+/home/niklas/daphne/test/api/cli/Utils.h:332: FAILED:
+  CHECK( statusDaphne == StatusCode::SUCCESS )
+with expansion:
+  -1 == 0
+
+/home/niklas/daphne/test/api/cli/Utils.h:333: FAILED:
+  CHECK( statusDaphneLib == 0 )
+with expansion:
+  -1 == 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (add) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:87
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  2.36158e-114 3.56881e-284 1.29264e-284 5.28667e+46 -3.7725e-74 -1.52937e-169
+  -1.29549e-262 2.35392e+166 1.51081e-13 3.49191e-302 2.46599e+85 -2.35893e+66
+  2.89518e+285 1.43137e+09 3.74165e+25 6.80394e-90 -9.41944e+238 -1.325e-63
+  -1.68922e+90 2.08859e-165 -1.99623e-174 1.12914e-160 0.00629163 4.1525e+103
+  
+==
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  4.65221e-310 0 3.15026e-224 1.65002e+138 1.20482e+123 3.94025e+72
+  0 0 1.86548e+255 8.47053e+254 6.79259e+120 -1.10653e+212
+  2.71736e-321 1.95575e-109 9.52459e-08 -7.94849e-11 2.53143e-213 -4.86464e-173
+  -1.57312e+297 4.68945e-52 -5.82139e+62 -1.25343e+104 -2.40167e+39 -1.93587e+
+  279
+  
+==
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  1 2 0 0 1 3
+  0 1 0 2 0 3
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  4.65221e-310 0 3.33273e+209 1.00186e+246 1.20361e-180 -6.00358e+193
+  0 0 -8.80816e-241 -3.40753e+171 3.04614e-50 -8.36903e+134
+  2.60373e-321 1.95575e-109 5.30196e-47 -3.04065e-15 -7.46093e-278 6.7916e-199
+  1.3595e+191 2.91497e+124 -4.1491e+305 13140.5 2.79715e-184 5.89942e-63
+  
+==
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  2 3 1 1 2 4
+  1 2 1 3 1 4
+  1 1 1 1 1 1
+  1 1 1 1 1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (add) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:87
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  1213891336 1133307448 1605157101 271716476 1530936776 1527728
+  3389223232 320204096 3266544704 1134405440 2989038400 1558787904
+  1594667046 1403904533 1484117263 1165616288 1379802291 924007321
+  3826884160 1220885312 1111040320 3763787072 2797787200 1618920768
+  
+==
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 1585778986 3871370341 1575066062 229712631 1272981195
+  0 3686578496 2124514367 2770252608 4108721728 1126230080
+  0 1343890869 1360351810 1054220221 1452787127 377228382
+  0 337131584 3541960256 2609340480 3613248576 877820480
+  
+==
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  1 2 0 0 1 3
+  0 1 0 2 0 3
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 1368720512 1547410221 1557057361 1246899236 1493785614
+  0 2872756032 2766736960 2078202688 3271143744 3062699584
+  0 1390505975 1482020221 1584477262 1579835376 825092810
+  0 887568448 1740390720 908755264 2162347328 1240721728
+  
+==
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  2 3 1 1 2 4
+  1 2 1 3 1 4
+  1 1 1 1 1 1
+  1 1 1 1 1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (mul) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:133
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  2.81814e+35 1.26269e+121 -2.57602e-42 1.82585e-190 -7.43591e+269 -3.65063e+
+  203
+  -2.70618e+103 3.22867e-255 5.4078e-131 3.58994e-270 2.734e+169 -3.59808e-66
+  1.51171e+160 2.67914e-140 2.94294e-31 3.96672e+94 4.07038e+200 1.7841e+248
+  -9.85258e-308 9.4883e+201 -7.51096e-200 7.95998e+229 -3.20657e-46 4.03196e+
+  138
+  
+==
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  4.65221e-310 0 4.00586e+164 -4.29008e-305 5.12524e-14 2.36071e-120
+  0 0 4.2493e+290 5.35356e-246 1.31684e+273 8.71644e+171
+  2.74206e-321 1.95575e-109 -2.09595e-52 -7.88434e-35 -5.0752e+33 -6.47348e+24
+  1.00395e+80 2.29026e+259 1.26351e-119 4.06287e-82 3.45609e+18 -1.53446e-294
+  
+==
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  4.65221e-310 0 2.18936e-318 2.21402e-318 2.23832e-318 2.26337e-318
+  0 0 2.19168e-318 2.21651e-318 2.24078e-318 2.2659e-318
+  2.57408e-321 1.95575e-109 2.19417e-318 2.21875e-318 2.24335e-318 2.26821e-318
+  2.15734e-318 2.18179e-318 2.19663e-318 2.22115e-318 2.24576e-318 2.27083e-318
+  
+==
+  Frame(4x6, [col_0:double, col_1:double, col_2:double, col_3:double, col_4:
+  double, col_5:double])
+  2 4 0 0 2 6
+  0 2 0 4 0 6
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (mul) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:133
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  2008463 2012520 2016484 2020636 2024705 2028708
+  0 0 0 0 0 0
+  2008961 2013035 2017038 2021159 2025214 2029179
+  0 0 0 0 0 0
+  
+==
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 2893115 2897159 2901226 2905336 2909248
+  0 0 0 0 0 0
+  0 2893614 2897671 2901724 2905830 2909741
+  0 0 0 0 0 0
+  
+==
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  0 3778493 3782492 3786551 3790393 3794325
+  0 0 0 0 0 0
+  0 3778996 3782984 3787063 3790877 3794800
+  0 0 0 0 0 0
+  
+==
+  Frame(4x6, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t, col_3:uint32_t,
+  col_4:uint32_t, col_5:uint32_t])
+  2 4 0 0 2 6
+  0 2 0 4 0 6
+  0 0 0 0 0 0
+  0 0 0 0 0 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (div) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:174
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  2.44069e-317 2.44269e-317 2.44468e-317
+  2.44092e-317 2.44293e-317 2.44494e-317
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 1.44567e+10 8.31926e+12
+  0 4.35245e+14 2.38563
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  1 2 4
+  6 8 9
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  4.65221e-310 4.23588e+11 1.46684e+10
+  0 9.622e+08 5.43904e+13
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  1 2 4
+  6 8 9
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (div) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:174
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1117355181 1100711350 1122424784
+  1098967513 1118950873 1119264152
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 1119159215 1099185719
+  0 1117184553 1117399378
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1 2 4
+  6 8 9
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  3209011568 1104072813 1115594924
+  21923 1102955327 1107707345
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1 2 4
+  6 8 9
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (eq) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:206
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  3.99734e+07 5.66473e+13 6.80663e+10
+  1.65889e+14 5.9874e+12 6161.11
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 1 0
+  1 0 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (eq) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:206
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 1 0
+  1 0 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (neq) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:229
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  1 0 1
+  0 1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (neq) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:229
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1 0 1
+  0 1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (lt) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:252
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  1 0 0
+  0 0 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (lt) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:252
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1 0 0
+  0 0 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (le) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:275
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  1 1 0
+  1 0 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (le) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:275
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1 1 0
+  1 0 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (gt) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:298
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 1
+  0 1 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (gt) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:298
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 1
+  0 1 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (ge) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:321
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 1 1
+  1 1 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (ge) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:321
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 1 1
+  1 1 0
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (min) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:348
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  1 2 2
+  2 2 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (min) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:348
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  1 2 2
+  2 2 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (max) - DenseMatrix<double>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:371
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:double, col_1:double, col_2:double])
+  2 2 3
+  2 3 2
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (max) - DenseMatrix<uint32_t>
+  frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:371
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  0 0 0
+  0 0 0
+  
+==
+  Frame(2x3, [col_0:uint32_t, col_1:uint32_t, col_2:uint32_t])
+  2 2 3
+  2 3 2
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (and) - DenseMatrix<double>
+  scalar=1, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:420
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (and) - DenseMatrix<double>
+  scalar=2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:429
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (and) - DenseMatrix<double>
+  scalar=-2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:438
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (and) - DenseMatrix<uint32_t>
+  scalar=1, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:420
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (and) - DenseMatrix<uint32_t>
+  scalar=2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:429
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (and) - DenseMatrix<uint32_t>
+  scalar=-2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:438
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<double>
+  scalar=0, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:474
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<double>
+  scalar=1, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:483
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  1 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<double>
+  scalar=2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:492
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  1 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<double>
+  scalar=-2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:501
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:double, col_1:double])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:double, col_1:double])
+  1 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<uint32_t>
+  scalar=0, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:474
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 2373303296
+  0 32756
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<uint32_t>
+  scalar=1, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:483
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  1 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<uint32_t>
+  scalar=2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:492
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  1 1
+  1 1
+
+-------------------------------------------------------------------------------
+EwBinaryObjSca (or) - DenseMatrix<uint32_t>
+  scalar=-2, frame
+-------------------------------------------------------------------------------
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:501
+...............................................................................
+
+/home/niklas/daphne/test/runtime/local/kernels/EwBinaryObjScaTest.cpp:51: FAILED:
+  CHECK( *res == *exp )
+with expansion:
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  0 0
+  0 0
+  
+==
+  Frame(2x2, [col_0:uint32_t, col_1:uint32_t])
+  1 1
+  1 1
+
+===============================================================================
+test cases:    882 |    837 passed | 45 failed
+assertions: 306048 | 305956 passed | 92 failed
+

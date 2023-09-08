@@ -28,7 +28,7 @@ const std::string dirPath = "test/api/cli/functions/";
     TEST_CASE(name, TAG_FUNCTIONS) { \
         for(unsigned i = 1; i <= count; i++) { \
             DYNAMIC_SECTION(name "_" << i << ".daphne") { \
-                compareDaphneToSomeRefSimple(dirPath, name, i); \
+                compareDaphneToSomeRefSimple(dirPath, name, i, "--update-in-place"); \
             } \
         } \
     }
@@ -40,7 +40,7 @@ const std::string dirPath = "test/api/cli/functions/";
                 std::stringstream out; \
                 std::stringstream err; \
                 std::string filePath = dirPath + (name) + "_" + std::to_string(i) + ".daphne"; \
-                int status = runDaphne(out, err, filePath.c_str()); \
+                int status = runDaphne(out, err, filePath.c_str(), "--update-in-place"); \
                 REQUIRE(status == (error_status)); \
             } \
         } \

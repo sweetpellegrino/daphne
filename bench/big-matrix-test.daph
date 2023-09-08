@@ -1,6 +1,7 @@
 X = readMatrix("X.csv");
 Y = readMatrix("Y.csv");
 
-print("test1");
+t1 = now();
 Z = sqrt(X + Y);
-print("test2");
+t2 = now();
+print(as.f64(t2 - t1) / 10^9);

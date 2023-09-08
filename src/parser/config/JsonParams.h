@@ -53,6 +53,9 @@ struct DaphneConfigJsonParams {
     inline static const std::string LIBRARY_PATHS = "library_paths";
     inline static const std::string DAPHNEDSL_IMPORT_PATHS = "daphnedsl_import_paths";
     inline static const std::string LOGGING = "logging";
+
+    inline static const std::string UPDATE_IN_PLACE = "enable_update_in_place";
+    inline static const std::string EXPLAIN_UPDATE_IN_PLACE = "explain_update_in_place";
     
     inline static const std::string JSON_PARAMS[] = {
             USE_CUDA_,
@@ -74,6 +77,7 @@ struct DaphneConfigJsonParams {
             EXPLAIN_TYPE_ADAPTATION,
             EXPLAIN_VECTORIZED,
             EXPLAIN_OBJ_REF_MGNT,
+            EXPLAIN_UPDATE_IN_PLACE,
             TASK_PARTITIONING_SCHEME,
             NUMBER_OF_THREADS,
             MINIMUM_TASK_SIZE,
@@ -81,7 +85,8 @@ struct DaphneConfigJsonParams {
             LIB_DIR,
             LIBRARY_PATHS,
             DAPHNEDSL_IMPORT_PATHS,
-            LOGGING
+            LOGGING,
+            UPDATE_IN_PLACE,
     };
 };
 

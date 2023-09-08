@@ -17,6 +17,7 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_EWBINARYOBJSCA_H
 #define SRC_RUNTIME_LOCAL_KERNELS_EWBINARYOBJSCA_H
 
+#include <iostream>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -63,10 +64,14 @@ struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
         
-        res = InPlaceUtils::getResultsPointer(lhs, hasFutureUseLhs);
-
-        if(res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+         if(res == nullptr) {
+            if(InPlaceUtils::isInPlaceable(lhs, hasFutureUseLhs)) {
+                res = lhs;
+                res->increaseRefCounter();
+            }
+            else
+                res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+        }
         
         const VT * valuesLhs = lhs->getValues();
         VT * valuesRes = res->getValues();
@@ -115,6 +120,10 @@ template<typename VT>
 void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, Frame * lhs, VT rhs, size_t c, bool hasFutureUseLhs, DCTX(ctx)) {
     auto * col_res = res->getColumn<VT>(c);
     auto * col_lhs = lhs->getColumn<VT>(c);
+
+    if(InPlaceUtils::isInPlaceable(col_lhs, hasFutureUseLhs))
+        col_res = col_lhs;
+
     ewBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT>(opCode, col_res, col_lhs, rhs, hasFutureUseLhs, ctx);
 }
 
@@ -126,7 +135,7 @@ struct EwBinaryObjSca<Frame, Frame, VT> {
 
         if(res == nullptr)
             res = DataObjectFactory::create<Frame>(numRows, numCols, lhs->getSchema(), lhs->getLabels(), false);
-        
+
         for (size_t c = 0; c < numCols; c++) {
             switch(lhs->getColumnType(c)) {
                 // For all value types:

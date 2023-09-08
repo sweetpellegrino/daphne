@@ -28,7 +28,7 @@ const std::string dirPath = "test/api/cli/functions/";
     TEST_CASE(name, TAG_FUNCTIONS) { \
         for(unsigned i = 1; i <= count; i++) { \
             DYNAMIC_SECTION(name "_" << i << ".daphne") { \
-                compareDaphneToRefSimple(dirPath, name, i); \
+                compareDaphneToRefSimple(dirPath, name, i, "--update-in-place"); \
             } \
         } \
     }

@@ -19,10 +19,13 @@
 #define SRC_RUNTIME_LOCAL_UTILS_RUNTIMEUTILS_H
 
 #include "runtime/local/datastructures/DenseMatrix.h"
+#include "runtime/local/datastructures/Frame.h"
 #include <ir/daphneir/Daphne.h>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/IR/Value.h>
+
+#include <optional>
 
 #include <stdexcept>
 #include <string>
@@ -32,41 +35,72 @@
 class InPlaceUtils {
 public:
 
-    //correct type?
+    /**
+    * @brief Checks if two matrices are of the same type and have the same dimensions.
+    *
+    * @param arg1 Pointer to a matrix.
+    * @param arg2 Pointer to a matrix.
+    * @return Returns true if the matrices are of the same type and have the same dimensions.
+    */
     template<typename VTLhs, typename VTRhs>
-    static bool isValidType(const DenseMatrix<VTLhs> *res, const DenseMatrix<VTRhs> *arg) {
-        if(res->getNumCols() == arg->getNumCols() &&
-           res->getNumRows() == arg->getNumRows() &&
-           std::is_same_v<VTLhs, VTRhs>
-        ) {
-            return true;
+    static bool isValidType(const DenseMatrix<VTLhs>* arg1, const DenseMatrix<VTRhs>* arg2) {
+        if(arg1->getNumCols() == arg2->getNumCols() && arg1->getNumRows() == arg2->getNumRows()) {
+            return std::is_same_v<VTLhs, VTRhs>; 
         }
         return false;
     }
 
-    template<typename VTArg, typename... Args>
-    static DenseMatrix<VTArg>* getResultsPointer(DenseMatrix<VTArg> *arg, bool hasFutureUseArg, Args... args) {
-        if (!hasFutureUseArg) {
-            if (arg->getRefCounter() == 1 && arg->getValuesUseCount() == 1) {
-                arg->increaseRefCounter();
-                return arg;
-            }
+    /**
+    * @brief Checks if two matrices are of the same type and have atleast complementary dimensions.
+    *
+    * @param arg1 Pointer to a matrix.
+    * @param arg2 Pointer to a matrix.
+    * @return Returns true if the matrices are of the same type and complementary dimensions. 
+    */
+    template<typename VTLhs, typename VTRhs>
+    static bool isValidTypeWeak(const DenseMatrix<VTLhs>* arg1, const DenseMatrix<VTRhs>* arg2) {
+        if (arg1->getNumCols() == arg2->getNumRows() && arg1->getNumRows() == arg2->getNumCols()) {
+            return std::is_same_v<VTLhs, VTRhs>;
         }
+        return false;
+    }
+
+    /**
+    * @brief From one or multiple operands, the function decides whether it can and which operand is used as the result pointer.
+    *
+    * @param arg Pointer to a matrix.
+    * @param hasFutureUseArg Denotes if the compiler has determined that the result of the operation is used in a future operation.
+    * @param args Additional matrices and hasFutureUse
+    * @return Returns the first operand that can be used as the result pointer.
+    */
+    template<typename VTArg, typename... Args>
+    static DenseMatrix<VTArg>* selectInPlaceableOperand(DenseMatrix<VTArg> *arg, bool hasFutureUseArg, Args... args) {
+        if (InPlaceUtils::isInPlaceable(arg, hasFutureUseArg))
+            return arg;
 
         if constexpr (sizeof...(Args) == 0) {
             return nullptr;
         } else {
-            return getResultsPointer(args...);
+            return selectInPlaceableOperand(args...);
         }
     }
 
+    /**
+    * @brief Checks if a matrix can be used as the result pointer.
+    *
+    * @param arg Pointer to a matrix.
+    * @param hasFutureUseArg Denotes if the compiler has determined that the result of the operation is used in a future operation.
+    * @return Returns true if the matrix can be used as the result pointer.
+    */
+    template<typename VTArg>
+    static bool isInPlaceable(DenseMatrix<VTArg> *arg, bool hasFutureUseArg) {
+        if (!hasFutureUseArg) {
+            if (arg->getRefCounter() == 1 && arg->getValuesUseCount() == 1) {
+                return true;
+            }
+        }
+        return false;
+    }
 };
-
-//was muss berücksichtigt werden?
-//1. Operanden und Ergebnis müssen den gleichen Typ haben
-//1.1 darf nach gewissen Regeln trotzdem erlaubt sein, z.b. transpose
-//2. Operanden dürfen nicht nach dem aktuellen Op verwendet werden
-
-
 
 #endif //SRC_RUNTIME_LOCAL_UTILS_RUNTIMEUTILS_H

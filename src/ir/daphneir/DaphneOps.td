@@ -176,17 +176,11 @@ class Daphne_EwUnaryOp<string name, Type scalarType, list<Trait> traits = []> : 
     DataTypeFromFirstArg,
     ShapeFromArg,
     CastArgsToResType,
-    //InPlaceOperands<[0]>,
-    InPlaceOpInterface
-    //InPlaceOpInterface
+    DeclareOpInterfaceMethods<InPlaceOpInterface>
+
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$arg);
     let results = (outs AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$res);
-    
-    let extraClassDeclaration = [{
-    // InPlaceOpInterface:
-    std::vector<int> getInPlaceOperands() { return {0}; }
-    }];
 }
 
 // ----------------------------------------------------------------------------
@@ -637,7 +631,8 @@ def Daphne_SliceColOp : Daphne_Op<"sliceCol", [
 
 def Daphne_InsertRowOp : Daphne_Op<"insertRow", [
     TypeFromFirstArg, // this is debatable
-    ShapeFromArg
+    ShapeFromArg,
+//  DeclareOpInterfaceMethods<InPlaceOpInterface>
 ]> {
     let arguments = (ins MatrixOrFrame:$arg, MatrixOrFrame:$ins, Size:$rowLowerIncl, Size:$rowUpperExcl);
     let results = (outs MatrixOrFrame:$res);
@@ -645,7 +640,8 @@ def Daphne_InsertRowOp : Daphne_Op<"insertRow", [
 
 def Daphne_InsertColOp : Daphne_Op<"insertCol", [
     TypeFromFirstArg, // this is debatable
-    ShapeFromArg
+    ShapeFromArg,
+//  DeclareOpInterfaceMethods<InPlaceOpInterface>
 ]> {
     let arguments = (ins MatrixOrFrame:$arg, MatrixOrFrame:$ins, Size:$colLowerIncl, Size:$colUpperExcl);
     let results = (outs MatrixOrFrame:$res);

@@ -373,6 +373,7 @@ namespace
                 auto inPlaceOperands = inPlaceOp.getInPlaceOperands();
                 auto inPlaceFutureUse = op->getAttrOfType<ArrayAttr>("inPlaceFutureUse");
 
+                //Not needed anymore
                 auto sTRUE = static_cast<bool>(true);
                 auto sFALSE = static_cast<bool>(false);
 

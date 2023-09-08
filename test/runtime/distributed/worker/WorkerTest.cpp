@@ -141,7 +141,7 @@ TEMPLATE_PRODUCT_TEST_CASE("Simple distributed worker functionality test", TAG_D
                 matOrigTimes2,
                 matOrig,
                 matOrig,
-                true,
+                true, 
                 true,
                 nullptr);
 

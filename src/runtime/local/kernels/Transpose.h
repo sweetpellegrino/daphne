@@ -31,7 +31,7 @@
 
 template<class DTRes, class DTArg>
 struct Transpose {
-    static void apply(DTRes *& res, DTArg * arg, bool hasFutureUseArg, DCTX(ctx)) = delete;
+    static void apply(DTRes *& res, DTArg * arg, bool hasFutureUseArg, DCTX(ctx));
 };
 
 // ****************************************************************************
@@ -60,15 +60,14 @@ struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
         // skip data movement for vectors
         // FIXME: The check (numCols == arg->getRowSkip()) is a hack to check if the input arg is only a "view"
         //        on a larger matrix.
+
+        hasFutureUseArg = true;
+
         if ((numRows == 1 || numCols == 1) && (numCols == arg->getRowSkip())) {
             res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, arg);
         }
         else
         {
- 
-            //std::cout << hasFutureUseArg << std::endl;
-            //res = InPlaceUtils::getResultsPointer(arg, hasFutureUseArg);
-
             if (res == nullptr)
                 res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, false);
 

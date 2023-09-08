@@ -44,8 +44,7 @@ void funMul(DT*** outputs, Structure** inputs, DCTX(ctx)) {
         *outputs[0],
         reinterpret_cast<DT*>(inputs[0]),
         reinterpret_cast<DT*>(inputs[1]),
-        true,
-        true,
+        true, true,
         ctx);
 }
 

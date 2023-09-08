@@ -169,9 +169,6 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         pm.addPass(mlir::createCanonicalizerPass());
         pm.addPass(mlir::createCSEPass());
 
-        llvm::outs() << "enable_update_in_place: ";
-        llvm::outs() << userConfig_.enable_update_in_place << "\n";
-
         if(userConfig_.enable_update_in_place)
             pm.addPass(mlir::daphne::createFlagUpdateInPlacePass());
         if (userConfig_.explain_update_in_place)
