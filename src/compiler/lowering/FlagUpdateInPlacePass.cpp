@@ -32,12 +32,13 @@
 #include <mlir/Pass/Pass.h>
 
 #include "ir/daphneir/DaphneUpdateInPlaceOpInterface.h"
+#include "runtime/local/context/DaphneContext.h"
+
+#include <mlir/Dialect/SCF/IR/SCF.h>
 
 using namespace mlir;
 
 #include <iostream>
-
-
 
 /**
  * @brief XXXXXXXXXXX
@@ -47,8 +48,62 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
 
     //Check if operand is used after the current operation op
     mlir::Value arg = op->getOperand(operand_index);
+
     for (auto *userOp : arg.getUsers()) {
-        if (op->isBeforeInBlock(userOp)) {
+        llvm::outs() << "##############\n op:";
+        op->print(llvm::outs());
+        llvm::outs() << "\n op->parentOp:";
+        op->getParentOp()->print(llvm::outs());
+        llvm::outs() << "\n Arg:";
+        arg.print(llvm::outs());
+        llvm::outs() << "\n Userop:";
+        userOp->print(llvm::outs());
+        llvm::outs() << "\n op block:";
+
+        //userOp->getParentOp()->print(llvm::outs());
+
+        op->getBlock()->print(llvm::outs());
+        llvm::outs() << "\n userop block";
+        userOp->getBlock()->print(llvm::outs());
+        llvm::outs() << "\n arg defining op:";
+        //arg.getDefiningOp()->print(llvm::outs());
+        llvm::outs() << "\n";
+
+        //e.g. it is defined by a block
+        //is a block argument
+        //TODO: They are potentially cases, where the block argument could be used in place 
+        if (arg.getDefiningOp() == nullptr)
+            return true;
+
+        // If there is a loop, we assume that the argument is used in the next iteration.
+        // Therefore, it is not safe to use it in place.
+        if (isa<scf::WhileOp, scf::ForOp>(op->getParentOp()) &&
+            arg.getDefiningOp()->getParentOp() != op->getParentOp()) {
+            return true;
+        }
+
+        //as there is the posiblity that the op->getParentOp is scf.if, and the parentOp of that a scf.for,
+        //we need to check whether somewhere the parentOp is a scf.for
+        mlir::Operation *parentOp = op->getParentOp();
+        while (parentOp != nullptr) {
+            if (isa<scf::ForOp, scf::WhileOp>(parentOp) &&
+                arg.getDefiningOp()->getParentOp() != parentOp) {
+                return true;
+            }
+            parentOp = parentOp->getParentOp();
+        }
+
+
+        // Check if userOp and op have the same parent block. 
+        // This is especially important for scf.if 
+        if (op->getBlock() == userOp->getBlock()) {
+
+            //check if userOp is after op
+            if (op->isBeforeInBlock(userOp)) {
+                return true;
+            }
+        }
+        else {
             return true;
         }
     }

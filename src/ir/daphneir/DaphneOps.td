@@ -234,8 +234,8 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
     ShapeEwBinary,
     CastArgsToResType,
     DeclareOpInterfaceMethods<InPlaceOpInterface>
-    
 ])> {
+
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$lhs, AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$rhs);
     let results = (outs AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$res);
 

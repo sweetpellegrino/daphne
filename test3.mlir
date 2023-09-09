@@ -1,4 +1,4 @@
-IR after update in place flagging:
+%23 = "daphne.ewPow"(%arg2, %arg3) : (!daphne.Matrix<?x5xf64>, f64) -> !daphne.Matrix<?x?xf64>%25 = "daphne.transpose"(%24) : (!daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%24 = "daphne.ewMul"(%23, %arg6) : (!daphne.Matrix<?x?xf64>, f64) -> !daphne.Matrix<?x?xf64>%25 = "daphne.ewAdd"(%24, %arg7) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x5xf64>) -> !daphne.Matrix<?x?xf64>%25 = "daphne.ewAdd"(%24, %arg7) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x5xf64>) -> !daphne.Matrix<?x?xf64>%27 = "daphne.ewLe"(%25, %26) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%27 = "daphne.ewLe"(%25, %26) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%27 = "daphne.ewLe"(%25, %26) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%29 = "daphne.ewDiv"(%27, %28) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%29 = "daphne.ewDiv"(%27, %28) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%29 = "daphne.ewDiv"(%27, %28) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%30 = "daphne.transpose"(%29) : (!daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%30 = "daphne.transpose"(%29) : (!daphne.Matrix<?x?xf64>) -> !daphne.Matrix<?x?xf64>%23 = "daphne.transpose"(%arg2) : (!daphne.Matrix<?x5xf64>) -> !daphne.Matrix<?x?xf64>%24 = "daphne.ewDiv"(%23, %arg5) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x1xf64>) -> !daphne.Matrix<?x?xf64>%24 = "daphne.ewDiv"(%23, %arg5) : (!daphne.Matrix<?x?xf64>, !daphne.Matrix<?x1xf64>) -> !daphne.Matrix<?x?xf64>IR after update in place flagging:
 module {
   func.func @main() {
     %0 = "daphne.constant"() {value = -1 : si64} : () -> si64
@@ -12,7 +12,7 @@ module {
     %8 = "daphne.constant"() {value = 1 : index} : () -> index
     %9 = "daphne.constant"() {value = -2.000000e+00 : f64} : () -> f64
     %10 = "daphne.constant"() {value = 2.000000e+00 : f64} : () -> f64
-    %11 = "daphne.constant"() {value = 140724697947192 : ui64} : () -> ui64
+    %11 = "daphne.constant"() {value = 140723330350072 : ui64} : () -> ui64
     %12 = "daphne.createDaphneContext"(%11) : (ui64) -> !daphne.DaphneContext
     %13 = "daphne.randMatrix"(%4, %4, %1, %5, %5, %0) : (index, index, f64, f64, f64, si64) -> !daphne.Matrix<5x5xf64:sp[1.000000e+00]>
     %14 = "daphne.randMatrix"(%4, %4, %1, %5, %5, %0) : (index, index, f64, f64, f64, si64) -> !daphne.Matrix<5x5xf64:sp[1.000000e+00]>
@@ -76,7 +76,7 @@ module {
     %8 = "daphne.constant"() {value = 1 : index} : () -> index
     %9 = "daphne.constant"() {value = -2.000000e+00 : f64} : () -> f64
     %10 = "daphne.constant"() {value = 2.000000e+00 : f64} : () -> f64
-    %11 = "daphne.constant"() {value = 140724697947192 : ui64} : () -> ui64
+    %11 = "daphne.constant"() {value = 140723330350072 : ui64} : () -> ui64
     %12 = "daphne.call_kernel"(%11) {callee = "_createDaphneContext__DaphneContext__uint64_t"} : (ui64) -> !daphne.DaphneContext
     %13 = "daphne.call_kernel"(%4, %4, %1, %5, %5, %0, %12) {callee = "_randMatrix__DenseMatrix_double__size_t__size_t__double__double__double__int64_t"} : (index, index, f64, f64, f64, si64, !daphne.DaphneContext) -> !daphne.Matrix<5x5xf64:sp[1.000000e+00]>
     %14 = "daphne.call_kernel"(%4, %4, %1, %5, %5, %0, %12) {callee = "_randMatrix__DenseMatrix_double__size_t__size_t__double__double__double__int64_t"} : (index, index, f64, f64, f64, si64, !daphne.DaphneContext) -> !daphne.Matrix<5x5xf64:sp[1.000000e+00]>
@@ -415,7 +415,7 @@ module {
     %8 = llvm.mlir.constant(1 : index) : i64
     %9 = llvm.mlir.constant(-2.000000e+00 : f64) : f64
     %10 = llvm.mlir.constant(2.000000e+00 : f64) : f64
-    %11 = llvm.mlir.constant(140724697947192 : ui64) : i64
+    %11 = llvm.mlir.constant(140723330350072 : ui64) : i64
     %12 = llvm.mlir.constant(1 : i64) : i64
     %13 = llvm.alloca %12 x !llvm.ptr<i1> : (i64) -> !llvm.ptr<ptr<i1>>
     %14 = llvm.mlir.null : !llvm.ptr<i1>

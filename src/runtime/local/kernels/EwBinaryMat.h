@@ -30,6 +30,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <spdlog/spdlog.h>
 
 // ****************************************************************************
 // Struct for partial template specialization
@@ -71,6 +72,7 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
             // Check if we can utilize the allocated memory of the lhs matrix for the result.
             // We assume that the result has the same type as lhs (no need to check isValidType).
             if(InPlaceUtils::isInPlaceable(lhs, hasFutureUseLhs)) {
+                spdlog::debug("EwBinaryMat(Dense) - lhs is in-placeable");
                 res = lhs;
                 res->increaseRefCounter();
             }
@@ -78,12 +80,15 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
             // Here we need to check if rhs has a valid type, as it could differ from the result type.
             // E.g. lhs is rectangular and rhs is a column/row vector, the result will be rectangular (rhs cannot store the result).
             else if(InPlaceUtils::isInPlaceable(rhs, hasFutureUseRhs) && InPlaceUtils::isValidType(lhs, rhs)) {
+                spdlog::debug("EwBinaryMat(Dense) - rhs is in-placeable");
                 res = rhs;
                 res->increaseRefCounter();
             }
             // Otherwise we create a new matrix based on the dimensions of the lhs matrix.
-            else
+            else {
                 res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
+                spdlog::debug("EwBinaryMat(Dense) - create new matrix for result");
+            }
         }
 
         const VTlhs * valuesLhs = lhs->getValues();
