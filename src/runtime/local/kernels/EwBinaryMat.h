@@ -25,7 +25,9 @@
 #include <runtime/local/datastructures/Matrix.h>
 #include <runtime/local/kernels/BinaryOpCode.h>
 #include <runtime/local/kernels/EwBinarySca.h>
+#include <util/DaphneLogger.h>
 
+#include "InPlaceUtils.h"
 #include "runtime/local/kernels/InPlaceUtils.h"
 
 #include <cassert>
@@ -79,15 +81,21 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
             // Check if we can utilize the allocated memory of the rhs matrix for the result.
             // Here we need to check if rhs has a valid type, as it could differ from the result type.
             // E.g. lhs is rectangular and rhs is a column/row vector, the result will be rectangular (rhs cannot store the result).
-            else if(InPlaceUtils::isInPlaceable(rhs, hasFutureUseRhs) && InPlaceUtils::isValidType(lhs, rhs)) {
-                spdlog::debug("EwBinaryMat(Dense) - rhs is in-placeable");
-                res = rhs;
-                res->increaseRefCounter();
+            else if(InPlaceUtils::isInPlaceable(rhs, hasFutureUseRhs) && InPlaceUtils::isValidTypeWeak(lhs, rhs)) {
+                if(InPlaceUtils::isValidType(lhs, rhs)) {
+                    spdlog::debug("EwBinaryMat(Dense) - rhs is in-placeable");
+                    res = rhs;
+                    res->increaseRefCounter();
+                }
+                else {
+                    spdlog::debug("EwBinaryMat(Dense) - data buffer of rhs is in-placeable");
+                    res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, rhs->getValues());
+                }
             }
             // Otherwise we create a new matrix based on the dimensions of the lhs matrix.
             else {
-                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
                 spdlog::debug("EwBinaryMat(Dense) - create new matrix for result");
+                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
             }
         }
 

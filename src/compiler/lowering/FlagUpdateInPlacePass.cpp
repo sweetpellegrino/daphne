@@ -41,8 +41,12 @@ using namespace mlir;
 #include <iostream>
 
 /**
- * @brief XXXXXXXXXXX
- */
+* @brief Check if an operand of an operation is used after the current operation.
+*
+* @param op The operation that is currently checked.
+* @param operand_index The index of the operand that is checked.
+* @return true if the operand is used after the current operation, false otherwise.
+*/
 
 bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
 
@@ -69,9 +73,8 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
         //arg.getDefiningOp()->print(llvm::outs());
         llvm::outs() << "\n";
 
-        //e.g. it is defined by a block
-        //is a block argument
-        //TODO: They are potentially cases, where the block argument could be used in place 
+        //getDefiningOp is nullptr if arg is a block argument
+        //TODO: Check for potential use cases, where the block argument could be used in place 
         if (arg.getDefiningOp() == nullptr)
             return true;
 
@@ -82,8 +85,8 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
             return true;
         }
 
-        //as there is the posiblity that the op->getParentOp is scf.if, and the parentOp of that a scf.for,
-        //we need to check whether somewhere the parentOp is a scf.for
+        // as there is the posiblity that the op->getParentOp is scf.if, and the parentOp of that a scf.for,
+        // we need to check whether somewhere the parentOp is a scf.for
         mlir::Operation *parentOp = op->getParentOp();
         while (parentOp != nullptr) {
             if (isa<scf::ForOp, scf::WhileOp>(parentOp) &&
@@ -92,7 +95,6 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
             }
             parentOp = parentOp->getParentOp();
         }
-
 
         // Check if userOp and op have the same parent block. 
         // This is especially important for scf.if 
@@ -103,13 +105,21 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
                 return true;
             }
         }
+        // Default case: userOp is in a different block than op
         else {
             return true;
         }
     }
 
     return false;
- }
+}
+
+/**
+* @brief Check if an operand of an operation is a valid type (matrix or frame).
+*
+* @param arg The operand that is checked.
+* @return true if the operand is a valid type, false otherwise.
+*/
 
 template<typename T>
  bool isValidType(T arg) {
@@ -126,35 +136,32 @@ void FlagUpdateInPlacePass::runOnOperation() {
 
     auto module = getOperation();
 
-    //llvm::errs() << "\033[1;31m";
-    //llvm::errs() << "FlagUpdateInPlacePass\n";
-
-    // Traverse the operations in the module, if InPlaceable.
+    // Traverse the operations in the module
     module.walk([&](mlir::Operation *op) {
 
+        // Only apply to operations that implement the DaphneUpdateInPlaceOpInterface
         if (auto inPlaceOp = llvm::dyn_cast<daphne::InPlaceable>(op)) {
         
-            //Fetches the operands that can be used in place from the InPlaceable op
+            // Fetches the operands that can be used in place from the InPlaceable op
             auto inPlaceOperands = inPlaceOp.getInPlaceOperands();
             BoolAttr inPlaceFutureUse[inPlaceOperands.size()];
 
             for (auto inPlaceOperand : inPlaceOperands) {
-                //TODO: Checking if the operand is valid type (matrix & frame) really necessary? We need to do it also in RewriteToCallKernelOpPass.cpp
+                // TODO: Checking if the operand is valid type (matrix & frame) really necessary? 
+                // We need to do it also in RewriteToCallKernelOpPass.cpp
                 if (!isValidType(op->getOperand(inPlaceOperand)) || hasAnyUseAfterCurrentOp(op, inPlaceOperand))
                     inPlaceFutureUse[inPlaceOperand] = BoolAttr::get(op->getContext(), true);
                 else
                     inPlaceFutureUse[inPlaceOperand] = BoolAttr::get(op->getContext(), false);
             }
 
-            //Add inPlaceFutureUse to the op as an attribute
-            //InPlaceFutureUse is an array of bools, one for each operand e.g. [false, true]
+            // inPlaceFutureUse is an array of bools, one for each operand e.g. [false, true]
             llvm::MutableArrayRef<mlir::Attribute> inPlaceFutureUseArray(inPlaceFutureUse, inPlaceOperands.size());
             op->setAttr("inPlaceFutureUse", mlir::ArrayAttr::get(op->getContext(), inPlaceFutureUseArray));
 
         }
 
     });
-    //llvm::errs() << "\033[0m";
 }
 
 std::unique_ptr<Pass> daphne::createFlagUpdateInPlacePass() {

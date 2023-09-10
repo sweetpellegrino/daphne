@@ -59,7 +59,7 @@ public:
     */
     template<typename VTLhs, typename VTRhs>
     static bool isValidTypeWeak(const DenseMatrix<VTLhs>* arg1, const DenseMatrix<VTRhs>* arg2) {
-        if (arg1->getNumCols() == arg2->getNumRows() && arg1->getNumRows() == arg2->getNumCols()) {
+        if (arg1->getNumCols() * arg1->getNumRows() == arg2->getNumRows() * arg2->getNumCols()) {
             return std::is_same_v<VTLhs, VTRhs>;
         }
         return false;
@@ -86,7 +86,10 @@ public:
     }
 
     /**
-    * @brief Checks if a matrix can be used as the result pointer.
+    * @brief Checks if a matrix can be used as the result pointer. 
+    *        TODO: As currently the MetaDataObject needs stabilisation and 
+    *              CSRMatrix and DenseMatrices are storing the informatin in a different way, 
+    *              we only look at the values (DenseMatrix) use count of the underlying shared_ptr. 
     *
     * @param arg Pointer to a matrix.
     * @param hasFutureUseArg Denotes if the compiler has determined that the result of the operation is used in a future operation.

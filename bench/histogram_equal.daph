@@ -1,0 +1,7 @@
+//create histogram equalization for a matrix, that represents an image
+
+X = readMatrix("X.csv");
+
+//algorithm
+//create histogram
+hist = a
