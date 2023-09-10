@@ -194,19 +194,27 @@ API: To enable the use of pre-allocated memory from the function caller, we need
 
 ```cpp
 if(res == nullptr) {
+	// Check if we can utilize the allocated memory of the lhs matrix for the result.
+        // We assume that the result has the same type as lhs (no need to check isValidType).
 	if(InPlaceUtils::isInPlaceable(lhs, hasFutureUseLhs)) {
         	res = lhs;
                 res->increaseRefCounter();
     	}
+	// Check if we can utilize the allocated memory of the rhs matrix for the result.
+        // Here we need to check if rhs has a valid type, as it could differ from the result type.
+        // E.g. lhs is rectangular and rhs is a column/row vector, the result will be rectangular (rhs cannot store the result).
        	else if(InPlaceUtils::isInPlaceable(rhs, hasFutureUseRhs) && InPlaceUtils::isValidTypeWeak(lhs, rhs)) {
+		// If the rhs has the same dimensions as the lhs, we can reuse the rhs matrix object.
             	if(InPlaceUtils::isValidType(lhs, rhs)) {
                     res = rhs;
                     res->increaseRefCounter();
                 }
+		// As it atleast weak, we can reuse the underlying data buffer of rhs.
                 else {
                     res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, rhs->getValues());
                 }
             }
+	// Otherwise we create a new matrix based on the dimensions of the lhs matrix.
       	else {
 		res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
      	}

@@ -21,26 +21,52 @@
 #include <catch.hpp>
 
 #include <string>
+#include <sstream>
+#include <regex>
 
-const std::string dirPath = "test/inplace/daphne/";
+const std::string dirPath = "test/inplace/ref/";
 
-#define MAKE_TEST_CASE(name, suffix, param) \
+template<typename... Args>
+void compareDaphneToRegexErrRef(const std::string &refFilePath, const std::string & scriptFilePath, const std::string & regex, Args ... args) {
+
+    std::string ref = readTextFile(refFilePath);
+    
+    std::stringstream out;
+    std::stringstream err;
+    int status = runDaphne(out, err, args..., scriptFilePath.c_str());
+
+    std::regex pattern(regex);
+    
+    CHECK(status == StatusCode::SUCCESS);
+    CHECK(out.str() == ref);
+    CHECK(std::regex_search(err.str(), pattern));
+}
+
+#define MAKE_TEST_CASE_REGEX(name, suffix, regex, param1, param2) \
     TEST_CASE(std::string(name)+std::string(suffix), TAG_INPLACE) { \
         std::string prefix(dirPath);\
         prefix += (name);\
-        compareDaphneToRef(prefix + ".txt", prefix + ".daphne", (param)); \
+        compareDaphneToRegexErrRef(prefix + ".txt", prefix + ".daphne", regex, (param1), (param2)); \
     }
 
-MAKE_TEST_CASE("bfu-matrix-test", "", "--update-in-place")
-MAKE_TEST_CASE("lfu-matrix-test", "", "--update-in-place")
-MAKE_TEST_CASE("rfu-matrix-test", "", "--update-in-place")
-MAKE_TEST_CASE("nfu-matrix-test", "", "--update-in-place")
 
-//ToDo: make these tests work
-//#ifdef USE_CUDA
-//MAKE_TEST_CASE("runMatMult", "CUDA", "--vec --cuda")
-//MAKE_TEST_CASE("runEwBinary", "CUDA", "--vec --cuda")
-//MAKE_TEST_CASE("runRowAgg", "CUDA", "--vec --cuda")
-//MAKE_TEST_CASE("runColAgg", "CUDA", "--vec --cuda")
-//MAKE_TEST_CASE("runOther", "CUDA", "--vec --cuda")
-//#endif
+/*
+* Test cases for the update-in-place feature.
+* Checks the output of the compiler to see if the update-in-place flag is set correctly.
+*/
+
+MAKE_TEST_CASE_REGEX("bfu-matrix-test", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, true\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("lfu-matrix-test", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, false\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("rfu-matrix-test", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[false, true\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("nfu-matrix-test", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[false, false\\]", "--update-in-place", "--explain=update_in_place")
+
+MAKE_TEST_CASE_REGEX("elseif_1", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, false\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("elseif_2", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, false\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("elseif_3", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[false, true\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("for_1", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, true\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("for_2", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, true\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("for_if", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, false\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("if_1", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[false, false\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("if_2", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[false, true\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("if_3", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, false\\]", "--update-in-place", "--explain=update_in_place")
+MAKE_TEST_CASE_REGEX("if_4", "", "daphne\\.ewAdd.*inPlaceFutureUse\\s*=\\s*\\[true, false\\]", "--update-in-place", "--explain=update_in_place")

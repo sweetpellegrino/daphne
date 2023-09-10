@@ -82,11 +82,13 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
             // Here we need to check if rhs has a valid type, as it could differ from the result type.
             // E.g. lhs is rectangular and rhs is a column/row vector, the result will be rectangular (rhs cannot store the result).
             else if(InPlaceUtils::isInPlaceable(rhs, hasFutureUseRhs) && InPlaceUtils::isValidTypeWeak(lhs, rhs)) {
+                // If the rhs has the same dimensions as the lhs, we can reuse the rhs matrix object.
                 if(InPlaceUtils::isValidType(lhs, rhs)) {
                     spdlog::debug("EwBinaryMat(Dense) - rhs is in-placeable");
                     res = rhs;
                     res->increaseRefCounter();
                 }
+                // As it atleast weak, we can reuse the underlying data buffer of rhs.
                 else {
                     spdlog::debug("EwBinaryMat(Dense) - data buffer of rhs is in-placeable");
                     res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, rhs->getValues());

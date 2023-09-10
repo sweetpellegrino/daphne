@@ -291,18 +291,9 @@ void MatMul<DenseMatrix<VT>, DenseMatrix<VT>, DenseMatrix<VT>>::apply(DenseMatri
         //In summary, column-wise matrix multiplication is possible when the number of rows in the first matrix (A) is equal to the number of rows in the second matrix (B), 
         //and the resulting matrix will have the same number of rows as A and the same number of columns as B.
 
-        //inplace
-        if (lhs->getNumRows() == rhs->getNumRows() && lhs->getNumRows() == rhs->getNumCols()) {
-            dctx->logger->debug("launch_gemm<{}>(C[{}x{}], A[{},{}], B[{}x{}], transA:{}, transB:{})",
+        dctx->logger->debug("launch_gemm<{}>(C[{}x{}], A[{},{}], B[{}x{}], transA:{}, transB:{})",
                     typeid(alpha).name(), m, n, m, k, k, n, transa, transb);
-            std::cout << "HIT" << std::endl;
-            launch_gemm<VT>(transa, transb, nr1, nc2, nc1, alpha, A, lda, B, ldb, beta, C, ldc); 
-        }
-        else {
-            dctx->logger->debug("launch_gemm<{}>(C[{}x{}], A[{},{}], B[{}x{}], transA:{}, transB:{})",
-                    typeid(alpha).name(), m, n, m, k, k, n, transa, transb);
-            launch_gemm<VT>(transa, transb, nr1, nc2, nc1, alpha, A, lda, B, ldb, beta, C, ldc);
-        }
+        launch_gemm<VT>(transa, transb, nr1, nc2, nc1, alpha, A, lda, B, ldb, beta, C, ldc);
     }
 }
 

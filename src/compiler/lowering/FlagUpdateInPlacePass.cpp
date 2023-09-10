@@ -54,7 +54,7 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
     mlir::Value arg = op->getOperand(operand_index);
 
     for (auto *userOp : arg.getUsers()) {
-        llvm::outs() << "##############\n op:";
+        /*llvm::outs() << "##############\n op:";
         op->print(llvm::outs());
         llvm::outs() << "\n op->parentOp:";
         op->getParentOp()->print(llvm::outs());
@@ -71,7 +71,7 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
         userOp->getBlock()->print(llvm::outs());
         llvm::outs() << "\n arg defining op:";
         //arg.getDefiningOp()->print(llvm::outs());
-        llvm::outs() << "\n";
+        llvm::outs() << "\n";*/
 
         //getDefiningOp is nullptr if arg is a block argument
         //TODO: Check for potential use cases, where the block argument could be used in place 
