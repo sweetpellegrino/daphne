@@ -66,11 +66,14 @@ struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
         
          if(res == nullptr) {
             if(InPlaceUtils::isInPlaceable(lhs, hasFutureUseLhs)) {
+                spdlog::debug("EwBinaryObjSca(Dense) - lhs is in-placeable");
                 res = lhs;
                 res->increaseRefCounter();
             }
-            else
+            else {
+                spdlog::debug("EwBinaryObjSca(Dense) - create new matrix for result");
                 res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+            }
         }
         
         const VT * valuesLhs = lhs->getValues();
@@ -96,6 +99,10 @@ struct EwBinaryObjSca<Matrix<VT>, Matrix<VT>, VT> {
     static void apply(BinaryOpCode opCode, Matrix<VT> *& res, Matrix<VT> * lhs, VT rhs, bool hasFutureUseLhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
+
+        if(hasFutureUseLhs == false) {
+            spdlog::debug("EwBinaryObjSca - in-place execution of abstract matrix class is not supported");
+        }
         
         // TODO Choose matrix implementation depending on expected number of non-zeros.
         if(res == nullptr)
@@ -121,8 +128,10 @@ void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, Frame * lhs, VT rhs,
     auto * col_res = res->getColumn<VT>(c);
     auto * col_lhs = lhs->getColumn<VT>(c);
 
-    if(InPlaceUtils::isInPlaceable(col_lhs, hasFutureUseLhs))
+    if(InPlaceUtils::isInPlaceable(col_lhs, hasFutureUseLhs)) {
+        spdlog::debug("EwBinaryObjSca(Frame) - column-wise in place", c);
         col_res = col_lhs;
+    }
 
     ewBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT>(opCode, col_res, col_lhs, rhs, hasFutureUseLhs, ctx);
 }

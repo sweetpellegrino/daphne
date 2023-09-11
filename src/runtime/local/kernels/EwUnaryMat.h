@@ -61,11 +61,14 @@ struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
 
         if(res == nullptr) {
             if(InPlaceUtils::isInPlaceable(arg, hasFutureUseArg)) {
+                spdlog::debug("EwUnaryMat(Dense) - arg is in-placeable");
                 res = arg;
                 res->increaseRefCounter();
             }
-            else
+            else {
+                spdlog::debug("EwUnaryMat(Dense) - create new matrix for result");
                 res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+            }
         }
         
         const VT * valuesArg = arg->getValues();

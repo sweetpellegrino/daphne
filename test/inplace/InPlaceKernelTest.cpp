@@ -21,6 +21,7 @@
 #include <runtime/local/kernels/EwBinaryMat.h>
 #include <runtime/local/kernels/EwBinaryObjSca.h>
 #include <runtime/local/kernels/EwUnaryMat.h>
+#include <runtime/local/kernels/Transpose.h>
 
 #include <tags.h>
 
@@ -29,16 +30,16 @@
 #include <vector>
 #include <cstdint>
 
+// ****************************************************************************
+// ewBinaryMat
+// ****************************************************************************
+
 template<class DT>
 void checkEwBinaryMat(BinaryOpCode opCode, DT * lhs, DT * rhs, const DT * exp, bool hasFutureUseLhs, bool hasFutureUseRhs) {
     DT * res = nullptr;
     ewBinaryMat<DT, DT, DT>(opCode, res, lhs, rhs, hasFutureUseLhs, hasFutureUseRhs, nullptr);
     CHECK(*res == *exp);
 }
-
-// ****************************************************************************
-// ewBinaryMat
-// ****************************************************************************
 
 TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In Place", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
     using DT = TestType;
@@ -147,15 +148,34 @@ TEMPLATE_PRODUCT_TEST_CASE("ewUnaryMat - In Place", TAG_INPLACE, (DenseMatrix), 
     DataObjectFactory::destroy(m2);
 }
 
-
-// ****************************************************************************
-// insertCol
-// ****************************************************************************
-
-// ****************************************************************************
-// insertRow
-// ****************************************************************************
-
 // ****************************************************************************
 // transpose
 // ****************************************************************************
+
+template<class DT>
+void checkTranspose(DT * arg, const DT * exp) {
+    DT * res = nullptr;
+    transpose<DT, DT>(res, arg, false, nullptr);
+    CHECK(*res == *exp);
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("Transpose - InPlace", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
+    using DT = TestType;
+    
+    auto m1 = genGivenVals<DT>(3, {
+            1, 2, 3, 4,
+            5, 6, 7, 8,
+            9, 10, 11, 12
+    });
+    auto m2 = genGivenVals<DT>(4, { 
+            1, 5, 9,
+            2, 6, 10,
+            3, 7, 11,
+            4, 8, 12
+    });
+
+    checkTranspose(m1, m2);
+
+    DataObjectFactory::destroy(m1);
+    DataObjectFactory::destroy(m2);
+}

@@ -221,19 +221,26 @@ if(res == nullptr) {
 }
 ```
 
-This is just an example. The decision on how to use one of the operands depends heavily on the nature of the kernel and its function. Additionally, consider the employed algorithm, as it must also support the in-place semantic.
+This is just an example. The decision on how to use one of the operands depends heavily on the nature of the kernel and its functionality. You need to consider the employed algorithm, as it must also support the in-place semantic.
 
 ## Special Notes
 
-Es ist ratsam die Tests ebenfalls entsprechend anzupassen und neue Testcases für die Nutzung von in-place update zu implementieren.
+It is advisable to adapt the tests accordingly as well and implement new test cases for the use of in-place update.
 
-Currently supported Kernels:
+**Currently supported Kernels:**
 
-Only for DenseMatrix and Frame
+| Kernel Name    | Dense | CSR | Frame |
+| -------------- | ----- | --- | ----- |
+| EwBinaryMat    | ✅    | ❌  |       |
+| EwBinaryObjMat | ✅    | ❌  | ✅    |
+| EwUnaryMat     | ✅    | ❌  |       |
+| Transpose      | ✅    | ❌  |       |
 
-The Passes are build in a way that they can act on CSRMatrices aswell. The hard part is to optimize the execution inside the kernel.
+None of these kernels currently support in-place updates when using CUDA or FPGA.
 
-Some examples are found here:
+Additional kernels/operations that could support in-place updates:
 
-One extreme is MatMul, here however it needs complete refactoring as the internal function used from CBLAS/Eigen doesn't support in place matrix multiplication.
-However there could be the edge-case
+* InsertColOp
+* InsertRowOp
+* ReverseOp
+* VectorizedPipelineOp

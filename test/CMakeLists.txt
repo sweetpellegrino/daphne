@@ -15,6 +15,8 @@
 include_directories(${PROJECT_SOURCE_DIR}/test)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/catch2) # for "catch.hpp"
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCATCH_CONFIG_ENABLE_BENCHMARKING")
+
 set(TEST_SOURCES
         run_tests.h
         run_tests.cpp
@@ -128,6 +130,7 @@ set(TEST_SOURCES
         inplace/InPlaceUtilsTest.cpp
         inplace/InPlaceKernelTest.cpp
         inplace/InPlaceAPITest.cpp
+        inplace/InPlaceMicroBench.cpp
 
 #        runtime/local/kernels/Morphstore/ProjectTest.cpp
 )

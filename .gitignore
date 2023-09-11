@@ -41,3 +41,5 @@ precompiled-dependencies/
 !containers/coder-daphne-env/build
 .cache
 .antlr
+bench/*.csv
+bench/*.csv.meta

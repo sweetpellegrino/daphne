@@ -153,6 +153,11 @@ struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, CSRMatrix<VT>> {
     static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, CSRMatrix<VT> * lhs, CSRMatrix<VT> * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
+
+        if(hasFutureUseLhs == false || hasFutureUseRhs == false) {
+            spdlog::debug("EwBinaryMat(CSR) - in-place execution of CSRMatrix is not supported");
+        }
+
         if( numRows != rhs->getNumRows() || numCols != rhs->getNumCols() )
             throw std::runtime_error("EwBinaryMat(CSR) - lhs and rhs must have the same dimensions.");
         
@@ -291,9 +296,14 @@ struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, CSRMatrix<VT>> {
 
 template<typename VT>
 struct EwBinaryMat<CSRMatrix<VT>, CSRMatrix<VT>, DenseMatrix<VT>> {
-    static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, CSRMatrix<VT> * lhs, DenseMatrix<VT> * rhs, bool hasFutureUseLHS, bool hasFutureUseRHS, DCTX(ctx)) {
+    static void apply(BinaryOpCode opCode, CSRMatrix<VT> *& res, CSRMatrix<VT> * lhs, DenseMatrix<VT> * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
+
+        if(hasFutureUseLhs == false || hasFutureUseRhs == false) {
+            spdlog::debug("EwBinaryMat(CSR) - in-place execution of CSRMatrix is not supported");
+        }
+
         // TODO: lhs broadcast
         if( (numRows != rhs->getNumRows() &&  rhs->getNumRows() != 1)
             || (numCols != rhs->getNumCols() && rhs->getNumCols() != 1 ) )
@@ -363,6 +373,11 @@ struct EwBinaryMat<Matrix<VT>, Matrix<VT>, Matrix<VT>> {
     static void apply(BinaryOpCode opCode, Matrix<VT> *& res, Matrix<VT> * lhs, Matrix<VT> * rhs, bool hasFutureUseLhs, bool hasFutureUseRhs, DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
+
+        if(hasFutureUseLhs == false || hasFutureUseRhs == false) {
+            spdlog::debug("EwBinaryMat - in-place execution of abstract matrix class is not supported");
+        }
+
         if( numRows != rhs->getNumRows() || numCols != rhs->getNumCols() )
             throw std::runtime_error("EwBinaryMat - lhs and rhs must have the same dimensions.");
         

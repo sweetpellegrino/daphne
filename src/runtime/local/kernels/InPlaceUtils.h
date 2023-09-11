@@ -59,7 +59,8 @@ public:
     */
     template<typename VTLhs, typename VTRhs>
     static bool isValidTypeWeak(const DenseMatrix<VTLhs>* arg1, const DenseMatrix<VTRhs>* arg2) {
-        if (arg1->getNumCols() * arg1->getNumRows() == arg2->getNumRows() * arg2->getNumCols()) {
+        //if (arg1->getNumCols() * arg1->getNumRows() == arg2->getNumRows() * arg2->getNumCols()) {
+        if (arg1->getNumItems() == arg2->getNumItems()) {
             return std::is_same_v<VTLhs, VTRhs>;
         }
         return false;
