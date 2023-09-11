@@ -3,20 +3,20 @@ import sys
 import subprocess
 import os
 import time
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import json
-import re
-from matplotlib import colors as mcolors
-from matplotlib import cm
 import psutil
 
 ### GLOBALS ###
 # Path to the application to run
 DAPHNE_PATH = "../bin/daphne"
-#DAPHNE_PATH = "../bin/daphne-"
+#DAPHNE_PATH = "../bin/daphne-96fbecb"
 RESULT_PATH = "./results/"
+#RESULT_PATH = "./results-96fbecb/"
+
+no_overwrite = False
+if "--no-overwrite" in sys.argv:
+    no_overwrite = True
+    sys.argv.remove("--no-overwrite") 
 
 def run_command(command, poll_interval=0.001): 
 
@@ -24,7 +24,7 @@ def run_command(command, poll_interval=0.001):
    
     process_memory = psutil.Process(process.pid)
     peak_mem = 0
-    while process.poll() is None:  # Check if the process has finished
+    while process.poll() is None: 
         mem_info = process_memory.memory_info().rss // 1024  # Memory usage in KB
         if mem_info > peak_mem:
             peak_mem = mem_info
@@ -34,13 +34,13 @@ def run_command(command, poll_interval=0.001):
     #print(f"Peak memory usage: {peak_mem} KB")
 
     _, stderr = process.communicate()
-
     return peak_mem, stderr.decode().splitlines()[-1]
 
 def run_benchmark(update_in_place, args, file_path, n):
 
     if update_in_place:
         command = [DAPHNE_PATH] + args + ["--update-in-place", "--timing"] + [file_path]
+        #command = [DAPHNE_PATH] + args + ["--timing"] + [file_path]
     else:
         command = [DAPHNE_PATH] + args + ["--timing"] + [file_path]
 
@@ -92,6 +92,9 @@ def create_file_name(file_path, prefix, n, update_in_place, suffix=""):
 
 def benchit(file_path, prefix, n, update_in_place, args):
     print("### BENCHMARKING " + file_path + " ###")
+    if (no_overwrite and os.path.exists(RESULT_PATH + create_file_name(file_path, prefix, n, update_in_place))):
+        print("Benchmark already exists. Skipping...")
+        return
     result = run_benchmark(update_in_place, args, file_path, n)
     save_dict_to_json(result, file_path, prefix, n, update_in_place)
     print("Done!")
@@ -103,36 +106,36 @@ def benchit(file_path, prefix, n, update_in_place, args):
 benchit(file_path="./normalize_matrix.daph", prefix="small", n=100, update_in_place=True, args=["--args", "n=50"])
 benchit(file_path="./normalize_matrix.daph", prefix="small", n=100, update_in_place=False, args=["--args", "n=50"])
 
-benchit(file_path="./normalize_matrix.daph", prefix="medium", n=25, update_in_place=True, args=["--args", "n=5000"])
-benchit(file_path="./normalize_matrix.daph", prefix="medium", n=25, update_in_place=False, args=["--args", "n=5000"])
+benchit(file_path="./normalize_matrix.daph", prefix="medium", n=30, update_in_place=True, args=["--args", "n=5000"])
+benchit(file_path="./normalize_matrix.daph", prefix="medium", n=30, update_in_place=False, args=["--args", "n=5000"])
 
-benchit(file_path="./normalize_matrix.daph", prefix="large", n=2, update_in_place=True, args=["--args", "n=25000"])
-benchit(file_path="./normalize_matrix.daph", prefix="large", n=2, update_in_place=False, args=["--args", "n=25000"])
+benchit(file_path="./normalize_matrix.daph", prefix="large", n=5, update_in_place=True, args=["--args", "n=15000"])
+benchit(file_path="./normalize_matrix.daph", prefix="large", n=5, update_in_place=False, args=["--args", "n=15000"])
 
 benchit(file_path="./normalize_matrix.daph", prefix="out-of-memory", n=1, update_in_place=True, args=["--args", "n=36500"])
 #benchit(file_path="./normalize_matrix.daph", prefix="out-of-memory", n=1, update_in_place=False, args=["--args", "n=36500"]) # <-- will crash
 
-### TRANSPOSE ADDITION ###
+### TRANSPOSE ###
 
-benchit(file_path="./transpose_addition.daph", prefix="small", n=100, update_in_place=True, args=["--args", "n=50"])
-benchit(file_path="./transpose_addition.daph", prefix="small", n=100, update_in_place=False, args=["--args", "n=50"])
+benchit(file_path="./transpose.daph", prefix="small", n=100, update_in_place=True, args=["--args", "n=50"])
+benchit(file_path="./transpose.daph", prefix="small", n=100, update_in_place=False, args=["--args", "n=50"])
 
-benchit(file_path="./transpose_addition.daph", prefix="medium", n=25, update_in_place=True, args=["--args", "n=5000"])
-benchit(file_path="./transpose_addition.daph", prefix="medium", n=25, update_in_place=False, args=["--args", "n=5000"])
+benchit(file_path="./transpose.daph", prefix="medium", n=30, update_in_place=True, args=["--args", "n=5000"])
+benchit(file_path="./transpose.daph", prefix="medium", n=30, update_in_place=False, args=["--args", "n=5000"])
 
-benchit(file_path="./transpose_addition.daph", prefix="large", n=2, update_in_place=True, args=["--args", "n=25000"])
-benchit(file_path="./transpose_addition.daph", prefix="large", n=2, update_in_place=False, args=["--args", "n=25000"])
+benchit(file_path="./transpose.daph", prefix="large", n=5, update_in_place=True, args=["--args", "n=15000"])
+benchit(file_path="./transpose.daph", prefix="large", n=5, update_in_place=False, args=["--args", "n=15000"])
 
 ### ADDITION ###
 
 benchit(file_path="./addition.daph", prefix="small", n=100, update_in_place=True, args=["--args", "n=50"])
 benchit(file_path="./addition.daph", prefix="small", n=100, update_in_place=False, args=["--args", "n=50"])
 
-benchit(file_path="./addition.daph", prefix="medium", n=25, update_in_place=True, args=["--args", "n=5000"])
-benchit(file_path="./addition.daph", prefix="medium", n=25, update_in_place=False, args=["--args", "n=5000"])
+benchit(file_path="./addition.daph", prefix="medium", n=30, update_in_place=True, args=["--args", "n=5000"])
+benchit(file_path="./addition.daph", prefix="medium", n=30, update_in_place=False, args=["--args", "n=5000"])
 
-benchit(file_path="./addition.daph", prefix="large", n=2, update_in_place=True, args=["--args", "n=25000"])
-benchit(file_path="./addition.daph", prefix="large", n=2, update_in_place=False, args=["--args", "n=25000"])
+benchit(file_path="./addition.daph", prefix="large", n=5, update_in_place=True, args=["--args", "n=15000"])
+benchit(file_path="./addition.daph", prefix="large", n=5, update_in_place=False, args=["--args", "n=15000"])
 
 ### ADDITION READMATRIX ###
 ### matrices are generated with create_matrix_files.daph
@@ -140,8 +143,19 @@ benchit(file_path="./addition.daph", prefix="large", n=2, update_in_place=False,
 benchit(file_path="./addition_readMatrix.daph", prefix="small", n=100, update_in_place=True, args=["--args", "n=\"X_small.csv\""])
 benchit(file_path="./addition_readMatrix.daph", prefix="small", n=100, update_in_place=False, args=["--args", "n=\"X_small.csv\""])
 
-benchit(file_path="./addition_readMatrix.daph", prefix="medium", n=25, update_in_place=True, args=["--args", "n=\"X_medium.csv\""])
-benchit(file_path="./addition_readMatrix.daph", prefix="medium", n=25, update_in_place=False, args=["--args", "n=\"X_medium.csv\""])
+benchit(file_path="./addition_readMatrix.daph", prefix="medium", n=30, update_in_place=True, args=["--args", "n=\"X_medium.csv\""])
+benchit(file_path="./addition_readMatrix.daph", prefix="medium", n=30, update_in_place=False, args=["--args", "n=\"X_medium.csv\""])
 
-#benchit(file_path="./addition_readMatrix.daph", prefix="large", n=2, update_in_place=True, args=["--args", "n=\"X_large.csv\""])
+benchit(file_path="./addition_readMatrix.daph", prefix="large", n=5, update_in_place=True, args=["--args", "n=\"X_large.csv\""])
 #benchit(file_path="./addition_readMatrix.daph", prefix="large", n=2, update_in_place=False, args=["--args", "n=\"X_large.csv\""]) # <-- will crash
+
+### KMEANS ###
+
+benchit(file_path="./kmeans.daph", prefix="small", n=100, update_in_place=True, args=["--args", "r=50,c=5,f=10,i=100"])
+benchit(file_path="./kmeans.daph", prefix="small", n=100, update_in_place=True, args=["--args", "r=50,c=5,f=10,i=100"])
+
+benchit(file_path="./kmeans.daph", prefix="medium", n=30, update_in_place=True, args=["--args", "r=5000,c=250,f=25,i=100"])
+benchit(file_path="./kmeans.daph", prefix="medium", n=30, update_in_place=True, args=["--args", "r=5000,c=250,f=25,i=100"])
+
+benchit(file_path="./kmeans.daph", prefix="large", n=5, update_in_place=True, args=["--args", "r=10000,c=5000,f=100,i=100"])
+benchit(file_path="./kmeans.daph", prefix="large", n=5, update_in_place=True, args=["--args", "r=10000,c=5000,f=100,i=100"])

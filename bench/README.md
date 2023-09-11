@@ -1,8 +1,37 @@
 # Benchmarking
 
-The how and some additional information for reproduce the result.
+This document provides key information about benchmarking the implemented in-place update approach to reproduce our results.
 
-## Cases
+**E2E-Benchmark:**
+
+There are currently following cases with different matrix sizes benchmarked:
+
+* [addition.daph](addition.daph)
+* [addition_readMatrix.daph](addition_readMatrix.daph)
+* [normalize_matrix.daph](normalize_matrix.daph)
+* [tranpose.daph](tranpose.daph)
+* [kmeans.daph](kmeans.daph)
+
+ We are capturing the following indicators:
+
+* *timings* from DAPHNE by using `--timing` as an argument.
+* *Peak memory* *consumption*
+
+To execute the benchmark, run `﻿$ python3 bench.py.` Prior to that, it is necessary to run [create_matrix_files.daph](create_matrix_files.daph) in order to generate static matrix files that will be stored on disk. The resulting matrices have a total size of 2.3GB and are used in *addition_readMatrix.daph*.
+
+The fine-granular results can be displayed as boxplots with the [draw_graphs.ipynb](draw_graphs.ipynb).
+
+**Microbenchmark:**
+
+The implemented kernels are tested directly in Catch2 using the BENCHMARK feature. This demonstrates the impact of not allocating new memory for a data object, especially in combination when another algorithm is used.
+
+The tag `[inplace-bench]` is deactivated by default, we can run it by executing:
+
+```bash
+$ ./test.sh [inplace-bench]
+```
+
+The result of the run on the bench VM can be found in file: XXXX
 
 ## System Information
 
@@ -32,4 +61,5 @@ L1i cache:                          128 KiB
 L2 cache:                           16 MiB
 L3 cache:                           16 MiB
 
-System memory: 16GB
+RAM: 16GB
+Disk Storage: SSD 160GB

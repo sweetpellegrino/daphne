@@ -373,21 +373,18 @@ namespace
                 auto inPlaceOperands = inPlaceOp.getInPlaceOperands();
                 auto inPlaceFutureUse = op->getAttrOfType<ArrayAttr>("inPlaceFutureUse");
 
-                //Not needed anymore
-                auto sTRUE = static_cast<bool>(true);
-                auto sFALSE = static_cast<bool>(false);
-
                 for (auto inPlaceOperand : inPlaceOperands) {
-                    if(op->getOperand(inPlaceOperand).getType().isa<daphne::MatrixType>() || op->getOperand(inPlaceOperand).getType().isa<daphne::FrameType>()) {
+                    if(op->getOperand(inPlaceOperand).getType().isa<daphne::MatrixType>() || 
+                       op->getOperand(inPlaceOperand).getType().isa<daphne::FrameType>()) {
                         if (!inPlaceFutureUse || inPlaceFutureUse[inPlaceOperand].cast<BoolAttr>().getValue()) {
                             callee << "__bool";
                             newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                                    loc, sTRUE));
+                                    loc,  static_cast<bool>(true)));
                         }
                         else {
                             callee << "__bool";
                             newOperands.push_back(rewriter.create<daphne::ConstantOp>(
-                                    loc, sFALSE));
+                                    loc, static_cast<bool>(false)));
                         }
                     }
                 }

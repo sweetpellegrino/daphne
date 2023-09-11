@@ -1,9 +1,0 @@
-//Testing if print is possible (as the refCounter needs to be set correctly)
-X = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-Y = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-
-print("test1");
-Z = sqrt(X + Y);
-print(Y);
-print(Z);
-print("test2");

@@ -85,7 +85,7 @@ struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
 
                     // We need to apply a different algorithm for updating in-place matrices
                     // Based on https://en.wikipedia.org/wiki/In-place_matrix_transposition#Non-square_matrices%3a_Following_the_cycles
-                    // and https://stackoverflow.com/questions/9227747/in-place-transposition-of-a-matrix
+                    // and https://www.geeksforgeeks.org/inplace-m-x-n-size-matrix-transpose/
                     // Here we initialize a boolean array to keep track of the visited elements.
                     // Trade-off between allocating n*m bytes (boolean) vs worst case n*m*8 bytes (double)
                     // TODO: Implement trivial algorithm for square matrices

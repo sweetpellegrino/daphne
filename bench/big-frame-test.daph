@@ -1,7 +1,0 @@
-//create frame
-
-X = readMatrix("X.csv");
-
-F = createFrame(X, "X");
-
-D = (F + 2);
