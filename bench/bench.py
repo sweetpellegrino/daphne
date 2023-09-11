@@ -157,5 +157,5 @@ benchit(file_path="./kmeans.daphne", prefix="small", n=100, update_in_place=Fals
 benchit(file_path="./kmeans.daphne", prefix="medium", n=30, update_in_place=True, args=["--args", "r=5000,c=250,f=25,i=100"])
 benchit(file_path="./kmeans.daphne", prefix="medium", n=30, update_in_place=False, args=["--args", "r=5000,c=250,f=25,i=100"])
 
-benchit(file_path="./kmeans.daphne", prefix="large", n=5, update_in_place=True, args=["--args", "r=10000,c=5000,f=100,i=100"])
-benchit(file_path="./kmeans.daphne", prefix="large", n=5, update_in_place=False, args=["--args", "r=10000,c=5000,f=100,i=100"])
+benchit(file_path="./kmeans.daphne", prefix="large", n=5, update_in_place=True, args=["--args", "r=10000,c=5000,f=100,i=10"])
+benchit(file_path="./kmeans.daphne", prefix="large", n=5, update_in_place=False, args=["--args", "r=10000,c=5000,f=100,i=10"])
