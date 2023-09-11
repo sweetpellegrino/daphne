@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <mlir/Dialect/SCF/IR/SCF.h>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/CSRMatrix.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
@@ -25,14 +23,11 @@
 #include <runtime/local/datastructures/Matrix.h>
 #include <runtime/local/kernels/BinaryOpCode.h>
 #include <runtime/local/kernels/EwBinarySca.h>
-#include <util/DaphneLogger.h>
-
-#include "InPlaceUtils.h"
-#include "runtime/local/kernels/InPlaceUtils.h"
+#include <runtime/local/kernels/InPlaceUtils.h>
+#include <spdlog/spdlog.h>
 
 #include <cassert>
 #include <cstddef>
-#include <spdlog/spdlog.h>
 
 // ****************************************************************************
 // Struct for partial template specialization

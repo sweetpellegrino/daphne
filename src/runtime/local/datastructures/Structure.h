@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "MetaDataObject.h"
-#include <memory>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/MetaDataObject.h>
 
@@ -80,10 +78,6 @@ public:
     
     MetaDataObject* getMetaDataObject() const {
         return mdo.get();
-    }
-
-    size_t getUseCountOfMdo() const {
-        return mdo.use_count();
     }
 
     /**

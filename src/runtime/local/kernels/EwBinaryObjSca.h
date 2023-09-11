@@ -17,7 +17,6 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_EWBINARYOBJSCA_H
 #define SRC_RUNTIME_LOCAL_KERNELS_EWBINARYOBJSCA_H
 
-#include <iostream>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -27,6 +26,7 @@
 #include <runtime/local/kernels/EwBinarySca.h>
 
 #include <runtime/local/kernels/InPlaceUtils.h>
+#include <spdlog/spdlog.h>
 
 #include <cassert>
 #include <cstddef>

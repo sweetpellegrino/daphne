@@ -15,6 +15,7 @@
  */
 
 #include "EwBinaryObjSca.h"
+#include <spdlog/spdlog.h>
 
 #include <runtime/local/datastructures/AllocationDescriptorCUDA.h>
 

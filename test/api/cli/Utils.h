@@ -329,7 +329,6 @@ void compareDaphneToDaphneLib(const std::string & pythonScriptFilePath, const st
     // checks of out and err still run and provide useful messages. For err,
     // don't check empty(), because then catch2 doesn't display the error
     // output.
-
     CHECK(statusDaphne == StatusCode::SUCCESS);
     CHECK(statusDaphneLib == 0);
     CHECK(outDaphne.str() == outDaphneLib.str());

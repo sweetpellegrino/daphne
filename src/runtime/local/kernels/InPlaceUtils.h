@@ -18,8 +18,8 @@
 #ifndef SRC_RUNTIME_LOCAL_UTILS_RUNTIMEUTILS_H
 #define SRC_RUNTIME_LOCAL_UTILS_RUNTIMEUTILS_H
 
-#include "runtime/local/datastructures/DenseMatrix.h"
-#include "runtime/local/datastructures/Frame.h"
+#include <runtime/local/datastructures/DenseMatrix.h>
+#include <runtime/local/datastructures/Frame.h>
 #include <ir/daphneir/Daphne.h>
 
 #include <mlir/Dialect/Arith/IR/Arith.h>

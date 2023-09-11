@@ -37,8 +37,6 @@
 
 using namespace mlir;
 
-const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
-
 namespace
 {
     class KernelReplacement : public RewritePattern
@@ -498,7 +496,8 @@ namespace
                     newOperands,
                     op.getOutputs().getTypes()
             );
-            cko->setAttr(ATTR_HASVARIADICRESULTS, rewriter.getBoolAttr(true));
+            // TODO Use ATTR_HASVARIADICRESULTS from LowerToLLVMPass.cpp.
+            cko->setAttr("hasVariadicResults", rewriter.getBoolAttr(true));
       
             return success();
         }

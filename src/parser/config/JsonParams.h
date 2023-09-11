@@ -32,6 +32,7 @@ struct DaphneConfigJsonParams {
     inline static const std::string USE_PHY_OP_SELECTION = "use_phy_op_selection";
     inline static const std::string CUDA_FUSE_ANY = "cuda_fuse_any";
     inline static const std::string VECTORIZED_SINGLE_QUEUE = "vectorized_single_queue";
+    inline static const std::string UPDATE_IN_PLACE = "enable_update_in_place";
 
     inline static const std::string DEBUG_LLVM = "debug_llvm";
     inline static const std::string EXPLAIN_KERNELS = "explain_kernels";
@@ -45,6 +46,7 @@ struct DaphneConfigJsonParams {
     inline static const std::string EXPLAIN_TYPE_ADAPTATION = "explain_type_adaptation";
     inline static const std::string EXPLAIN_VECTORIZED = "explain_vectorized";
     inline static const std::string EXPLAIN_OBJ_REF_MGNT = "explain_obj_ref_mgnt";
+    inline static const std::string EXPLAIN_UPDATE_IN_PLACE = "explain_update_in_place";
     inline static const std::string TASK_PARTITIONING_SCHEME = "taskPartitioningScheme";
     inline static const std::string NUMBER_OF_THREADS = "numberOfThreads";
     inline static const std::string MINIMUM_TASK_SIZE = "minimumTaskSize";
@@ -53,9 +55,6 @@ struct DaphneConfigJsonParams {
     inline static const std::string LIBRARY_PATHS = "library_paths";
     inline static const std::string DAPHNEDSL_IMPORT_PATHS = "daphnedsl_import_paths";
     inline static const std::string LOGGING = "logging";
-
-    inline static const std::string UPDATE_IN_PLACE = "enable_update_in_place";
-    inline static const std::string EXPLAIN_UPDATE_IN_PLACE = "explain_update_in_place";
     
     inline static const std::string JSON_PARAMS[] = {
             USE_CUDA_,

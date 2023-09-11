@@ -16,13 +16,12 @@
 
 #pragma once
 
-#include "InPlaceUtils.h"
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/CSRMatrix.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
-
 #include <runtime/local/kernels/InPlaceUtils.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 

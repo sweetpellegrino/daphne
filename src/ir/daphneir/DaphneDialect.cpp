@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "mlir/IR/Attributes.h"
 #include <compiler/utils/CompilerUtils.h>
-#include <iostream>
 #include <ir/daphneir/Daphne.h>
 #include <ir/daphneir/DaphneOpsEnums.cpp.inc>
 #define GET_OP_CLASSES
@@ -49,15 +47,16 @@
 #include <llvm/ADT/APSInt.h>
 #include <llvm/ADT/DenseMap.h>
 
-void mlir::daphne::DaphneDialect::initialize() {
-  addOperations<
-#define GET_OP_LIST
-#include <ir/daphneir/DaphneOps.cpp.inc>
-      >();
-  addTypes<
-#define GET_TYPEDEF_LIST
-#include <ir/daphneir/DaphneOpsTypes.cpp.inc>
-      >();
+void mlir::daphne::DaphneDialect::initialize()
+{
+    addOperations<
+        #define GET_OP_LIST
+        #include <ir/daphneir/DaphneOps.cpp.inc>
+    >();
+    addTypes<
+        #define GET_TYPEDEF_LIST
+        #include <ir/daphneir/DaphneOpsTypes.cpp.inc>
+    >();
 }
 
 mlir::Operation *mlir::daphne::DaphneDialect::materializeConstant(OpBuilder &builder,
