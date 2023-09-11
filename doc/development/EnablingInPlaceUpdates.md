@@ -47,7 +47,7 @@ Values can only be overridden if they are not used later in the application's ex
 
 **Compile-time analysis**
 
-While compiling the DAPHNE application to LLVM instruction, in the Pass [FlagUpdateInPlace.cpp](/src/compiler/lowering/FlagUpdateInPlace.cpp) we check whether an operand can be used for in-place updates. The operand is typically the result of an another operation. The operand is usually the result of another operation. If this result is not used as an operand in subsequent operations, we can potentially overwrite its values to avoid memory allocation (refer to the example at the beginning).
+While compiling the DAPHNE application to LLVM instruction, in the Pass [FlagUpdateInPlacePass.cpp](/src/compiler/lowering/FlagUpdateInPlacePass.cpp) we check whether an operand can be used for in-place updates. The operand is typically the result of an another operation. The operand is usually the result of another operation. If this result is not used as an operand in subsequent operations, we can potentially overwrite its values to avoid memory allocation (refer to the example at the beginning).
 
 Furthermore, we need to propagate this information to the kernel call. We accomplish this by adding an additional attribute (e.g., `inPlaceFutureUse = [false, true]`) to the MLIR operation object. Subsequently, in the [RewriteToCallKernelOpPass.cpp](/src/compiler/lowering/RewriteToCallKernelOpPass.cpp), we append a true/false value for each operand at the end of the operand list of an operation. This allows the information to be available at runtime. We still expect to initialize the result operand with a nullptr.
 
@@ -66,7 +66,7 @@ To enable the updating in-place for a kernel, we need to employ different steps.
 
 ### 1. Mark the operation as InPlaceable
 
-We need to add an MLIR op interface to the operation. This is necessary for the [FlagUpdateInPlace.cpp](/src/compiler/lowering/FlagUpdateInPlace.cpp) pass to consider using the operands of the specific operation in-place.
+We need to add an MLIR op interface to the operation. This is necessary for the [FlagUpdateInPlacePass.cpp](/src/compiler/lowering/FlagUpdateInPlacePass.cpp) pass to consider using the operands of the specific operation in-place.
 
 This is accompanied by changing the traits of an operation in [DaphneOps.td](/src/ir/daphneir/DaphneOps.td) by adding `DeclareOpInterfaceMethods<InPlaceOpInterface>` to the list. For instance:
 
