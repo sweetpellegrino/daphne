@@ -14,8 +14,9 @@ There are currently following cases with different matrix sizes benchmarked:
 
  We are capturing the following indicators:
 
-* *timings* from DAPHNE by using `--timing` as an argument.
+* *timings* from DAPHNE by using `--timing` as an argument
 * *Peak memory* *consumption*
+* (*perf*)
 
 To execute the benchmark, run `﻿$ python3 bench.py.` Prior to that, it is necessary to run [create_matrix_files.daph](create_matrix_files.daph) in order to generate static matrix files that will be stored on disk. The resulting matrices have a total size of 2.3GB and are used in *addition_readMatrix.daph*.
 
@@ -35,31 +36,21 @@ The result of the run on the bench VM can be found in file: XXXX
 
 ## System Information
 
-The benchmark was done inside a VM on hetzner.cloud
+The benchmark was done inside a VM (CX41, scaled up) on hetzner.cloud
 
-Architecture:                       x86_64
-CPU op-mode(s):                     32-bit, 64-bit
-Byte Order:                         Little Endian
-Address sizes:                      40 bits physical, 48 bits virtual
-CPU(s):                             4
-On-line CPU(s) list:                0-3
-Thread(s) per core:                 1
-Core(s) per socket:                 4
-Socket(s):                          1
-NUMA node(s):                       1
-Vendor ID:                          GenuineIntel
-CPU family:                         6
-Model:                              85
-Model name:                         Intel Xeon Processor (Skylake, IBRS)
-Stepping:                           4
-CPU MHz:                            2099.998
-BogoMIPS:                           4199.99
-Hypervisor vendor:                  KVM
-Virtualization type:                full
-L1d cache:                          128 KiB
-L1i cache:                          128 KiB
-L2 cache:                           16 MiB
-L3 cache:                           16 MiB
+**CPU:**
 
-RAM: 16GB
-Disk Storage: SSD 160GB
+Architecture: x86_64
+CPUs: 4x @ 2.1 Ghz
+Model name: Intel Xeon Processor (Skylake, IBRS)
+L1 cache: 128 KiB
+L2 cache: 16 MiB
+L3 cache: 16 MiB
+
+Hypervisor vendor: KVM
+Virtualization type:  full
+
+**RAM**: 16GB
+**Disk Storage**: SSD 80GB
+
+**OS**: Ubuntu 22.04.2 LTS (GNU/Linux 5.15.0-75-generic x86_64)
