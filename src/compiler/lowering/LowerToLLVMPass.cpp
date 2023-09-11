@@ -37,10 +37,9 @@
 
 using namespace mlir;
 
-const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
-
 // Optional attribute of CallKernelOp, which indicates that all results shall
 // be combined into a single variadic result.
+const std::string ATTR_HASVARIADICRESULTS = "hasVariadicResults";
 
 #if 0
 // At the moment, all of these operations are lowered to kernel calls.
@@ -786,7 +785,6 @@ public:
             }
         }
         else {
-            op->print(llvm::outs());
             throw std::runtime_error("vectorizedPipelineOp without outputs not supported at the moment!");
         }
 

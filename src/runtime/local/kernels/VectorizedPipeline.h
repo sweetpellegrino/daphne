@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <codecvt>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -38,20 +37,6 @@ struct VectorizedPipeline {
     static void apply(DTRes ** outputs, size_t numOutputs, bool* isScalar, Structure **inputs, size_t numInputs, int64_t *outRows,
             int64_t *outCols, int64_t *splits, int64_t *combines, size_t numFuncs, void** fun, DCTX(ctx)) {
         auto wrapper = std::make_unique<MTWrapper<DTRes>>(numFuncs, ctx);
-
-        /*
-        std::cout << "output:" << outputs << std::endl;
-        std::cout << "numOutputs:" << numOutputs << std::endl;
-        std::cout << "isScalar:" << isScalar << std::endl;
-        std::cout << "inputs:" << inputs << std::endl;
-        std::cout << "numInputs:" << numInputs << std::endl;
-        std::cout << "outRows:" << outRows << std::endl;
-        std::cout << "outCols:" << outCols << std::endl;
-        std::cout << "splits:" << splits << std::endl;
-        std::cout << "combines:" << combines << std::endl;
-        std::cout << "numFuncs:" << numFuncs << std::endl;
-        std::cout << "fun:" << fun << std::endl;
-        */
 
         std::vector<std::function<void(DTRes ***, Structure **, DCTX(ctx))>> funcs;
         for (auto i = 0ul; i < numFuncs; ++i) {

@@ -18,7 +18,7 @@
 #include "HostUtils.h"
 #include "runtime/local/datastructures/AllocationDescriptorCUDA.h"
 #include "runtime/local/kernels/CUDA/bin_ops.cuh"
-#include <spdlog/spdlog.h>
+#include #include <spdlog/spdlog.h>
 
 namespace CUDA {
     template<class VT, class OP>
