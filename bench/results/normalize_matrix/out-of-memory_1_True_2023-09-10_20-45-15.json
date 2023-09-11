@@ -1,1 +1,0 @@
-{"command": ["../bin/daphne", "--args", "n=36500", "--update-in-place", "--timing", "./normalize_matrix.daph"], "n": 1, "update_in_place": true, "peak_mem": [10508204], "timing": [{"startup_seconds": 0.00488501, "parsing_seconds": 0.0130854, "compilation_seconds": 0.105734, "execution_seconds": 161.603, "total_seconds": 161.727}]}

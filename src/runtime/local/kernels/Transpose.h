@@ -70,20 +70,20 @@ struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
 
             if (res == nullptr) {
                 if(InPlaceUtils::isInPlaceable(arg, hasFutureUseArg)) {
-                    // In case of square matrix, we can transpose in place on the data object
+                    // In case of square matrix, we can transpose in-place on the data object
                     if(numRows == numCols) {
                         spdlog::debug("Transpose(Dense) - arg is in-placeable");
                         res = arg;
                         res->increaseRefCounter();
                     }
                     // In case of non-square matrix, we need to allocate a new object
-                    // but we can still transpose in place on the data buffer.
+                    // but we can still transpose in-place on the data buffer.
                     else {
                         spdlog::debug("Transpose(Dense) - data buffer of arg is in-placeable");
                         res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, arg);
                     }
 
-                    // We need to apply a different algorithm for updating in place matrices
+                    // We need to apply a different algorithm for updating in-place matrices
                     // Based on https://en.wikipedia.org/wiki/In-place_matrix_transposition#Non-square_matrices%3a_Following_the_cycles
                     // and https://stackoverflow.com/questions/9227747/in-place-transposition-of-a-matrix
                     // Here we initialize a boolean array to keep track of the visited elements.

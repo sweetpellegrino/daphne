@@ -78,26 +78,6 @@ namespace mlir::OpTrait {
     template<class ConcreteOp>
     class FPGAOPENCLSupport : public TraitBase<ConcreteOp, FPGAOPENCLSupport> {
     };
-
-    template<class ConcreteOp>
-    class InPlaceUnaryOp : public TraitBase<ConcreteOp, InPlaceUnaryOp> {
-    };
-
-    template<class ConcreteOp>
-    class InPlaceBinaryOp : public TraitBase<ConcreteOp, InPlaceBinaryOp> {
-    };
-    
-    template <int... positions>
-    class InPlaceOperands {
-    public:
-        template <typename ConcreteType>
-        class Impl : public TraitBase<ConcreteType, InPlaceOperands<positions...>::Impl> {
-        public:
-            static std::vector<int> GetInPlaceOperand() {
-                return std::vector<int>({positions...});
-            }
-        };
-    };
 }
 
 namespace mlir::daphne {

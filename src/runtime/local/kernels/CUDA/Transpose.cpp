@@ -55,8 +55,8 @@ namespace CUDA {
 // ----------------------------------------------------------------------------
     
     template<typename VT>
-    void Transpose<DenseMatrix<VT>, DenseMatrix<VT>>::apply(DenseMatrix<VT> *&res, const DenseMatrix<VT> *arg,
-            DCTX(dctx)) {
+    void Transpose<DenseMatrix<VT>, DenseMatrix<VT>>::apply(DenseMatrix<VT> *&res, DenseMatrix<VT> *arg,
+            bool hasFutureUseArg, DCTX(dctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
         const size_t deviceID = 0; //ToDo: multi device support
@@ -65,6 +65,10 @@ namespace CUDA {
         const VT blend_alpha = 1.0f;
         const VT blend_beta = 0.0f;
         const VT *d_arg = arg->getValues(&alloc_desc);
+
+        if (hasFutureUseArg == false) {
+            spdlog::debug("Transpose(Dense)[CUDA] - currently not implemented.");
+        }
         
         // ToDo: this optimization needs more work on the data placement feature [DAPHNE-191]
         // skip data movement for vectors

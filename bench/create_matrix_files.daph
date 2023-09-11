@@ -7,5 +7,5 @@ write(X_medium, "X_medium.csv");
 X_large = rand(25000, 25000, 0.0, 5.0, 1, -1);
 write(X_large, "X_large.csv");
 
-X_out_of_memory = rand(36500, 36500, 0.0, 5.0, 1, -1);
-write(X_out_of_memory, "X_out_of_memory.csv");
+//X_out_of_memory = rand(36500, 36500, 0.0, 5.0, 1, -1);
+//write(X_out_of_memory, "X_out_of_memory.csv");

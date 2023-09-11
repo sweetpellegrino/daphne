@@ -31,7 +31,7 @@
 - [Building DAPHNE with the build.sh script](/doc/development/BuildingDaphne.md)
 - [Logging in DAPHNE](/doc/development/Logging.md)
 - [Profiling in DAPHNE](/doc/development/Profling.md)
-- [Enabling updating in place of data objects in kernels](/doc/development/EnablingInPlaceUpdates.md)
+- [Enabling updating in-place of data objects in kernels](/doc/development/EnablingInPlaceUpdates.md)
 
 ### Source Code Documentation
 

@@ -248,12 +248,7 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
     ];
     let hasFolder = 1;
 
-    /*
-    let extraClassDeclaration = [{
-    // InPlaceOpInterface:
-    std::vector<int> getInPlaceOperands() { return {0, 1}; }
-    }];
-    */
+
 }
 
 // ----------------------------------------------------------------------------
@@ -631,8 +626,7 @@ def Daphne_SliceColOp : Daphne_Op<"sliceCol", [
 
 def Daphne_InsertRowOp : Daphne_Op<"insertRow", [
     TypeFromFirstArg, // this is debatable
-    ShapeFromArg,
-//  DeclareOpInterfaceMethods<InPlaceOpInterface>
+    ShapeFromArg
 ]> {
     let arguments = (ins MatrixOrFrame:$arg, MatrixOrFrame:$ins, Size:$rowLowerIncl, Size:$rowUpperExcl);
     let results = (outs MatrixOrFrame:$res);
@@ -640,8 +634,7 @@ def Daphne_InsertRowOp : Daphne_Op<"insertRow", [
 
 def Daphne_InsertColOp : Daphne_Op<"insertCol", [
     TypeFromFirstArg, // this is debatable
-    ShapeFromArg,
-//  DeclareOpInterfaceMethods<InPlaceOpInterface>
+    ShapeFromArg
 ]> {
     let arguments = (ins MatrixOrFrame:$arg, MatrixOrFrame:$ins, Size:$colLowerIncl, Size:$colUpperExcl);
     let results = (outs MatrixOrFrame:$res);
@@ -662,7 +655,7 @@ def Daphne_ReshapeOp : Daphne_Op<"reshape", [
 def Daphne_TransposeOp : Daphne_Op<"transpose", [
     TypeFromFirstArg,
     DeclareOpInterfaceMethods<VectorizableOpInterface>,
-    InPlaceOpInterface,
+    DeclareOpInterfaceMethods<InPlaceOpInterface>,
     NumRowsFromArgNumCols, NumColsFromArgNumRows, SparsityFromArg, CUDASupport,
     Pure
 ]> {
@@ -675,11 +668,6 @@ def Daphne_TransposeOp : Daphne_Op<"transpose", [
             build($_builder, $_state, ty, input);
         }]>,
     ];
-
-    let extraClassDeclaration = [{
-    // InPlaceOpInterface:
-    std::vector<int> getInPlaceOperands() { return {0}; }
-    }];
 }
 
 class Daphne_BindOp<string name, list<Trait> traits = []> : Daphne_Op<name, !listconcat(traits, [

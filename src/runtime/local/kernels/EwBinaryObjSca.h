@@ -129,7 +129,7 @@ void ewBinaryFrameColSca(BinaryOpCode opCode, Frame *& res, Frame * lhs, VT rhs,
     auto * col_lhs = lhs->getColumn<VT>(c);
 
     if(InPlaceUtils::isInPlaceable(col_lhs, hasFutureUseLhs)) {
-        spdlog::debug("EwBinaryObjSca(Frame) - column-wise in place", c);
+        spdlog::debug("EwBinaryObjSca(Frame) - column-wise in-place.");
         col_res = col_lhs;
     }
 

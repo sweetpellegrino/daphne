@@ -41,7 +41,7 @@ void checkEwBinaryMat(BinaryOpCode opCode, DT * lhs, DT * rhs, const DT * exp, b
     CHECK(*res == *exp);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In Place", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
+TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In-Place", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
     using DT = TestType;
     
     auto m1 = genGivenVals<DT>(4, {
@@ -90,7 +90,7 @@ void checkEwBinaryMatSca(BinaryOpCode opCode, DT * lhs, typename DT::VT rhs, con
     DataObjectFactory::destroy(res);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("ewBinaryObjSca - In Place", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
+TEMPLATE_PRODUCT_TEST_CASE("ewBinaryObjSca - In-Place", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
     using DT = TestType;
     //using VT = typename DT::VT;
     
@@ -125,7 +125,7 @@ void checkEwUnaryMat(UnaryOpCode opCode, DT * arg, const DT * exp) {
     DataObjectFactory::destroy(res);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("ewUnaryMat - In Place", TAG_INPLACE, (DenseMatrix), (float)) {
+TEMPLATE_PRODUCT_TEST_CASE("ewUnaryMat - In-Place", TAG_INPLACE, (DenseMatrix), (float)) {
     using DT = TestType;
     
     auto m1 = genGivenVals<DT>(4, {
@@ -159,7 +159,7 @@ void checkTranspose(DT * arg, const DT * exp) {
     CHECK(*res == *exp);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("Transpose - InPlace", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
+TEMPLATE_PRODUCT_TEST_CASE("Transpose - In-Place", TAG_INPLACE, (DenseMatrix), (uint32_t)) {
     using DT = TestType;
     
     auto m1 = genGivenVals<DT>(3, {

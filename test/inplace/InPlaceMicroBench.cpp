@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include "runtime/local/datastructures/DataObjectFactory.h"
+#include "runtime/local/kernels/UnaryOpCode.h"
+#include <new>
 #include <runtime/local/datagen/GenGivenVals.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
 #include <runtime/local/kernels/CheckEq.h>
@@ -32,34 +35,168 @@
 #include <cstdint>
 
 
-// ****************************************************************************
-// ewBinaryMat
-// ****************************************************************************
-
-// TODO: use  
-template<class DT,typename VT>
+// TODO: use Fill kernel
+template<class DT, typename VT>
 void fillMatrix(DT *& m, size_t numRows, size_t numCols, VT val) {
     
-    DT * m = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+    m = DataObjectFactory::create<DT>(numRows, numCols, false);
     
     VT * values = m->getValues();
     const size_t numCells = numRows * numCols;
     
     // Fill the matrix with ones of the respective value type.
     for(size_t i = 0; i < numCells; i++)
-        values[i] = VT(1);
+        values[i] = 1;
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In Place - Bench", TAG_INPLACE_BENCH, (DenseMatrix), (uint32_t)) {
+// ****************************************************************************
+// ewBinaryMat
+// ****************************************************************************
+
+template<class DT,typename VT>
+void generateBinaryMatrices(DT *& m1, DT *& m2, size_t numRows, size_t numCols, VT val1, VT val2) {
+    fillMatrix<DT, VT>(m1, numRows, numCols, val1);
+    fillMatrix<DT, VT>(m2, numRows, numCols, val2);
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In-Place - Bench", TAG_INPLACE_BENCH, (DenseMatrix), (double, int)) {
     using DT = TestType;
-    using VT = DT::ValueType;
-    // Measure the execution time of myFunctionToBenchmark using Catch's benchmarking macros
-    DT* m1 = nullptr;
-    DT* m2 = nullptr;
+    using VT = typename DT::VT;
 
-    DT* res = nullptr;
+    BENCHMARK_ADVANCED("hasFutureUseLhs == false") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        DT* m2 = nullptr;
+        generateBinaryMatrices<DT, VT>(m1, m2, 5000, 5000, VT(1), VT(2));
+        DT* res = nullptr;
 
-    BENCHMARK("My Function Benchmark") {
-        ewBinaryMat<DT, DT, DT>(BinaryOpCode::ADD, res, m1, m2, false, false, nullptr);
+        meter.measure([&m1, &m2, &res]() {
+            return ewBinaryMat<DT, DT, DT>(BinaryOpCode::ADD, res, m1, m2, false, true, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(m2);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("hasFutureUseLhs == true") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        DT* m2 = nullptr;
+        generateBinaryMatrices(m1, m2, 5000, 5000, VT(1), VT(2));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &m2, &res]() {
+            return ewBinaryMat<DT, DT, DT>(BinaryOpCode::ADD, res, m1, m2, true, true, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(m2);
+        DataObjectFactory::destroy(res);
+    };
+}
+
+
+// ****************************************************************************
+// ewBinaryObjSca
+// ****************************************************************************
+
+TEMPLATE_PRODUCT_TEST_CASE("ewBinaryObjSca - In-Place - Bench", TAG_INPLACE_BENCH, (DenseMatrix), (double, int)) {
+    using DT = TestType;
+    using VT = typename DT::VT;
+
+    BENCHMARK_ADVANCED("hasFutureUseLhs == false") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        fillMatrix(m1, 5000, 5000, VT(1.0));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return ewBinaryObjSca<DT, DT, VT>(BinaryOpCode::ADD, res, m1, VT(2), false, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("hasFutureUseLhs == true") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        fillMatrix(m1, 5000, 5000, VT(1.0));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return ewBinaryObjSca<DT, DT, VT>(BinaryOpCode::ADD, res, m1, VT(2), true, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+}
+
+
+// ****************************************************************************
+// ewUnaryMat
+// ****************************************************************************
+
+TEMPLATE_PRODUCT_TEST_CASE("ewUnaryMat - In-Place - Bench", TAG_INPLACE_BENCH, (DenseMatrix), (double, int)) {
+    using DT = TestType;
+    using VT = typename DT::VT;
+
+    BENCHMARK_ADVANCED("hasFutureUseArg == false") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        fillMatrix(m1, 5000, 5000, VT(1.0));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return ewUnaryMat<DT, DT>(UnaryOpCode::SIGN, res, m1, false, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("hasFutureUseArg == true") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        fillMatrix(m1, 5000, 5000, VT(1.0));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return ewUnaryMat<DT, DT>(UnaryOpCode::SIGN, res, m1, true, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+}
+
+// ****************************************************************************
+// transpose
+// ****************************************************************************
+
+TEMPLATE_PRODUCT_TEST_CASE("transpose - In-Place - Bench", TAG_INPLACE_BENCH, (DenseMatrix), (double, int)) {
+    using DT = TestType;
+    using VT = typename DT::VT;
+
+    BENCHMARK_ADVANCED("hasFutureUseArg == false") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        fillMatrix(m1, 5000, 5000, VT(1.0));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return transpose<DT, DT>(res, m1, false, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("hasFutureUseArg == true") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        fillMatrix(m1, 5000, 5000, VT(1.0));
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return transpose<DT, DT>(res, m1, true, nullptr);
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
     };
 }

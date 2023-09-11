@@ -22,45 +22,14 @@ include "mlir/IR/OpBase.td"
 include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/BuiltinAttributeInterfaces.td"
 
-/*def INPLACE_ONE : I64EnumAttrCase<"ONE", 0>;
-def INPLACE_ARG : I64EnumAttrCase<"ARG", 0>;
-def INPLACE_LHS : I64EnumAttrCase<"LHS", 0>;
-def INPLACE_TWO : I64EnumAttrCase<"TWO", 1>;
-def INPLACE_RHS : I64EnumAttrCase<"RHS", 1>;
-def INPLACE_THREE : I64EnumAttrCase<"THREE", 2>;
-def INPLACE_FOUR : I64EnumAttrCase<"FOUR", 3>;
-def INPLACE_FIVE : I64EnumAttrCase<"FIVE", 4>;
-def INPLACE_SIX : I64EnumAttrCase<"SIX", 5>;
-def INPLACE_SEVEN : I64EnumAttrCase<"SEVEN", 6>;
-def INPLACE_EIGHT : I64EnumAttrCase<"EIGHT", 7>;
-def INPLACE_NINE : I64EnumAttrCase<"NINE", 8>;
-
-def InPlaceOperand : I64EnumAttr<"InPlace", "", [INPLACE_ONE, INPLACE_TWO, INPLACE_THREE, INPLACE_FOUR, INPLACE_FIVE, INPLACE_SIX, INPLACE_SEVEN, INPLACE_EIGHT, INPLACE_NINE]> {
-    let cppNamespace = "::mlir::daphne";
-}*/
-
-/*def InPlaceAttr : ArrayAttr {
-    let cppNamespace = "::mlir::daphne";
-    let valueType = "InPlaceEnum";
-}*/
-
-/*
-def InPlaceAttrKey : StringAttr<"InPlaceFutureUse"> {
-    let cppNamespace = "::mlir::daphne";
-};
-*/
-
-//Different approach:
-//https://github.com/tensorflow/tensorflow/blob/fd8d0c80373f6a011cfab909ee23ce4b9c42e0c2/tensorflow/compiler/mlir/lite/ir/tfl_op_interfaces.td#L59
-//Problem -> undefined reference by linking the executable
 def InPlaceOpInterface : OpInterface<"InPlaceable"> {
     let description = [{
-        Interface for ops that allow for update in place of some operands.
+        Interface for operation that allow for in-place update of some operands.
     }];
   
     let methods = [
         InterfaceMethod<
-        [{Returns the indices of potential operands that could be updated in place.}],
+        [{Returns the indices of potential operands that could be updated in-place.}],
         "std::vector<int>", "getInPlaceOperands", (ins)
         >,
     ];

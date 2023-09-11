@@ -54,32 +54,14 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
     mlir::Value arg = op->getOperand(operand_index);
 
     for (auto *userOp : arg.getUsers()) {
-        /*llvm::outs() << "##############\n op:";
-        op->print(llvm::outs());
-        llvm::outs() << "\n op->parentOp:";
-        op->getParentOp()->print(llvm::outs());
-        llvm::outs() << "\n Arg:";
-        arg.print(llvm::outs());
-        llvm::outs() << "\n Userop:";
-        userOp->print(llvm::outs());
-        llvm::outs() << "\n op block:";
-
-        //userOp->getParentOp()->print(llvm::outs());
-
-        op->getBlock()->print(llvm::outs());
-        llvm::outs() << "\n userop block";
-        userOp->getBlock()->print(llvm::outs());
-        llvm::outs() << "\n arg defining op:";
-        //arg.getDefiningOp()->print(llvm::outs());
-        llvm::outs() << "\n";*/
 
         //getDefiningOp is nullptr if arg is a block argument
-        //TODO: Check for potential use cases, where the block argument could be used in place 
+        //TODO: Check for potential use cases, where the block argument could be used in-place 
         if (arg.getDefiningOp() == nullptr)
             return true;
 
         // If there is a loop, we assume that the argument is used in the next iteration.
-        // Therefore, it is not safe to use it in place.
+        // Therefore, it is not safe to use it in-place.
         if (isa<scf::WhileOp, scf::ForOp>(op->getParentOp()) &&
             arg.getDefiningOp()->getParentOp() != op->getParentOp()) {
             return true;
@@ -97,10 +79,9 @@ bool hasAnyUseAfterCurrentOp(mlir::Operation *op, int operand_index) {
         }
 
         // Check if userOp and op have the same parent block. 
-        // This is especially important for scf.if 
         if (op->getBlock() == userOp->getBlock()) {
 
-            //check if userOp is after op
+            // Check if userOp is after op
             if (op->isBeforeInBlock(userOp)) {
                 return true;
             }
@@ -142,7 +123,7 @@ void FlagUpdateInPlacePass::runOnOperation() {
         // Only apply to operations that implement the DaphneUpdateInPlaceOpInterface
         if (auto inPlaceOp = llvm::dyn_cast<daphne::InPlaceable>(op)) {
         
-            // Fetches the operands that can be used in place from the InPlaceable op
+            // Fetches the operands that can be used in-place from the InPlaceable op
             auto inPlaceOperands = inPlaceOp.getInPlaceOperands();
             BoolAttr inPlaceFutureUse[inPlaceOperands.size()];
 

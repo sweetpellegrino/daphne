@@ -26,6 +26,9 @@ namespace mlir::daphne
 
 using namespace mlir;
 
+// ****************************************************************************
+// Binary Ops {0, 1}
+// ****************************************************************************
 
 #define IMPL_IN_PLACE_OPERANDS_BINARYOP(OP) \
     std::vector<int> daphne::OP::getInPlaceOperands() { \
@@ -64,13 +67,15 @@ IMPL_IN_PLACE_OPERANDS_BINARYOP(EwGeOp)
 #undef IMPL_IN_PLACE_OPERANDS_BINARYOP
 
 // ****************************************************************************
+// Unary Ops {0}
+// ****************************************************************************
 
 #define IMPL_IN_PLACE_OPERANDS_UNARYOP(OP) \
     std::vector<int> daphne::OP::getInPlaceOperands() { \
         return {0}; \
     }
 
-//elementwise unary ops
+// Elementwise Unary Ops
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwAbsOp)
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwAcosOp)
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwAsinOp)
@@ -91,12 +96,20 @@ IMPL_IN_PLACE_OPERANDS_UNARYOP(EwSqrtOp)
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwTanOp)
 IMPL_IN_PLACE_OPERANDS_UNARYOP(EwTanhOp)
 
-//transpose
-//IMPL_IN_PLACE_OPERANDS_UNARYOP(TransposeOp)
-
-//IMPL_IN_PLACE_OPERANDS_UNARYOP(InsertColOp)
-//IMPL_IN_PLACE_OPERANDS_UNARYOP(InsertRowOp)
+// Transpose
+IMPL_IN_PLACE_OPERANDS_UNARYOP(TransposeOp)
 
 #undef IMPL_IN_PLACE_OPERANDS_UNARYOP
 
 // ****************************************************************************
+
+/* Alternative way for defining with the extra class declaration inside DaphneOps.td.
+ * This is not used, because it requires atleast one DeclareOpInterface in DaphneOps.td.
+ * The information would be spread across multiple files.
+ * It is kept here for reference.
+
+let extraClassDeclaration = [{
+    // InPlaceOpInterface:
+    std::vector<int> getInPlaceOperands() { return {0, 1}; }
+}];
+*/

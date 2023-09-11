@@ -172,7 +172,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module)
         if(userConfig_.enable_update_in_place)
             pm.addPass(mlir::daphne::createFlagUpdateInPlacePass());
         if (userConfig_.explain_update_in_place)
-            pm.addPass(mlir::daphne::createPrintIRPass("IR after update in place flagging:"));
+            pm.addPass(mlir::daphne::createPrintIRPass("IR after update in-place flagging:"));
 
         if(userConfig_.use_obj_ref_mgnt)
             pm.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createManageObjRefsPass());

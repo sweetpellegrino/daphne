@@ -43,3 +43,4 @@ precompiled-dependencies/
 .antlr
 bench/*.csv
 bench/*.csv.meta
+bench/results/archive/*

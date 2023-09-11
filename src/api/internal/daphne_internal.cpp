@@ -247,7 +247,7 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
 
     static opt<bool> updateInPlace(
             "update-in-place", cat(daphneOptions),
-            desc("Enable update in place optimization")
+            desc("Enable update in-place optimization")
     );
 
     static opt<string> libDir(
@@ -286,7 +286,7 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
             clEnumVal(obj_ref_mgnt, "Show DaphneIR after managing object references"),
             clEnumVal(kernels, "Show DaphneIR after kernel lowering"),
             clEnumVal(llvm, "Show DaphneIR after llvm lowering"),
-            clEnumVal(update_in_place, "Show DaphneIR after flagging for update in place")),
+            clEnumVal(update_in_place, "Show DaphneIR after flagging for in-place updating")),
         CommaSeparated);
 
     static llvm::cl::list<string> scriptArgs1(
