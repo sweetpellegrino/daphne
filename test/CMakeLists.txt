@@ -70,6 +70,9 @@ set(TEST_SOURCES
         runtime/local/datastructures/FrameTest.cpp
         runtime/local/datastructures/MatrixTest.cpp
         runtime/local/datastructures/TaskQueueTest.cpp
+        runtime/local/datastructures/CSCMatrixTest.cpp
+        runtime/local/datastructures/MCSRMatrixTest.cpp
+        runtime/local/datastructures/MCSCMatrixTest.cpp
 
         runtime/local/io/ReadCsvTest.cpp
         runtime/local/io/ReadParquetTest.cpp
@@ -99,6 +102,7 @@ set(TEST_SOURCES
         runtime/local/kernels/EwBinaryMatTest.cpp
         runtime/local/kernels/EwBinaryObjScaTest.cpp
         runtime/local/kernels/EwBinaryScaTest.cpp
+        runtime/local/kernels/EwUnaryMatTest.cpp
         runtime/local/kernels/EwUnaryMatTest.cpp
         runtime/local/kernels/EwUnaryScaTest.cpp
         runtime/local/kernels/ExtractColTest.cpp
