@@ -47,6 +47,7 @@
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
 #include "mlir/Transforms/Passes.h"
+#include "mlir/Transforms/ViewOpGraph.h"
 
 DaphneIrExecutor::DaphneIrExecutor(bool selectMatrixRepresentations,
                                    DaphneUserConfig cfg)
@@ -172,6 +173,8 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     }
     if (userConfig_.explain_vectorized)
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));
+    
+    pm.addPass(mlir::createPrintOpGraphPass());
 
     if (userConfig_.use_distributed)
         pm.addPass(mlir::daphne::createDistributePipelinesPass());

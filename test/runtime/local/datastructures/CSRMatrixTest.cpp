@@ -28,6 +28,8 @@ TEMPLATE_TEST_CASE("CSRMatrix allocates enough space", TAG_DATASTRUCTURES, ALL_V
     // No assertions in this test case. We just want to see if it runs without
     // crashing.
 
+    std::cout << "CSRMATRIX" << std::endl;
+
     using ValueType = TestType;
 
     const size_t numRows = 10000;
@@ -50,8 +52,9 @@ TEMPLATE_TEST_CASE("CSRMatrix allocates enough space", TAG_DATASTRUCTURES, ALL_V
     for(size_t i = 0; i <= numRows; i++)
         rowOffsets[i] = size_t(1);
 
-
-
+   for (size_t i = 0; i < numNonZeros; i++) {
+     std::cout << "values[" << i << "] = " << values[i] << std::endl;
+   }
 
     DataObjectFactory::destroy(m);
 }
