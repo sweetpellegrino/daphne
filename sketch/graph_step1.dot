@@ -1,0 +1,22 @@
+digraph G {
+  compound = true;
+  node[style=filled];
+  v15 [label = "daphne.rand", shape = ellipse, fillcolor = lightblue]; 
+  v16 [label = "daphne.rand", shape = ellipse, fillcolor = lightblue]; 
+  v17 [label = "daphne.rand", shape = ellipse, fillcolor = lightblue]; 
+  v18 [label = "daphne.matMul", shape = ellipse, fillcolor = lightblue]; 
+  v19 [label = "daphne.ewAdd", shape = ellipse, fillcolor = lightblue]; 
+  v20 [label = "daphne.transpose", shape = ellipse, fillcolor = lightblue]; 
+  v21 [label = "daphne.maxAll", shape = ellipse, fillcolor = lightblue]; 
+  v22 [label = "daphne.minAll", shape = ellipse, fillcolor = lightblue]; 
+  v24 [label = "daphne.print", shape = ellipse, fillcolor = lightblue];  
+  v16 -> v18 [label = "", style = solid];
+  v15 -> v18 [label = "", style = solid];
+  v16 -> v19 [label = "", style = solid];
+  v17 -> v19 [label = "", style = solid];
+  v18 -> v20 [label = "", style = solid];
+  v20 -> v21 [label = "", style = solid];
+  v19 -> v22 [label = "", style = solid];
+  v21 -> v24 [label = "", style = solid];
+  v22 -> v24 [label = "", style = solid];
+}

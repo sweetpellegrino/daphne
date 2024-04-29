@@ -1,0 +1,37 @@
+digraph G {
+  compound = true;
+          v16 [label = "daphne.rand", shape = ellipse, style = filled, fillcolor = lightblue]; // Changed color to lightblue
+          subgraph cluster_18 {
+            v19 [label = " ", shape = plain];
+            label = "daphne.vec";
+            subgraph cluster_20 {
+              v21 [label = " ", shape = plain];
+              label = "";
+              v17 [label = "daphne.rand", shape = ellipse, style = filled, fillcolor = lightseagreen]; // Changed color to lightblue
+              v24 [label = "daphne.ewAdd", shape = ellipse, style = filled, fillcolor = lightseagreen]; // Changed color to lightblue
+             }
+           }
+          subgraph cluster_26 {
+            v27 [label = " ", shape = plain];
+            label = "daphne.vec";
+            subgraph cluster_28 {
+              v29 [label = " ", shape = plain];
+              label = "";
+              v15 [label = "daphne.rand", shape = ellipse, style = filled, fillcolor = lightcoral]; // Changed color to light orange
+              v33 [label = "daphne.matMul", shape = ellipse, style = filled, fillcolor = lightcoral]; // Changed color to light blue
+              v34 [label = "daphne.transpose", shape = ellipse, style = filled, fillcolor = lightcoral]; // Changed color to light blue
+             }
+           }
+          v36 [label = "daphne.maxAll", shape = ellipse, style = filled, fillcolor = lightblue]; // Changed color to lightblue
+          v37 [label = "daphne.minAll", shape = ellipse, style = filled, fillcolor = lightblue]; // Changed color to lightblue
+          v39 [label = "daphne.print", shape = ellipse, style = filled, fillcolor = lightblue]; // Changed color to lightblue
+  v16 -> v19 [style = solid, lhead = cluster_18];
+  v17 -> v24 [style = solid, lhead = cluster_18];
+  v33 -> v34 [label = "", style = solid];
+  v16 -> v27 [style = solid, lhead = cluster_26];
+  v15 -> v33 [style = solid, lhead = cluster_26];
+  v27 -> v36 [style = solid, ltail = cluster_26];
+  v19 -> v37 [style = solid, ltail = cluster_18];
+  v37 -> v39 [label = "", style = solid];
+  v36 -> v39 [label = "", style = solid];
+}
