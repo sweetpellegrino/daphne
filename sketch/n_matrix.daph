@@ -1,6 +1,9 @@
 m = rand($dim, $dim, 100.0, 200.0, 1.0, -1);
 n = rand($dim, $dim, 100.0, 200.0, 1.0, -1);
-y = n @ m;
+g = rand($dim, $dim, 100.0, 200.0, 1.0, -1);
+y = n * m;
+c = n + y;
 x = t(y);
 t = aggMax(x);
-print(t);
+f = aggMin(c);
+print(f, t);

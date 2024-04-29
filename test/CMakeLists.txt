@@ -14,6 +14,7 @@
 
 include_directories(${PROJECT_SOURCE_DIR}/test)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/catch2) # for "catch.hpp"
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCATCH_CONFIG_ENABLE_BENCHMARKING") # <- necessary for including the catch.hpp
 
 set(TEST_SOURCES
         run_tests.h
@@ -143,6 +144,8 @@ set(TEST_SOURCES
         runtime/local/vectorized/MultiThreadedKernelTest.cpp
         runtime/local/kernels/CheckEqApproxTest.cpp
 
+        bench/SparseMatrixMB.cpp
+
 #        runtime/local/kernels/Morphstore/ProjectTest.cpp
 )
 
@@ -177,7 +180,10 @@ if(USE_CUDA AND CMAKE_CUDA_COMPILER)
     list(APPEND LIBS CUDAKernels CUDA::cudart CUDA::cublasLt CUDA::cublas CUDA::cusparse ${CUDA_cudnn_LIBRARY})
 endif()
 
-target_link_libraries(run_tests PRIVATE ${LIBS})
+find_library(PAPI_LIB NAMES libpapi.so HINTS ${PROJECT_BINARY_DIR}/installed/lib REQUIRED)
+find_library(HWLOC_LIB NAMES libhwloc.so HINTS ${PROJECT_BINARY_DIR}/installed/lib REQUIRED)
+
+target_link_libraries(run_tests PRIVATE ${LIBS} ${PAPI_LIB} ${HWLOC_LIB})
 target_link_directories(run_tests PRIVATE ${PROJECT_BINARY_DIR}/lib)
 add_executable(theta_join_test run_tests.cpp run_tests.h runtime/local/kernels/ThetaJoinTest.cpp)
 set_target_properties(theta_join_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
