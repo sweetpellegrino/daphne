@@ -311,6 +311,10 @@ std::string mlir::daphne::matrixRepresentationToString(MatrixRepresentation rep)
         return "dense";
     case MatrixRepresentation::Sparse:
         return "sparse";
+    case MatrixRepresentation::SparseCSR:
+        return "csr";
+    case MatrixRepresentation::SparseCSC:
+        return "csc";
     default:
         throw std::runtime_error("unknown mlir::daphne::MatrixRepresentation " +
                 std::to_string(static_cast<int>(rep)));
@@ -322,6 +326,10 @@ mlir::daphne::MatrixRepresentation mlir::daphne::stringToMatrixRepresentation(co
         return MatrixRepresentation::Dense;
     else if (str == "sparse")
         return MatrixRepresentation::Sparse;
+    else if (str == "csr")
+        return MatrixRepresentation::SparseCSR;
+    else if (str == "csc") 
+        return MatrixRepresentation::SparseCSC;
     else
         throw std::runtime_error("No matrix representation equals the string `" + str + "`");
 }

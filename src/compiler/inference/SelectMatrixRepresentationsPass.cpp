@@ -41,9 +41,9 @@ class SelectMatrixRepresentationsPass : public PassWrapper<SelectMatrixRepresent
                     if(auto matTy = res.getType().dyn_cast<daphne::MatrixType>()) {
                         const double sparsity = matTy.getSparsity();
                         // TODO: set threshold by user
-                        if(sparsity < 0.1) {
-                            res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::Sparse));
-                        }
+//                        if(sparsity < 0.1) {
+                            res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::SparseCSR));
+//                        }
                     }
                 }
             }

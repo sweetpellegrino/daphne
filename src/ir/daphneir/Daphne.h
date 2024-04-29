@@ -86,6 +86,8 @@ namespace mlir::daphne {
         // default is dense
         Default = MatrixRepresentation::Dense,
         Sparse = 1,
+        SparseCSR = 2,
+        SparseCSC = 3
     };
 
     std::string matrixRepresentationToString(MatrixRepresentation rep);

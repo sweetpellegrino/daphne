@@ -156,6 +156,10 @@ public:
                     return "DenseMatrix_" + mlirTypeToCppTypeName(matTy.getElementType(), false);
                 case mlir::daphne::MatrixRepresentation::Sparse:
                     return "CSRMatrix_" + mlirTypeToCppTypeName(matTy.getElementType(), false);
+                case mlir::daphne::MatrixRepresentation::SparseCSR:
+                    return "CSRMatrix_" + mlirTypeToCppTypeName(matTy.getElementType(), false);
+                case mlir::daphne::MatrixRepresentation::SparseCSC:
+                    return "CSCMatrix_" + mlirTypeToCppTypeName(matTy.getElementType(), false);
                 }
             }
         else if(llvm::isa<mlir::daphne::FrameType>(t))
