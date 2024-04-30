@@ -1035,6 +1035,13 @@ antlrcpp::Any DaphneDSLBuiltins::build(mlir::Location loc, const std::string & f
                 loc, arg, newline, err
         );
     }
+    
+    if(func == "startProfiling") {
+        return builder.create<StartProfilingOp>(loc);
+    }
+    if(func == "stopProfiling") {
+        return builder.create<StopProfilingOp>(loc);
+    }
 
     if (func == "readMatrix") {
         checkNumArgsExact(loc, func, numArgs, 1);

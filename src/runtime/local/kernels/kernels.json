@@ -47,7 +47,12 @@
                     ["float", ["CSRMatrix", "float"]],
                     ["int64_t", ["CSRMatrix", "int64_t"]],
                     ["double", ["CSRMatrix", "int64_t"]],
-                    ["float", ["CSRMatrix", "int64_t"]]
+                    ["float", ["CSRMatrix", "int64_t"]],
+                    ["double", ["CSCMatrix", "double"]],
+                    ["float", ["CSCMatrix", "float"]],
+                    ["int64_t", ["CSCMatrix", "int64_t"]],
+                    ["double", ["CSCMatrix", "int64_t"]],
+                    ["float", ["CSCMatrix", "int64_t"]]
                 ],
                 "opCodes": ["SUM", "MIN", "MAX", "MEAN", "STDDEV", "VAR"]
             }
@@ -1142,7 +1147,10 @@
                     [["CSRMatrix", "double"], ["CSRMatrix", "double"], ["DenseMatrix", "double"]],
                     [["CSRMatrix", "double"], ["CSRMatrix", "double"], ["CSRMatrix", "double"]],
                     [["CSRMatrix", "float"], ["CSRMatrix", "float"], ["DenseMatrix", "float"]],
-                    [["CSRMatrix", "float"], ["CSRMatrix", "float"], ["CSRMatrix", "float"]]
+                    [["CSRMatrix", "float"], ["CSRMatrix", "float"], ["CSRMatrix", "float"]],
+
+                    [["CSCMatrix", "double"], ["CSCMatrix", "double"], ["CSCMatrix", "double"]],
+                    [["CSCMatrix", "float"], ["CSCMatrix", "float"], ["CSCMatrix", "float"]]
 
                 ],
                 "opCodes": ["ADD", "SUB", "MUL", "DIV", "POW", "LOG", "MOD", "EQ", "NEQ", "LT", "LE", "GT", "GE", "MIN", "MAX", "AND", "OR"]
@@ -2354,7 +2362,9 @@
             [["DenseMatrix", "int64_t"], "int64_t"],
             [["DenseMatrix", "uint8_t"], "uint8_t"],
             [["CSRMatrix", "double"], "double"],
-            [["CSRMatrix", "int64_t"], "int64_t"]
+            [["CSRMatrix", "int64_t"], "int64_t"],
+            [["CSCMatrix", "double"], "double"],
+            [["CSCMatrix", "int64_t"], "int64_t"]
         ]
     },
     {
@@ -4059,6 +4069,30 @@
         "kernelTemplate": {
             "header": "StopProfiling.h",
             "opName": "stopProfiling",
+            "returnType": "void",
+            "templateParams": [],
+            "runtimeParams": []
+        },
+        "instantiations": [
+            []
+        ]
+    },
+    {
+        "kernelTemplate": {
+            "header": "PAPICounters.h",
+            "opName": "startCounters",
+            "returnType": "void",
+            "templateParams": [],
+            "runtimeParams": []
+        },
+        "instantiations": [
+            []
+        ]
+    },
+    {
+        "kernelTemplate": {
+            "header": "PAPICounters.h",
+            "opName": "stopCounters",
             "returnType": "void",
             "templateParams": [],
             "runtimeParams": []

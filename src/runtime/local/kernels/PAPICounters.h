@@ -24,11 +24,13 @@
 // Convenience function
 // ****************************************************************************
 
-void stopProfiling(DCTX(ctx)) {
-    int retval;
-    retval = PAPI_hl_region_begin("computation");
-    if ( retval != PAPI_OK )
-        std::cerr << "ERROR PAPI: Stopping" << std::endl;
-    PAPI_hl_region_end("fixme");
-    std::cout << "STOP_PROFILING" << std::endl;
+void startCounters(DCTX(ctx)) {
+    PAPI_hl_region_begin("fixme");
 }
+
+void stopCounters(DCTX(ctx)) {
+    PAPI_hl_region_begin("fixme");
+}
+
+
+

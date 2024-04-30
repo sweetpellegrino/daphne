@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <runtime/local/context/DaphneContext.h>
 
 #include <papi.h>
@@ -25,5 +26,9 @@
 // ****************************************************************************
 
 void startProfiling(DCTX(ctx)) {
-    PAPI_hl_region_begin("fixme");
+    std::cout << "START_PROFILING" << std::endl;
+    int retval;
+    retval = PAPI_hl_region_begin("computation");
+    if ( retval != PAPI_OK )
+        std::cerr << "ERROR PAPI: Starting" << std::endl;
 }

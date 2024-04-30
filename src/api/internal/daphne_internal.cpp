@@ -284,6 +284,24 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
       mlir_codegen
     };
 
+    enum ForceSparseArgs {
+        csrcsr,
+        csccsc,
+        csrcsc,
+        csccsr
+    };
+
+    static llvm::cl::list<ForceSparseArgs> forceSparseArgList(
+        "force-sparse", cat(daphneOptions),
+        llvm::cl::desc("Show DaphneIR after certain compiler passes (separate "
+                       "multiple values by comma, the order is irrelevant)"),
+        llvm::cl::values(
+            clEnumVal(csrcsr, "Show DaphneIR after parsing"),
+            clEnumVal(csccsc, "Show DaphneIR after parsing and some simplifications"),
+            clEnumVal(csrcsc, "Show DaphneIR after SQL parsing"),
+            clEnumVal(csccsr, "Show DaphneIR after property inference")),
+        CommaSeparated);
+
     static llvm::cl::list<ExplainArgs> explainArgList(
         "explain", cat(daphneOptions),
         llvm::cl::desc("Show DaphneIR after certain compiler passes (separate "
@@ -488,6 +506,23 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
 
     if(enableProfiling) {
         user_config.enable_profiling = true;
+    }
+
+    for (auto explain : forceSparseArgList) {
+        switch (explain) {
+            case csrcsr:
+                user_config.force_sparse = SPARSE_COMB::CSR_CSR;
+                break;
+            case csccsc:
+                user_config.force_sparse = SPARSE_COMB::CSC_CSC;
+                break;
+            case csrcsc:
+                user_config.force_sparse = SPARSE_COMB::CSR_CSC;
+                break;
+            case csccsr:
+                user_config.force_sparse = SPARSE_COMB::CSC_CSR;
+                break;
+        }
     }
 
     // add this after the cli args loop to work around args order

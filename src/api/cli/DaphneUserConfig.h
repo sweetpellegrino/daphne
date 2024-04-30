@@ -18,6 +18,7 @@
 #pragma once
 
 #include <api/daphnelib/DaphneLibResult.h>
+#include <cstddef>
 #include <runtime/local/vectorized/LoadPartitioningDefs.h>
 #include <runtime/local/datastructures/IAllocationDescriptor.h>
 #include <util/LogConfig.h>
@@ -29,6 +30,15 @@ class DaphneLogger;
 #include <memory>
 #include <map>
 #include <limits>
+
+enum SPARSE_COMB {
+    CSR_CSR,
+    CSC_CSC,
+    CSR_CSC,
+    CSC_CSR,
+    //Dense
+};
+
 
 /*
  * Container to pass around user configuration
@@ -52,6 +62,8 @@ struct DaphneUserConfig {
     bool debugMultiThreading = false;
     bool use_fpgaopencl = false;
     bool enable_profiling = false;
+
+    SPARSE_COMB force_sparse = SPARSE_COMB::CSR_CSR;
 
     bool debug_llvm = false;
     bool explain_kernels = false;
