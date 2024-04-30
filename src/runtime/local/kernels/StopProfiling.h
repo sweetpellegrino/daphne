@@ -26,9 +26,8 @@
 
 void stopProfiling(DCTX(ctx)) {
     int retval;
-    retval = PAPI_hl_region_begin("computation");
+    retval = PAPI_hl_region_end("computation");
     if ( retval != PAPI_OK )
-        std::cerr << "ERROR PAPI: Stopping" << std::endl;
-    PAPI_hl_region_end("fixme");
+        std::cerr << "PAPI error " << retval << ": " << PAPI_strerror(retval) << std::endl;
     std::cout << "STOP_PROFILING" << std::endl;
 }

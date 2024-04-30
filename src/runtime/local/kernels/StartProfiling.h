@@ -30,5 +30,5 @@ void startProfiling(DCTX(ctx)) {
     int retval;
     retval = PAPI_hl_region_begin("computation");
     if ( retval != PAPI_OK )
-        std::cerr << "ERROR PAPI: Starting" << std::endl;
+        std::cerr << "PAPI error " << retval << ": " << PAPI_strerror(retval) << std::endl;
 }

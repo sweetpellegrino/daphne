@@ -25,6 +25,7 @@
 
 #include <stdexcept>
 #include <memory>
+#include <string>
 #include <vector>
 #include <utility>
 
@@ -48,29 +49,52 @@ public:
                 // ----------------------------------------------------------------
                 if(!isScfOp) {
                     // Set the matrix representation for all result types
-                    llvm::outs() << op->getLoc() << "\n";
                     for(auto res : op->getResults()) {
                         if(auto matTy = res.getType().dyn_cast<daphne::MatrixType>()) {
                             const double sparsity = matTy.getSparsity();
                             // TODO: set threshold by user
 
+                            auto fileLoc = op->getLoc().dyn_cast<mlir::FileLineColLoc>();
+                            int isOdd = fileLoc.getLine() % 2;
+
+                            daphne::MatrixRepresentation matrixRep;
                             switch (l_cfg.force_sparse) {
                                 case SPARSE_COMB::CSR_CSR:
-                                    res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::SparseCSR));
+                                    matrixRep = daphne::MatrixRepresentation::SparseCSR;
                                     break;
                                 case SPARSE_COMB::CSC_CSC:
-                                    res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::SparseCSC));
+                                    matrixRep = daphne::MatrixRepresentation::SparseCSC;
                                     break;
                                 case SPARSE_COMB::CSR_CSC:
-                                    res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::Dense));
+                                    if (!isOdd) {
+                                        matrixRep = daphne::MatrixRepresentation::SparseCSR;
+                                        }
+                                    else {
+                                        matrixRep = daphne::MatrixRepresentation::SparseCSC;
+                                        }
                                     break;
                                 case SPARSE_COMB::CSC_CSR:
-                                    res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::Dense));
+                                    if (!isOdd) {
+                                        matrixRep = daphne::MatrixRepresentation::SparseCSC;
+                                        }
+                                    else {
+                                        matrixRep = daphne::MatrixRepresentation::SparseCSR;
+                                        }
                                     break;
                                 default:
-                                    res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::Dense));
+                                    matrixRep = daphne::MatrixRepresentation::Dense;
                                     break;
                             }
+                            res.setType(matTy.withRepresentation(matrixRep));
+                            std::string outType;
+                            if (matrixRep == daphne::MatrixRepresentation::SparseCSR) {
+                                outType = "SparseCSR";
+                            } else if (matrixRep == daphne::MatrixRepresentation::SparseCSC) {
+                                outType = "SparseCSC";
+                            } else {
+                                outType = "Dense";
+                            }
+                            llvm::errs() << op->getName() << " at line: " << fileLoc.getLine() << " and chosen matrix rep " << outType << "\n";
     //                        if(sparsity < 0.1) {
     //                            res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::SparseCSR));
     //                        }
