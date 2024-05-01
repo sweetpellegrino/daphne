@@ -2,7 +2,7 @@ m = rand($dim, $dim, 1.0, 2.0, 0.1, -1);
 n = rand($dim, $dim, 1.0, 2.0, 0.1, -1);
 
 startProfiling();
-y = sm(m, 1);
+y = sum(m, 1);
 c = sum(y, 0);
 stopProfiling();
 
