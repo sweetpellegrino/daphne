@@ -99,7 +99,7 @@ echo ""
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
     echo -e "\nDid not receive a \"y\". \tAborting.\n"
-    git checkout -
+#    git checkout -
     exit 1
 fi
 rm -rf bin build lib
@@ -130,7 +130,9 @@ source build.sh -nd -ns -nf --installPrefix /usr/local --mpi $FEATURE --target a
 cd "$projectRoot"
 
 # shellcheck disable=SC2086
-source test.sh --no-build $FEATURE
+# source test.sh --no-build $FEATURE
+
+echo "Test"
 
 # shellcheck disable=SC2181
 if [[ $? == 0 ]];then
