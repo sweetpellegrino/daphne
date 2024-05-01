@@ -27,17 +27,16 @@
 // ****************************************************************************
 
 void startProfiling(DCTX(ctx)) {
-    PAPI_set_debug( PAPI_VERB_ECONT );
-    putenv("PAPI_EVENTS=\"PAPI_TOT_INS,PAPI_TOT_CYC\"");
+    //PAPI_set_debug( PAPI_VERB_ECONT );
+    //putenv("PAPI_EVENTS=\"PAPI_TOT_INS,PAPI_TOT_CYC\"");
     int retval;
-    retval = PAPI_library_init(PAPI_VER_CURRENT);
+/*    retval = PAPI_library_init(PAPI_VER_CURRENT);
     std::cout << retval << std::endl;
     if (retval != PAPI_VER_CURRENT)
         std::cerr << "PAPI error " << retval << ": " << PAPI_strerror(retval) << std::endl;
-
+*/
     std::cout << "START_PROFILING" << std::endl;
     retval = PAPI_hl_region_begin("computation");
-    std::cout << retval << std::endl;
     if ( retval != PAPI_OK )
         std::cerr << "PAPI error " << retval << ": " << PAPI_strerror(retval) << std::endl;
 }
