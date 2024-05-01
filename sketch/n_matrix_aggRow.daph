@@ -1,11 +1,12 @@
-m = rand($dim, $dim, 100.0, 200.0, 0.1, -1);
-n = rand($dim, $dim, 100.0, 200.0, 0.1, -1);
+m = rand($dim, $dim, 1.0, 2.0, 0.1, -1);
+n = rand($dim, $dim, 1.0, 2.0, 0.1, -1);
 
 startProfiling();
-y = aggRow(m);
-c = aggRow(n);
+y = sum(m, 0);
+c = sum(y, 1);
 stopProfiling();
 
 t = aggMax(y);
 f = aggMin(c);
-print(f, t);
+print(t);
+print(f);
