@@ -7,28 +7,56 @@
 *********************************************************************************************/
 
 struct Graph:
+    Node* nodes = []
+    Bit** edges = [][] //adjacent matrix
 
 struct Node:
+    Type opType = MatrixOp | MatrixSinkOp | MatrixSourceOp
+    Node* inputs = []
+    Node* outputs = []
 
-struct FusionNode:
+struct FusedNode of Node:
+    Type opType = FuseOp
+    Graph replacedOps = []
 
 function VectorPass(Graph cfg):
 
+    _cfg = deepcopy(cfg)
+
     // Step 1: Identify potential fusable operations
-    queue = []
-    for node in cfg.nodes:
-        if type(op) is MatrixOp or type(op) is SinkOp or type(op) is SourceOp:
+    // Only considering them specified in the function isVectorizable
+    // directly "divides" graph in multiple pipelines as breaking operations
+    // are not part of releveant opTypes
+    queue = [] // FIFO
+    for node in _cfg.nodes:
+        if isVectorizable(node):
             queue.append(node)
     
     // Step 2: Fusing adjacent nodes
-    while vectorizable_operations.size() != 0:
+    // Heuristic: greedily fuse operations together
+    while queue.size() != 0:
         op = queue.dequeue()
-        fuseOp = fuseWithNeighbors(op, queue)
-        if fuseOp != null:
-            for op in fuseOp.:
-                removeOpFromGraph(cfg, op)
+        
+        toReplaceOps = []
+        for parent in op.inputs:
+            if isVectorizable(parent) == true:
+                (op, toReplaceOps)
+
+        toReplaceOps = 
+        if len(toReplaceOps) > 0:
+            fuseOp = FusedNode(op, toReplaceOps)
+            removeOpFromGraph(_cfg, op)
+            removeOpFromGraph(_cfg, toReplaceOps)
             queue.append(fusionNode)
+    
+    //_cfg should now consist of only "disjunct" fuseOp
 
+    // Step 3: Rewrite original graph
+    for fusedOp in _cfg.nodes:
 
-function fuseWithNeighbors(Operation op, queue):
-    //maybe only in one direction? cause it is easier?
+    
+    
+function isVectorizable(Node op):
+    if op.opType is in (MatrixOp, MatrixSinkOp, MatrixSourceOp, FuseOp):
+        return true
+    return false
