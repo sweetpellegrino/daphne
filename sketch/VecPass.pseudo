@@ -6,29 +6,29 @@
 *
 *********************************************************************************************/
 
-// The 
+struct Graph:
+
+struct Node:
+
+struct FusionNode:
 
 function VectorPass(Graph cfg):
 
     // Step 1: Identify potential fusable operations
-    vectorizable_operations = []
+    queue = []
     for node in cfg.nodes:
-        if isVectorizable(node) == true:
-            vectorizable_nodes.add(node)
+        if type(op) is MatrixOp or type(op) is SinkOp or type(op) is SourceOp:
+            queue.append(node)
     
-    // Step 2: fusing adjacent nodes
-    // beginning with last node
-    for op in vectorizable_operations:
-        
+    // Step 2: Fusing adjacent nodes
+    while vectorizable_operations.size() != 0:
+        op = queue.dequeue()
+        fuseOp = fuseWithNeighbors(op, queue)
+        if fuseOp != null:
+            for op in fuseOp.:
+                removeOpFromGraph(cfg, op)
+            queue.append(fusionNode)
 
 
-
-// Check if the operation can be vectorized
-function isVectorizable(Operation op): 
-    if op is MatrixOp or op is SinkOp or op is SourceOp:
-        return true
-    else
-        return false
-
-    
-
+function fuseWithNeighbors(Operation op, queue):
+    //maybe only in one direction? cause it is easier?
