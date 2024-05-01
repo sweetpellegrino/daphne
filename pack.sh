@@ -102,7 +102,7 @@ then
 #    git checkout -
     exit 1
 fi
-rm -rf bin build lib
+#rm -rf bin build lib
 
 # shellcheck disable=SC2086
 # MPI is an internal feature so we can turn this on here

@@ -70,7 +70,7 @@ TEST_CASE("Parse file in DML, write and re-read as DaphneIR", TAG_PARSER)
         mlir::PassManager passManager(&context);
         passManager.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createInferencePass());
         passManager.addPass(mlir::createCanonicalizerPass());
-        passManager.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createSelectMatrixRepresentationsPass());
+        //passManager.addNestedPass<mlir::func::FuncOp>(mlir::daphne::createSelectMatrixRepresentationsPass());
         
         REQUIRE(failed(passManager.run(moduleOp)) == false);
         

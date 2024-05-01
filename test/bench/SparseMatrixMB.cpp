@@ -72,13 +72,6 @@ TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In-Place - Bench", TAG_SPARSEMATRIX_BE
     using DT = TestType;
     using VT = typename DT::VT;
 
-    int counters[3] = {PAPI_L3_TCM, PAPI_L2_TCM, PAPI_DTLB_MISSES};
-    long values[3];
-    int ret = PAPI_start_counters(counters, 3, &values);
-    // Run your code here
-    ret = PAPI_stop_counters(&values);
-    printf("Cache misses: %ld\n", values[2]);
-
     BENCHMARK_ADVANCED("hasFutureUseLhs == false") (Catch::Benchmark::Chronometer meter) {
         DT* m1 = nullptr;
         DT* m2 = nullptr;
