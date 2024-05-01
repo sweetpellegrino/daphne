@@ -1,14 +1,11 @@
-start = now();
-startProfiling();
-m = rand($dim, $dim, 100.0, 200.0, 1.0, -1);
-n = rand($dim, $dim, 100.0, 200.0, 1.0, -1);
-g = rand($dim, $dim, 100.0, 200.0, 1.0, -1);
-stopProfiling();
-a_generate = now();
+m = rand($dim, $dim, 100.0, 200.0, 0.1, -1);
+n = rand($dim, $dim, 100.0, 200.0, 0.1, -1);
 
+startProfiling();
 y = n * m;
 c = n + y;
-a_calc = now();
-t = aggMax(c);
+stopProfiling();
+
+t = aggMax(y);
 f = aggMin(c);
 print(f, t);

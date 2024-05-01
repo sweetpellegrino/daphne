@@ -162,9 +162,6 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     }
 #endif
 
-    std::cerr << "--- GRAPH BEFORE VEC ---" << std::endl;
-    pm.addPass(mlir::createPrintOpGraphPass());
-
     // For now, in order to use the distributed runtime we also require the
     // vectorized engine to be enabled to create pipelines. Therefore, *if*
     // distributed runtime is enabled, we need to make a vectorization pass.
@@ -178,8 +175,8 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     if (userConfig_.explain_vectorized)
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));
     
-    std::cerr << "--- GRAPH AFTER VEC ---" << std::endl;
-    pm.addPass(mlir::createPrintOpGraphPass());
+    //std::cerr << "--- GRAPH AFTER VEC ---" << std::endl;
+    //pm.addPass(mlir::createPrintOpGraphPass());
 
     if (userConfig_.use_distributed)
         pm.addPass(mlir::daphne::createDistributePipelinesPass());
