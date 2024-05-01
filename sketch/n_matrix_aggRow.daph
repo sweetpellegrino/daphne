@@ -1,5 +1,4 @@
 m = rand($dim, $dim, 1.0, 2.0, 0.1, -1);
-n = rand($dim, $dim, 1.0, 2.0, 0.1, -1);
 
 startProfiling();
 y = sum(m, 0);
