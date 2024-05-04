@@ -407,7 +407,7 @@ struct AggCol<DenseMatrix<VTRes>, CSCMatrix<VTArg>> {
             const VTRes neutral = AggOpCodeUtils::template getNeutral<VTRes>(opCode);
 
             for(size_t r = 0; r < numCols; r++) {
-                *valuesRes = AggAll<VTRes, CSCMatrix<VTArg>>::aggArray(
+                valuesRes[r] = AggAll<VTRes, CSCMatrix<VTArg>>::aggArray(
                         arg->getValues(r),
                         arg->getNumNonZeros(r),
                         numRows,
@@ -416,7 +416,6 @@ struct AggCol<DenseMatrix<VTRes>, CSCMatrix<VTArg>> {
                         neutral,
                         ctx
                 );
-                valuesRes += sizeof(VTRes);
             }
         }
         else { // The op-code is either MEAN or STDDEV or VAR
