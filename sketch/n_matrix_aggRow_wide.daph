@@ -1,0 +1,11 @@
+m = rand($dim/20, $dim*20, 1.0, 2.0, 0.1, -1);
+
+startProfiling();
+y = sum(m, 0);
+c = sum(y, 1);
+stopProfiling();
+
+t = aggMax(y);
+f = aggMin(c);
+print(t);
+print(f);
