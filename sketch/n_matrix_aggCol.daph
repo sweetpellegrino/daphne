@@ -2,6 +2,7 @@ m = rand($dim/20, $dim*20, 1.0, 2.0, 0.1, -1);
 
 startProfiling();
 y = sum(m, 1);
+print(y);
 c = sum(y, 0);
 stopProfiling();
 
