@@ -2314,6 +2314,10 @@
             [["CSRMatrix", "float"]],
             [["CSRMatrix", "int64_t"]],
             [["CSRMatrix", "uint8_t"]],
+            [["CSCMatrix", "double"]],
+            [["CSCMatrix", "float"]],
+            [["CSCMatrix", "int64_t"]],
+            [["CSCMatrix", "uint8_t"]],
             ["Frame"],
             ["char"]
         ]
