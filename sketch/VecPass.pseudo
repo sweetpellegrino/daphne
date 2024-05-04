@@ -8,14 +8,14 @@
 
 struct Graph:
     Node* nodes = []
-    Bit** edges = [][] //adjacent matrix
+    //Bit** edges = [][] //adjacent matrix
 
 struct Node:
     Type opType = MatrixOp | MatrixSinkOp | MatrixSourceOp
     Node* inputs = []
     Node* outputs = []
 
-struct FusedNode of Node:
+struct Pipeline of Node:
     Type opType = FuseOp
     Graph block = null
 
@@ -40,15 +40,16 @@ function VectorPass(Graph cfg):
             if isVectorizable(parent):
                 toReplaceOps.add(parent)
 
-        if op.opType == FuseOp:
-            fusionNode.block.addNode(toReplaceOps)
-            fusionNode.inputs = toReplaceOps.inputs
-        else:
-            fusionNode = FusedNode(op, toReplaceOps)
-            removeOpFromGraph(_cfg, op)
-            removeOpFromGraph(_cfg, toReplaceOps)
-            addOpToGraph(_cfg, fusionNode)
-        queue.append(fusionNode)
+        if toReplaceOps.size() > 0:
+            if op.opType == FuseOp:
+                fusionNode.block.addNode(toReplaceOps)
+                fusionNode.inputs = toReplaceOps.inputs
+            else:
+                fusionNode = FusedNode(op, toReplaceOps)
+                removeNodeFromGraph(_cfg, op)
+                removeNodeFromGraph(_cfg, toReplaceOps)
+                addNodeToGraph(_cfg, fusionNode)
+            queue.append(fusionNode)
 
    return cfg 
     
