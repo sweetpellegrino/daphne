@@ -17,6 +17,8 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_AGGCOL_H
 #define SRC_RUNTIME_LOCAL_KERNELS_AGGCOL_H
 
+#include <iostream>
+#include <ostream>
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/CSRMatrix.h>
 #include <runtime/local/datastructures/CSCMatrix.h>
@@ -405,10 +407,6 @@ struct AggCol<DenseMatrix<VTRes>, CSCMatrix<VTArg>> {
             const VTRes neutral = AggOpCodeUtils::template getNeutral<VTRes>(opCode);
 
             for(size_t r = 0; r < numCols; r++) {
-                std::cout << arg->getValues(r) << std::endl;
-                std::cout << r << std::endl;
-                std::cout << arg->getNumNonZeros(r) << std::endl;
-                std::cout << arg->getNumRows() << std::endl;
                 *valuesRes = AggAll<VTRes, CSCMatrix<VTArg>>::aggArray(
                         arg->getValues(r),
                         arg->getNumNonZeros(r),
@@ -418,7 +416,7 @@ struct AggCol<DenseMatrix<VTRes>, CSCMatrix<VTArg>> {
                         neutral,
                         ctx
                 );
-                valuesRes += res->getRowSkip();
+                valuesRes += sizeof(VTRes);
             }
         }
         else { // The op-code is either MEAN or STDDEV or VAR
