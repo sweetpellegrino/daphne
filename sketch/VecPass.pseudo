@@ -17,11 +17,9 @@ struct Node:
 
 struct FusedNode of Node:
     Type opType = FuseOp
-    Graph replacedOps = []
+    Graph block = null
 
 function VectorPass(Graph cfg):
-
-    _cfg = deepcopy(cfg)
 
     // Step 1: Identify potential fusable operations
     // Only considering them specified in the function isVectorizable
@@ -39,22 +37,20 @@ function VectorPass(Graph cfg):
         
         toReplaceOps = []
         for parent in op.inputs:
-            if isVectorizable(parent) == true:
-                (op, toReplaceOps)
+            if isVectorizable(parent):
+                toReplaceOps.add(parent)
 
-        toReplaceOps = 
-        if len(toReplaceOps) > 0:
-            fuseOp = FusedNode(op, toReplaceOps)
+        if op.opType == FuseOp:
+            fusionNode.block.addNode(toReplaceOps)
+            fusionNode.inputs = toReplaceOps.inputs
+        else:
+            fusionNode = FusedNode(op, toReplaceOps)
             removeOpFromGraph(_cfg, op)
             removeOpFromGraph(_cfg, toReplaceOps)
-            queue.append(fusionNode)
-    
-    //_cfg should now consist of only "disjunct" fuseOp
+            addOpToGraph(_cfg, fusionNode)
+        queue.append(fusionNode)
 
-    // Step 3: Rewrite original graph
-    for fusedOp in _cfg.nodes:
-
-    
+   return cfg 
     
 function isVectorizable(Node op):
     if op.opType is in (MatrixOp, MatrixSinkOp, MatrixSourceOp, FuseOp):
