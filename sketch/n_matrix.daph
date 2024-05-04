@@ -9,3 +9,6 @@ stopProfiling();
 t = aggMax(y);
 f = aggMin(c);
 print(f, t);
+
+sqrt(t(x))
+t(x) 

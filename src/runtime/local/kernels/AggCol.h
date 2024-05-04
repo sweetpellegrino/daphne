@@ -23,6 +23,7 @@
 #include <runtime/local/datastructures/MCSRMatrix.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
+#include <runtime/local/kernels/AggAll.h>
 #include <runtime/local/kernels/AggOpCode.h>
 #include <runtime/local/kernels/EwBinarySca.h>
 
@@ -388,64 +389,42 @@ struct AggCol<DenseMatrix<VTRes>, MCSRMatrix<VTArg>> {
 template<typename VTRes, typename VTArg>
 struct AggCol<DenseMatrix<VTRes>, CSCMatrix<VTArg>> {
     static void apply(AggOpCode opCode, DenseMatrix<VTRes> *& res, const CSCMatrix<VTArg> * arg, DCTX(ctx)) {
-        const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
+        const size_t numRows = arg->getNumRows();
 
         if(res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VTRes>>(1, numCols, true);
+            res = DataObjectFactory::create<DenseMatrix<VTRes>>(1, numCols, false);
 
         VTRes * valuesRes = res->getValues();
 
-        EwBinaryScaFuncPtr<VTRes, VTRes, VTRes> func;
-        if(AggOpCodeUtils::isPureBinaryReduction(opCode))
-            func = getEwBinaryScaFuncPtr<VTRes, VTRes, VTRes>(AggOpCodeUtils::getBinaryOpCode(opCode));
-        else
-            func = getEwBinaryScaFuncPtr<VTRes, VTRes, VTRes>(AggOpCodeUtils::getBinaryOpCode(AggOpCode::SUM));
+        if (AggOpCodeUtils::isPureBinaryReduction(opCode)) {
 
-        if(AggOpCodeUtils::isSparseSafe(opCode)) {
-            for(size_t c = 0; c < numCols; c++) {
-                const VTArg * valuesCol = arg->getValues(c);
-                const size_t numNonZerosCol = arg->getNumNonZeros(c);
-                for(size_t i = 0; i < numNonZerosCol; i++) {
-                    valuesRes[c] = func(valuesRes[c], static_cast<VTRes>(valuesCol[i]), ctx);
-                }
+            EwBinaryScaFuncPtr<VTRes, VTRes, VTRes> func = getEwBinaryScaFuncPtr<VTRes, VTRes, VTRes>(AggOpCodeUtils::getBinaryOpCode(opCode));
+
+            const bool isSparseSafe = AggOpCodeUtils::isSparseSafe(opCode);
+            const VTRes neutral = AggOpCodeUtils::template getNeutral<VTRes>(opCode);
+
+            for(size_t r = 0; r < numCols; r++) {
+                std::cout << arg->getValues(r) << std::endl;
+                std::cout << r << std::endl;
+                std::cout << arg->getNumNonZeros(r) << std::endl;
+                std::cout << arg->getNumRows() << std::endl;
+                *valuesRes = AggAll<VTRes, CSCMatrix<VTArg>>::aggArray(
+                        arg->getValues(r),
+                        arg->getNumNonZeros(r),
+                        numRows,
+                        func,
+                        isSparseSafe,
+                        neutral,
+                        ctx
+                );
+                valuesRes += res->getRowSkip();
             }
         }
-        else {
-            throw std::runtime_error("Non-sparse-safe column aggregation for CSCMatrix is not yet implemented.");
+        else { // The op-code is either MEAN or STDDEV or VAR
+            // get sum for each row
+            throw std::runtime_error("unsupported AggOpCode in AggRow for CSCMatrix"); 
         }
-
-        if(AggOpCodeUtils::isPureBinaryReduction(opCode))
-            return;
-
-        // The op-code is either MEAN or STDDEV
-
-        for(size_t c = 0; c < numCols; c++)
-            valuesRes[c] /= numRows;
-
-        if(opCode != AggOpCode::STDDEV)
-            return;
-
-        auto tmp = DataObjectFactory::create<DenseMatrix<VTRes>>(1, numCols, true);
-        VTRes * valuesT = tmp->getValues();
-
-        for(size_t c = 0; c < numCols; c++) {
-            const VTArg * valuesCol = arg->getValues(c);
-            const size_t numNonZerosCol = arg->getNumNonZeros(c);
-            for(size_t i = 0; i < numNonZerosCol; i++) {
-                VTRes val = static_cast<VTRes>(valuesCol[i]) - valuesRes[c];
-                valuesT[c] = valuesT[c] + val * val;
-            }
-            // Take all zeros in the column into account
-            valuesT[c] += (valuesRes[c] * valuesRes[c]) * (numRows - numNonZerosCol);
-            // Finish computation of stddev
-            valuesT[c] /= numRows;
-            valuesT[c] = sqrt(valuesT[c]);
-        }
-
-
-        memcpy(valuesRes, valuesT, numCols * sizeof(VTRes));
-        DataObjectFactory::destroy<DenseMatrix<VTRes>>(tmp);
     }
 };
 
