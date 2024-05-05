@@ -101,6 +101,7 @@ TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Sequential Pipes", TAG_SPARSEMA
         DT* m1 = nullptr;
         DT* m2 = nullptr;
         generateBinaryMatrices<DT, VT>(m1, m2, 5000, 5000, VT(1), VT(2));
+        generateBinaryMatrices<DT, VT>(m1, m2, 5000, 5000, VT(1), VT(2));
         DT* res = nullptr;
 
         meter.measure([&m1, &m2, &res]() {
