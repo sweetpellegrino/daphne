@@ -68,7 +68,7 @@ void generateBinaryMatrices(DT *& m1, DT *& m2, size_t numRows, size_t numCols, 
     fillMatrix<DT, VT>(m2, numRows, numCols, val2);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In-Place - Bench", TAG_SPARSEMATRIX_BENCH, (DenseMatrix), (double, uint32_t)) {
+TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Function", TAG_VECTORIZED_BENCH, (DenseMatrix), (double, uint32_t)) {
     using DT = TestType;
     using VT = typename DT::VT;
 
@@ -86,11 +86,16 @@ TEMPLATE_PRODUCT_TEST_CASE("ewBinaryMat - In-Place - Bench", TAG_SPARSEMATRIX_BE
         DataObjectFactory::destroy(m2);
         DataObjectFactory::destroy(res);
     };
+}
 
-    BENCHMARK_ADVANCED("hasFutureUseLhs == true") (Catch::Benchmark::Chronometer meter) {
+TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Function", TAG_VECTORIZED_BENCH, (DenseMatrix), (double, uint32_t)) {
+    using DT = TestType;
+    using VT = typename DT::VT;
+
+    BENCHMARK_ADVANCED("hasFutureUseLhs == false") (Catch::Benchmark::Chronometer meter) {
         DT* m1 = nullptr;
         DT* m2 = nullptr;
-        generateBinaryMatrices(m1, m2, 5000, 5000, VT(1), VT(2));
+        generateBinaryMatrices<DT, VT>(m1, m2, 5000, 5000, VT(1), VT(2));
         DT* res = nullptr;
 
         meter.measure([&m1, &m2, &res]() {
