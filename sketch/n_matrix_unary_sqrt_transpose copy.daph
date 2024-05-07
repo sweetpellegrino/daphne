@@ -1,11 +1,8 @@
 m = rand($dim, $dim, 100.0, 200.0, 0.1, -1); //123456
-n = rand($dim, $dim, 100.0, 200.0, 0.1, -1); //123457
 
 startProfiling();
-y = n * m;
-c = n + y;
+y = sqrt(t(m));
 stopProfiling();
 
 t = aggMax(y);
-f = aggMin(c);
-print(f, t);
+print(t);

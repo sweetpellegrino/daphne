@@ -47,8 +47,6 @@ TEMPLATE_TEST_CASE("CSCMatrix appends and updates values correctly", TAG_DATASTR
 
    using ValueType = TestType;
     
-  std::cout << "CSCMATRIX" << std::endl;
-
    const size_t numRows = 4;
    const size_t numCols = 6;
    const size_t maxNumNonZeros = 8;
@@ -76,10 +74,6 @@ TEMPLATE_TEST_CASE("CSCMatrix appends and updates values correctly", TAG_DATASTR
    ValueType * values = m->getValues();
    size_t * rowIdxs = m->getRowIdxs();
    size_t * columnOffsets = m->getColumnOffsets();
-
-   for (size_t i = 0; i < maxNumNonZeros; i++) {
-     std::cout << "values[" << i << "] = " << values[i] << std::endl;
-   }
 
    ValueType valuesControl[] = {10, 20, 30, 50, 40, 60, 70, 80};
    size_t rowIdxsControl[] = {0, 0, 1, 2, 1, 2, 2, 3};

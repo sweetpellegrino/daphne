@@ -30,7 +30,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batch
         uint64_t r2 = std::min(r + batchSize, _data._ru);
         
         auto linputs = this->createFuncInputs(r, r2);
-        
+
         //execute function on given data binding (batch size)
         _data._funcs[fid](outputs.data(), linputs.data(), _data._ctx);
         accumulateOutputs(localResults, localAddRes, r, r2);

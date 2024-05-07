@@ -145,6 +145,7 @@ set(TEST_SOURCES
         runtime/local/kernels/CheckEqApproxTest.cpp
 
         bench/SparseMatrixMB.cpp
+        bench/SplitCombineMB.cpp
 
 #        runtime/local/kernels/Morphstore/ProjectTest.cpp
 )
