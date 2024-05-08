@@ -1,4 +1,4 @@
-m = rand($dim, $dim, 100.0, 200.0, 0.1, -1); //123456
+m = rand($dim, $dim, 100.0, 200.0, 1.0, -1); //123456
 
 startProfiling();
 y = sqrt(t(m));

@@ -18,6 +18,7 @@
 #include "runtime/local/context/DaphneContext.h"
 #include "runtime/local/datastructures/Structure.h"
 #include <cstddef>
+#include <iostream>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/kernels/UnaryOpCode.h>
 #include <runtime/local/datagen/GenGivenVals.h>
@@ -35,41 +36,9 @@
 #include <runtime/local/kernels/VectorizedPipeline.h>
 
 #include <tags.h>
-
 #include <catch.hpp>
-
 #include <vector>
-
 #include <papi.h>
-
-
-// TODO: use Fill kernel
-template<class DT, typename VT>
-void fillMatrix(DT *& m, size_t numRows, size_t numCols, VT val) {
-
-    m = DataObjectFactory::create<DT>(numRows, numCols, false);
-
-    VT * values = m->getValues();
-    const size_t numCells = numRows * numCols;
-
-    // Fill the matrix with ones of the respective value type.
-    for(size_t i = 0; i < numCells; i++)
-        values[i] = 1;
-
-}
-
-/*template<class DTRes, typename DTArg>
-struct FusedPipelineStruct {
-    static void fusedVectorizedPipeline(DTRes *&res, DTArg *row, DaphneContext *ctx) {
-        std::cout << "Test123" << std::endl;
-        return ewUnaryMat<DTRes, DTArg>(UnaryOpCode::SQRT, res, row, ctx);
-    }
-};
-
-static void fusedVectorizedPipeline(DenseMatrix<double> *&res, DenseMatrix<double> *row, DaphneContext *ctx) {
-        std::cout << "Test123" << std::endl;
-        ewUnaryMat<DenseMatrix<double>, DenseMatrix<double>>(UnaryOpCode::SQRT, res, row, ctx);
-}*/
 
 /*
   llvm.func @_vect1(%arg0: !llvm.ptr<ptr<ptr<i1>>>, %arg1: !llvm.ptr<ptr<i1>>, %arg2: !llvm.ptr<i1>) {
@@ -104,49 +73,135 @@ static void fusedVectorizedPipeline(DenseMatrix<double> *&res, DenseMatrix<doubl
     llvm.return
   }
 */
-static void fusedVectorizedPipeline(DenseMatrix<double> ***res, Structure **row, DaphneContext *ctx) {
-    DenseMatrix<double> *& _res = *res[1];
-    DenseMatrix<double> *_row = reinterpret_cast<DenseMatrix<double>*>(row[1]);
-    std::cout << "Test" << std::endl;
-    ewUnaryMat<DenseMatrix<double>, DenseMatrix<double>>(UnaryOpCode::SQRT, _res, _row, ctx);
+static void fusedVectorizedPipeline(DenseMatrix<double> ***res, Structure **rows, DaphneContext *ctx) {
+    DenseMatrix<double> *& _res = *res[0];
+    DenseMatrix<double> *_rows = reinterpret_cast<DenseMatrix<double>*>(rows[0]);
+
+    DenseMatrix<double> * _localRes = nullptr;
+
+    transpose<DenseMatrix<double>, DenseMatrix<double>>(_localRes, _rows, ctx);
+    ewUnaryMat<DenseMatrix<double>, DenseMatrix<double>>(UnaryOpCode::SQRT, _res, _localRes, ctx);
 }
 
-typedef struct
-{
-   void (*ptr)(void);
-} Func;
+static void transposeVectorizedPipeline(DenseMatrix<double> ***res, Structure **rows, DaphneContext *ctx) {
+    DenseMatrix<double> *& _res = *res[0];
+    DenseMatrix<double> *_rows = reinterpret_cast<DenseMatrix<double>*>(rows[0]);
+    transpose<DenseMatrix<double>, DenseMatrix<double>>(_res, _rows, ctx);
+}
 
-template<class DT,typename VT>
-void generateBinaryMatrices(DT *& m1, DT *& m2, size_t numRows, size_t numCols, VT val1, VT val2) {
-    fillMatrix<DT, VT>(m1, numRows, numCols, val1);
-    fillMatrix<DT, VT>(m2, numRows, numCols, val2);
+static void sqrtVectorizedPipeline(DenseMatrix<double> ***res, Structure **rows, DaphneContext *ctx) {
+    DenseMatrix<double> *& _res = *res[0];
+    DenseMatrix<double> *_rows = reinterpret_cast<DenseMatrix<double>*>(rows[0]);
+    ewUnaryMat<DenseMatrix<double>, DenseMatrix<double>>(UnaryOpCode::SQRT, _res, _rows, ctx);
+}
+
+int numRows = 2001;
+int numCols = 1999;
+
+TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Sequential Vec Ops", TAG_VECTORIZED_BENCH, (DenseMatrix), (double)) {
+    using DT = TestType;
+    using VT = typename DT::VT;
+
+    auto dctx = setupContextAndLogger();
+    DT* m1 = nullptr;
+    randMatrix(m1, numRows, numCols, 1.0, 5.0, 1.0, -1, nullptr);
+
+    BENCHMARK_ADVANCED("MAIN") (Catch::Benchmark::Chronometer meter) {
+
+        // Set up Data
+        //int numRows = 10;
+        //int numCols = 5;
+
+        // Set up VectorizedPipeline (transpose)
+        size_t t_numOutputs = 1;
+        size_t t_numInputs = 1;
+
+        DT** t_outputs = new DT*[t_numOutputs]; 
+        t_outputs[0] = nullptr;; 
+        
+        bool* t_isScalar = new bool[t_numInputs];
+        t_isScalar[0] = false;
+
+        Structure** t_inputs = new Structure*[t_numInputs];
+        t_inputs[0] = m1; 
+
+        int64_t t_outRows[1] = {numCols}; // <- flipped 
+        int64_t t_outCols[1] = {numRows}; // <- flipped 
+        int64_t t_splits[1] = {1};
+        int64_t t_combines[1] = {2};
+
+        size_t t_numFuncs = 1;
+        void (*t_funPtrs[1])(DT ***, Structure **, DaphneContext*) = {
+            transposeVectorizedPipeline
+        };
+        void **t_fun = reinterpret_cast<void**>(t_funPtrs);
+
+        // Set up VectorizedPipeline (sqrt)
+        size_t sqrt_numOutputs = 1;
+        size_t sqrt_numInputs = 1;
+
+        DT** sqrt_outputs = new DT*[sqrt_numOutputs];
+        sqrt_outputs[0] = nullptr;;
+        
+        bool* sqrt_isScalar = new bool[sqrt_numInputs];
+        sqrt_isScalar[0] = false;
+
+        Structure** sqrt_inputs = new Structure*[sqrt_numInputs];
+        sqrt_inputs[0] = nullptr;
+
+        int64_t sqrt_outRows[1] = {numCols}; // <- flipped 
+        int64_t sqrt_outCols[1] = {numRows}; // <- flipped 
+        int64_t sqrt_splits[1] = {1};
+        int64_t sqrt_combines[1] = {1};
+
+        size_t sqrt_numFuncs = 1;
+        void (*sqrt_funPtrs[1])(DT ***, Structure **, DaphneContext*) = {
+            sqrtVectorizedPipeline
+        };
+        void **sqrt_fun = reinterpret_cast<void**>(sqrt_funPtrs);
+
+        meter.measure([&t_outputs, &t_numOutputs, &t_isScalar, &t_inputs, &t_numInputs, &t_outRows, &t_outCols, &t_splits, &t_combines, &t_numFuncs, &t_fun, &sqrt_outputs, &sqrt_numOutputs, &sqrt_isScalar, &sqrt_inputs, &sqrt_numInputs, &sqrt_outRows, &sqrt_outCols, &sqrt_splits, &sqrt_combines, &sqrt_numFuncs, &sqrt_fun, &dctx]() {
+            
+            //TRANSPOSE
+            vectorizedPipeline<DT>(t_outputs, t_numOutputs, t_isScalar, t_inputs, t_numInputs, t_outRows, t_outCols, t_splits, t_combines, t_numFuncs, t_fun, dctx.get()); 
+            //SQRT
+            sqrt_inputs[0] = t_outputs[0];
+            vectorizedPipeline<DT>(sqrt_outputs, sqrt_numOutputs, sqrt_isScalar, sqrt_inputs, sqrt_numInputs, sqrt_outRows, sqrt_outCols, sqrt_splits, sqrt_combines, sqrt_numFuncs, sqrt_fun, dctx.get()); 
+            return;
+            
+       });
+
+        /*std::cout << "Test" << std::endl;
+        m1->print(std::cout); 
+        t_outputs[0]->print(std::cout); 
+        sqrt_outputs[0]->print(std::cout); 
+        std::cout << "Test" << std::endl;*/
+        DataObjectFactory::destroy(t_outputs[0]);
+        DataObjectFactory::destroy(sqrt_outputs[0]);
+    };
+    DataObjectFactory::destroy(m1);
 }
 
 TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Ops", TAG_VECTORIZED_BENCH, (DenseMatrix), (double)) {
     using DT = TestType;
     using VT = typename DT::VT;
 
+    auto dctx = setupContextAndLogger();
+
+    DT* m1 = nullptr;
+    randMatrix(m1, numRows, numCols, 1.0, 5.0, 1.0, -1, nullptr);
+
     BENCHMARK_ADVANCED("MAIN") (Catch::Benchmark::Chronometer meter) {
-        
-        auto dctx = setupContextAndLogger();
+        // Set up Data
+        //int numRows = 10;
+        //int numCols = 5;
 
-        /* Set up Data */
-
-        int numRows = 1000;
-        int numCols = 1000;
-
-        DT* m1 = nullptr;
-        DT* m2 = nullptr;
-        generateBinaryMatrices<DT, VT>(m1, m2, numRows, numCols, VT(1), VT(2));
-        DT* res = nullptr;
-
-        /* Set up VectorizedPipeline-Kernel */
-
+        // Set up VectorizedPipeline (Fused)
         size_t numOutputs = 1;
         size_t numInputs = 1;
 
         DT** outputs = new DT*[numOutputs];
-        outputs[0] = res;
+        outputs[0] = nullptr;;
         
         bool* isScalar = new bool[numInputs];
         isScalar[0] = false;
@@ -154,10 +209,10 @@ TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Ops", TAG_VECTORIZED_BENC
         Structure** inputs = new Structure*[numInputs];
         inputs[0] = m1;
 
-        int64_t outRows[1] = {numRows};
-        int64_t outCols[1] = {numCols};
+        int64_t outRows[1] = {numCols}; // <- flipped
+        int64_t outCols[1] = {numRows}; // <- flipped
         int64_t splits[1] = {1};
-        int64_t combines[1] = {1};
+        int64_t combines[1] = {2};
 
         size_t numFuncs = 1;
         void (*funPtrs[1])(DT ***, Structure **, DaphneContext*) = {
@@ -165,50 +220,12 @@ TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Ops", TAG_VECTORIZED_BENC
         };
         void **fun = reinterpret_cast<void**>(funPtrs);
 
-        vectorizedPipeline<DT>(outputs, numOutputs, isScalar, inputs, numInputs, outRows, outCols, splits, combines, numFuncs, fun, dctx.get()); 
-
-        /*std::function<void(DT *&res, DT *row, DaphneContext *ctx)> func = [&] (DT*& res, DT* row, DaphneContext* ctx) {
-            ewUnaryMat<DT, DT>(UnaryOpCode::SQRT, res, row, nullptr);
-        }tFused.fusedVectorizedPipeline;
-        }
-
-        /*auto fusedVectorizedPipeline = [](DT *&res, DT *row, DaphneContext *ctx) {
-            std::cout << "Test123" << std::endl;
-            return ewUnaryMat<DT, DT>(UnaryOpCode::SQRT, res, row, ctx);
-        };*/
-
-        //std::function<void(DT*&, DT*, DaphneContext*)> *func = new std::function<void(DT*&, DT*, DaphneContext*)>(fusedVectorizedPipeline);
-
-        //vectorizedPipeline<DT>(outputs, numOutputs, isScalar, inputs, numInputs, outRows, outCols, splits, combines, numFuncs, fun, dctx.get()); 
-
-       /* meter.measure([&m1, &m2, &res]() {
-
-            return vectorizedPipeline<DT>(outputs, numOutputs, isScalar, inputs, numInputs, outRows, outCols, splits, combines numFuncs, fun, nullptr); 
-        });*/
-
-        DataObjectFactory::destroy(m1);
-        DataObjectFactory::destroy(m2);
-        DataObjectFactory::destroy(res);
-    };
-}
-
-/*TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Sequential Pipes", TAG_VECTORIZED_BENCH, (DenseMatrix), (double, uint32_t)) {
-    using DT = TestType;
-    using VT = typename DT::VT;
-
-    BENCHMARK_ADVANCED("MAIN") (Catch::Benchmark::Chronometer meter) {
-        DT* m1 = nullptr;
-        DT* m2 = nullptr;
-        generateBinaryMatrices<DT, VT>(m1, m2, 5000, 5000, VT(1), VT(2));
-        generateBinaryMatrices<DT, VT>(m1, m2, 5000, 5000, VT(1), VT(2));
-        DT* res = nullptr;
-
-        meter.measure([&m1, &m2, &res]() {
-            return ewBinaryMat<DT, DT, DT>(BinaryOpCode::ADD, res, m1, m2, nullptr);
+        meter.measure([&outputs, &numOutputs, &isScalar, &inputs, &numInputs, &outRows, &outCols, &splits, &combines, &numFuncs, &fun, &dctx]() {
+            vectorizedPipeline<DT>(outputs, numOutputs, isScalar, inputs, numInputs, outRows, outCols, splits, combines, numFuncs, fun, dctx.get()); 
+            return;
         });
 
-        DataObjectFactory::destroy(m1);
-        DataObjectFactory::destroy(m2);
-        DataObjectFactory::destroy(res);
+        DataObjectFactory::destroy(outputs[0]);
     };
-}*/
+    DataObjectFactory::destroy(m1);
+}
