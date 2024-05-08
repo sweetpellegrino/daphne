@@ -95,8 +95,8 @@ static void sqrtVectorizedPipeline(DenseMatrix<double> ***res, Structure **rows,
     ewUnaryMat<DenseMatrix<double>, DenseMatrix<double>>(UnaryOpCode::SQRT, _res, _rows, ctx);
 }
 
-int numRows = 2001;
-int numCols = 1999;
+int numRows = 2050;
+int numCols = 1950;
 
 TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Sequential Vec Ops", TAG_VECTORIZED_BENCH, (DenseMatrix), (double)) {
     using DT = TestType;
