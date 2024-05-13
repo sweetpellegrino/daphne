@@ -95,8 +95,56 @@ static void sqrtVectorizedPipeline(DenseMatrix<double> ***res, Structure **rows,
     ewUnaryMat<DenseMatrix<double>, DenseMatrix<double>>(UnaryOpCode::SQRT, _res, _rows, ctx);
 }
 
-int numRows = 2050;
-int numCols = 1950;
+int numRows = 10000;
+int numCols = 10000;
+
+TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Ops", TAG_VECTORIZED_BENCH, (DenseMatrix), (double)) {
+    using DT = TestType;
+    using VT = typename DT::VT;
+
+    auto dctx = setupContextAndLogger();
+
+    DT* m1 = nullptr;
+    randMatrix(m1, numRows, numCols, 1.0, 5.0, 1.0, -1, nullptr);
+
+    BENCHMARK_ADVANCED("MAIN") (Catch::Benchmark::Chronometer meter) {
+        // Set up Data
+        //int numRows = 10;
+        //int numCols = 5;
+
+        // Set up VectorizedPipeline (Fused)
+        size_t numOutputs = 1;
+        size_t numInputs = 1;
+
+        DT** outputs = new DT*[numOutputs];
+        outputs[0] = nullptr;;
+        
+        bool* isScalar = new bool[numInputs];
+        isScalar[0] = false;
+
+        Structure** inputs = new Structure*[numInputs];
+        inputs[0] = m1;
+
+        int64_t outRows[1] = {numCols}; // <- flipped
+        int64_t outCols[1] = {numRows}; // <- flipped
+        int64_t splits[1] = {1};
+        int64_t combines[1] = {2};
+
+        size_t numFuncs = 1;
+        void (*funPtrs[1])(DT ***, Structure **, DaphneContext*) = {
+            fusedVectorizedPipeline
+        };
+        void **fun = reinterpret_cast<void**>(funPtrs);
+
+        meter.measure([&outputs, &numOutputs, &isScalar, &inputs, &numInputs, &outRows, &outCols, &splits, &combines, &numFuncs, &fun, &dctx]() {
+            vectorizedPipeline<DT>(outputs, numOutputs, isScalar, inputs, numInputs, outRows, outCols, splits, combines, numFuncs, fun, dctx.get()); 
+            return;
+        });
+
+        DataObjectFactory::destroy(outputs[0]);
+    };
+    DataObjectFactory::destroy(m1);
+}
 
 TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Sequential Vec Ops", TAG_VECTORIZED_BENCH, (DenseMatrix), (double)) {
     using DT = TestType;
@@ -182,50 +230,3 @@ TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Sequential Vec Ops", TAG_VECTOR
     DataObjectFactory::destroy(m1);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("VectorizedPipeline - Fused Ops", TAG_VECTORIZED_BENCH, (DenseMatrix), (double)) {
-    using DT = TestType;
-    using VT = typename DT::VT;
-
-    auto dctx = setupContextAndLogger();
-
-    DT* m1 = nullptr;
-    randMatrix(m1, numRows, numCols, 1.0, 5.0, 1.0, -1, nullptr);
-
-    BENCHMARK_ADVANCED("MAIN") (Catch::Benchmark::Chronometer meter) {
-        // Set up Data
-        //int numRows = 10;
-        //int numCols = 5;
-
-        // Set up VectorizedPipeline (Fused)
-        size_t numOutputs = 1;
-        size_t numInputs = 1;
-
-        DT** outputs = new DT*[numOutputs];
-        outputs[0] = nullptr;;
-        
-        bool* isScalar = new bool[numInputs];
-        isScalar[0] = false;
-
-        Structure** inputs = new Structure*[numInputs];
-        inputs[0] = m1;
-
-        int64_t outRows[1] = {numCols}; // <- flipped
-        int64_t outCols[1] = {numRows}; // <- flipped
-        int64_t splits[1] = {1};
-        int64_t combines[1] = {2};
-
-        size_t numFuncs = 1;
-        void (*funPtrs[1])(DT ***, Structure **, DaphneContext*) = {
-            fusedVectorizedPipeline
-        };
-        void **fun = reinterpret_cast<void**>(funPtrs);
-
-        meter.measure([&outputs, &numOutputs, &isScalar, &inputs, &numInputs, &outRows, &outCols, &splits, &combines, &numFuncs, &fun, &dctx]() {
-            vectorizedPipeline<DT>(outputs, numOutputs, isScalar, inputs, numInputs, outRows, outCols, splits, combines, numFuncs, fun, dctx.get()); 
-            return;
-        });
-
-        DataObjectFactory::destroy(outputs[0]);
-    };
-    DataObjectFactory::destroy(m1);
-}
