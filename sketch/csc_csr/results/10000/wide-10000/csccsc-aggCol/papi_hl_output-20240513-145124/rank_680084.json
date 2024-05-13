@@ -1,0 +1,45 @@
+{
+  "papi_version":"7.0.1.0",
+  "cpu_info":"Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz",
+  "max_cpu_rate_mhz":"3900",
+  "min_cpu_rate_mhz":"1200",
+  "event_definitions":{
+    "perf::CYCLES":{
+      "component":"perf_event",
+      "type":"delta"
+    },
+    "perf::INSTRUCTIONS":{
+      "component":"perf_event",
+      "type":"delta"
+    },
+    "perf::CACHE-REFERENCES":{
+      "component":"perf_event",
+      "type":"delta"
+    },
+    "perf::CACHE-MISSES":{
+      "component":"perf_event",
+      "type":"delta"
+    },
+    "perf::BRANCHES":{
+      "component":"perf_event",
+      "type":"delta"
+    }
+  },
+  "threads":{
+    "0":{
+      "regions":{
+        "0":{
+          "name":"computation",
+          "parent_region_id":"-1",
+          "cycles":"96199798",
+          "real_time_nsec":"26062181",
+          "perf::CYCLES":"72214418",
+          "perf::INSTRUCTIONS":"113433167",
+          "perf::CACHE-REFERENCES":"167830",
+          "perf::CACHE-MISSES":"147511",
+          "perf::BRANCHES":"30606324"
+        }
+      }
+    }
+  }
+}
