@@ -387,7 +387,14 @@ public:
 
     CSRMatrix* sliceCol(size_t cl, size_t cu) const override {
         // TODO add boundary validation when implementing
-        throw std::runtime_error("CSRMatrix does not support sliceCol yet");
+        assert(cl <= cu && "assert failed");
+
+        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>( numRows, cu - cl, maxNumNonZeros);
+        for (int i = 0; i < numCols; i++) {
+            
+        }
+
+        return sliced;
     }
 
     CSRMatrix* slice(size_t rl, size_t ru, size_t cl, size_t cu) const override {

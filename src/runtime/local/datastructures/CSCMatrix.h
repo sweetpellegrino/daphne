@@ -231,7 +231,6 @@ public:
   //**************************************************
 
 
-
   // get matrix cell by coordinates
   ValueType get(size_t rowIdx, size_t colIdx) const override {
     // Get the starting and ending pointers for the specified column
@@ -392,9 +391,18 @@ public:
 
 
 
-  CSCMatrix* sliceRow(size_t cl, size_t cu) const override {
+  CSCMatrix* sliceRow(size_t rl, size_t ru) const override {
       //return DataObjectFactory::create<CSCMatrix>(this, rl, ru);
-      throw std::runtime_error("CSCMatrix does not support sliceRow yet");
+      assert(rl <= ru && "assert failed");
+
+      //Should really be a CSC?
+      CSCMatrix * sliced = DataObjectFactory::create<CSCMatrix>(ru - rl, numCols, maxNumNonZeros);
+      for (int i = 0; i < numCols; i++) {
+      }
+
+      return sliced;
+
+      //throw std::runtime_error("CSCMatrix does not support sliceRow yet");
   }
 
   CSCMatrix* sliceCol(size_t cl, size_t cu) const override {
