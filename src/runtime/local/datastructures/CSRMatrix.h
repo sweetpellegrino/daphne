@@ -389,12 +389,35 @@ public:
         // TODO add boundary validation when implementing
         assert(cl <= cu && "assert failed");
 
-        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>( numRows, cu - cl, maxNumNonZeros);
-        for (int i = 0; i < numCols; i++) {
-            
-        }
+        size_t kk = 0;
+        size_t numNewCols = cu - cl;
 
-        return sliced;
+        //CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>( this->numRows, numNewCols, this->maxNumNonZeros, false);
+
+        /*size_t toAllocate = maxNumNonZeros;
+        if(maxNumNonZeros > (numRows*numNewCols))
+            toAllocate = (numRows*numNewCols);*/
+
+        ValueType values[this->maxNumNonZeros] = {0}; 
+        size_t colIdxs[this->maxNumNonZeros] = {0};
+        size_t rowOffsets[this->numRowsAllocated] = {0};
+        
+        for(size_t i = 0; i < this->numRowsAllocated; i++){
+            std::cout << "I: " << i << std::endl;
+            for(size_t jj = 0; jj < this->numCols; jj++){
+                std::cout << "JJ: " << jj << std::endl;
+                if ((this->colIdxs.get()[jj] >= cl) && (this->colIdxs.get()[jj] < cu)) {
+                    colIdxs[kk]     = this->colIdxs.get()[jj];
+                    rowOffsets[kk]  = this->values.get()[jj];
+                    kk++;
+                }
+            }
+            std::cout << "K: " << kk << std::endl;
+            rowOffsets[i+1] = kk;
+        }
+        //CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>();
+        
+        return nullptr;
     }
 
     CSRMatrix* slice(size_t rl, size_t ru, size_t cl, size_t cu) const override {

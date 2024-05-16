@@ -17,6 +17,8 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_SLICECOL_H
 #define SRC_RUNTIME_LOCAL_KERNELS_SLICECOL_H
 
+#include "runtime/local/datastructures/CSRMatrix.h"
+#include "runtime/local/io/DaphneFile.h"
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -93,5 +95,19 @@ struct SliceCol<Frame, Frame, VTSel> {
         res = arg->sliceCol(lowerIncl, upperExcl);
     }        
 };
+
+// ----------------------------------------------------------------------------
+// CSRMatrix <- CSRMatrix
+// ----------------------------------------------------------------------------
+
+template<typename VTArg, typename VTSel>
+struct SliceCol<CSRMatrix<VTArg>, CSRMatrix<VTArg>, VTSel> {
+    static void apply(CSRMatrix<VTArg> *& res, const CSRMatrix<VTArg> * arg, const VTSel lowerIncl, const VTSel upperExcl, DCTX(ctx)) {
+        const size_t numColsArg = arg->getNumCols();
+        validateArgsSliceCol(lowerIncl, upperExcl, numColsArg);
+        res = arg->sliceCol(lowerIncl, upperExcl);
+    }        
+};
+
 
 #endif //SRC_RUNTIME_LOCAL_KERNELS_SLICECOL_H

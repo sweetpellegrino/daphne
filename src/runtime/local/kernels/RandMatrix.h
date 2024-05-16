@@ -39,7 +39,7 @@
 
 template<class DTRes, typename VTArg>
 struct RandMatrix {
-    static void apply(DTRes *& res, size_t numRows, size_t numCols, VTArg min, VTArg max, double sparsity, int64_t seed, DCTX(ctx)) = delete;
+    static void apply(DTRes *& res, size_t numRows, size_t numCols, VTArg min, VTArg max, double sparsity, int64_t seed, DCTX(ctx));
 };
 
 // ****************************************************************************

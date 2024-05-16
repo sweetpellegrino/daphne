@@ -50,5 +50,6 @@
 #define TAG_DAPHNELIB "[daphnelib]"
 #define TAG_SPARSEMATRIX_BENCH "[.sparse-bench]" //<-- only run when explicity requested
 #define TAG_VECTORIZED_BENCH "[.vec-bench]" //<-- only run when explicity requested
+#define TAG_SLICEMATRIX_BENCH "[.slice-bench]" //<-- only run when explicity requested
 
 #endif //TEST_TAGS_H

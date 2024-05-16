@@ -1,10 +1,8 @@
-n = rand($dim, $dim, 1.0, 2.0, 1.0, -1); //123457
+n = rand($dim*50, $dim/50, 1.0, 2.0, 1.0, -1);
 
-y=n;
-print(y);
-
-y = y[2:4,4:5];
-print(y);
+startProfiling();
+y = sqrt(n);
+stopProfiling();
 
 t = aggMax(y);
 print(t);

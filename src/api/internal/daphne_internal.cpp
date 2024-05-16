@@ -195,6 +195,13 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
             ),
             init(1)
     );
+    static opt<int> batchSize(
+            "batchSize", cat(schedulingOptions),
+            desc(
+                "batchSize"
+            ),
+            init(-1)
+    );
     static opt<bool> useVectorizedPipelines(
             "vec", cat(schedulingOptions),
             desc("Enable vectorized execution engine")
@@ -416,6 +423,7 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
         user_config.numberOfThreads = numberOfThreads;
     }
 
+    user_config.batchSize = batchSize;
     user_config.minimumTaskSize = minimumTaskSize; 
     user_config.pinWorkers = pinWorkers;
     user_config.hyperthreadingEnabled = hyperthreadingEnabled;

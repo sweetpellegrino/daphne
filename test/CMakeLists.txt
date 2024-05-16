@@ -146,6 +146,7 @@ set(TEST_SOURCES
 
         bench/SparseMatrixMB.cpp
         bench/SplitCombineMB.cpp
+        bench/SliceMatrixMB.cpp
 
 #        runtime/local/kernels/Morphstore/ProjectTest.cpp
 )

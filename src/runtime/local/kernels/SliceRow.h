@@ -17,6 +17,7 @@
 #ifndef SRC_RUNTIME_LOCAL_KERNELS_SLICEROW_H
 #define SRC_RUNTIME_LOCAL_KERNELS_SLICEROW_H
 
+#include "runtime/local/datastructures/CSRMatrix.h"
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
@@ -88,6 +89,19 @@ struct SliceRow<DenseMatrix<VTArg>, DenseMatrix<VTArg>, VTSel> {
 template <typename VTSel>
 struct SliceRow<Frame, Frame, VTSel> {
     static void apply(Frame *& res, const Frame * arg, const VTSel lowerIncl, const VTSel upperExcl, DCTX(ctx)) {
+        const size_t numRowsArg = arg->getNumRows();
+        validateArgsSliceRow(lowerIncl, upperExcl, numRowsArg);
+        res = arg->sliceRow(lowerIncl, upperExcl);
+    }        
+};
+
+// ----------------------------------------------------------------------------
+// CSRMatrix <- CSRMatrix
+// ----------------------------------------------------------------------------
+
+template<typename VTArg, typename VTSel>
+struct SliceRow<CSRMatrix<VTArg>, CSRMatrix<VTArg>, VTSel> {
+    static void apply(CSRMatrix<VTArg> *& res, const CSRMatrix<VTArg> * arg, const VTSel lowerIncl, const VTSel upperExcl, DCTX(ctx)) {
         const size_t numRowsArg = arg->getNumRows();
         validateArgsSliceRow(lowerIncl, upperExcl, numRowsArg);
         res = arg->sliceRow(lowerIncl, upperExcl);
