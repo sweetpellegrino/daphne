@@ -32,7 +32,7 @@
           "name":"computation",
           "parent_region_id":"-1",
           "cycles":"3138969",
-          "real_time_nsec":"845709",
+          "real_time_nsec":"84570",
           "perf::CYCLES":"101969",
           "perf::INSTRUCTIONS":"48086",
           "perf::CACHE-REFERENCES":"1631",
