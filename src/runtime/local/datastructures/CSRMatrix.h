@@ -392,15 +392,20 @@ public:
         size_t kk = 0;
         size_t numNewCols = cu - cl;
 
-        //CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>( this->numRows, numNewCols, this->maxNumNonZeros, false);
+        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>( this->numRows, numNewCols, this->maxNumNonZeros, true);
 
         /*size_t toAllocate = maxNumNonZeros;
         if(maxNumNonZeros > (numRows*numNewCols))
             toAllocate = (numRows*numNewCols);*/
 
-        ValueType values[this->maxNumNonZeros] = {0}; 
-        size_t colIdxs[this->maxNumNonZeros] = {0};
-        size_t rowOffsets[this->numRowsAllocated] = {0};
+
+
+        //ValueType values[this->maxNumNonZeros] = {0}; 
+        //size_t colIdxs[this->maxNumNonZeros] = {0};
+        //size_t rowOffsets[this->numRowsAllocated] = {0};
+        ValueType *values   = sliced->values.get();
+        size_t *colIdxs     = sliced->colIdxs.get();
+        size_t *rowOffsets  = sliced->rowOffsets.get();
         
         for(size_t i = 0; i < this->numRowsAllocated; i++){
             std::cout << "I: " << i << std::endl;
@@ -408,7 +413,7 @@ public:
                 std::cout << "JJ: " << jj << std::endl;
                 if ((this->colIdxs.get()[jj] >= cl) && (this->colIdxs.get()[jj] < cu)) {
                     colIdxs[kk]     = this->colIdxs.get()[jj];
-                    rowOffsets[kk]  = this->values.get()[jj];
+                    values[kk]  = this->values.get()[jj];
                     kk++;
                 }
             }
@@ -417,7 +422,7 @@ public:
         }
         //CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>();
         
-        return nullptr;
+        return sliced;
     }
 
     CSRMatrix* slice(size_t rl, size_t ru, size_t cl, size_t cu) const override {

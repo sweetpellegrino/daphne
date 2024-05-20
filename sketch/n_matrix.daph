@@ -1,8 +1,6 @@
-n = rand($dim*50, $dim/50, 1.0, 2.0, 1.0, -1);
+n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 
-startProfiling();
 y = sqrt(n);
-stopProfiling();
 
 t = aggMax(y);
 print(t);

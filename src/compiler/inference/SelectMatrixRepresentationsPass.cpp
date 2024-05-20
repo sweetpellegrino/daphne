@@ -53,7 +53,6 @@ public:
                         if(auto matTy = res.getType().dyn_cast<daphne::MatrixType>()) {
                             const double sparsity = matTy.getSparsity();
                             // TODO: set threshold by user
-
                             auto fileLoc = op->getLoc().dyn_cast<mlir::FileLineColLoc>();
                             int isOdd = fileLoc.getLine() % 2;
 
@@ -220,8 +219,9 @@ public:
 
     static bool returnsKnownProperties(Operation *op) {
         return llvm::any_of(op->getResultTypes(), [](Type rt) {
-            if(auto mt = rt.dyn_cast<daphne::MatrixType>())
-                return mt.getSparsity() != -1.0;
+            if(auto mt = rt.dyn_cast<daphne::MatrixType>()) {
+                return true; //mt.getSparsity() != -1.0;
+            }
             return false;
         });
     }

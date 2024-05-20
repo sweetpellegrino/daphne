@@ -59,7 +59,7 @@ for i, (key, value) in enumerate(values.items()):
         df = pd.DataFrame(np.array(metrics).T, columns=agg_names)
         ax1 = axes[j]
         df.boxplot(column=list(agg_names), grid=True, ax=ax1)
-        #ax1.set_ylim(ymin=0)
+        ax1.set_ylim(ymin=0)
         ax1.set_title(f'{key3}')
         ax1.set_xlabel(f'x data')
         ax1.set_ylabel(f'{unit[j]}')

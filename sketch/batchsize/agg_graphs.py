@@ -90,7 +90,7 @@ for j, key3 in enumerate(_moi.keys()):
         ax1.fill_between(x, lower_bound, upper_bound)
         #ax1.plot(x2, y3, color="grey")
         
-        #ax1.set_ylim(ymin=0)
+        ax1.set_ylim(ymin=0)
         ax1.set_title(f'{key3}')
         ax1.set_xlabel(f'x data')
         ax1.set_ylabel(f'{unit[j]}')
