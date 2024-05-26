@@ -386,48 +386,55 @@ public:
     }
 
     CSRMatrix* sliceCol(size_t cl, size_t cu) const override {
-        // TODO add boundary validation when implementing
-        assert(cl <= cu && "assert failed");
+        return this->slice(0, this->numCols, cl, cu);
+    }
 
-        size_t kk = 0;
-        size_t numNewCols = cu - cl;
+    CSRMatrix* slice(size_t rl, size_t ru, size_t cl, size_t cu) const override {
+        assert((rl < this->numRows) && "rowLowerIncl is out of bounds");
+        assert((rl <= this->numRows) && "rowUpperExcl is out of bounds");
+        assert((rl < ru) && "rowLowerIncl must be lower than rowUpperExcl");
+        
+        assert(cl < this->numCols && "colLowerIncl is out of bounds");
+        assert(cu <= this->numCols && "colUpperExcl is out of bounds");
+        assert(cl < cu && "colLowerIncl must be lower than colUpperExcl");
 
-        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>( this->numRows, numNewCols, this->maxNumNonZeros, true);
+        size_t newNumCols = cu - cl;
+        size_t newNumRows = ru - rl;
+        size_t newMaxNumNonZeros = 0;
 
-        /*size_t toAllocate = maxNumNonZeros;
-        if(maxNumNonZeros > (numRows*numNewCols))
-            toAllocate = (numRows*numNewCols);*/
+        // Identify zeroes
+        for(size_t i = 0; i < newNumRows; i++) {
+            size_t row_start = this->rowOffsets.get()[rl+i];
+            size_t row_end = this->rowOffsets.get()[rl+i+1];
+            for(size_t j = row_start; j < row_end; j++){
+                if ((this->colIdxs.get()[j] >= cl) && (this->colIdxs.get()[j] < cu)) {
+                    newMaxNumNonZeros++;
+                }
+            }
+        }
 
+        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>(newNumRows, newNumCols, newMaxNumNonZeros, true);
 
-
-        //ValueType values[this->maxNumNonZeros] = {0}; 
-        //size_t colIdxs[this->maxNumNonZeros] = {0};
-        //size_t rowOffsets[this->numRowsAllocated] = {0};
         ValueType *values   = sliced->values.get();
         size_t *colIdxs     = sliced->colIdxs.get();
         size_t *rowOffsets  = sliced->rowOffsets.get();
         
-        for(size_t i = 0; i < this->numRowsAllocated; i++){
-            std::cout << "I: " << i << std::endl;
-            for(size_t jj = 0; jj < this->numCols; jj++){
-                std::cout << "JJ: " << jj << std::endl;
-                if ((this->colIdxs.get()[jj] >= cl) && (this->colIdxs.get()[jj] < cu)) {
-                    colIdxs[kk]     = this->colIdxs.get()[jj];
-                    values[kk]  = this->values.get()[jj];
-                    kk++;
+        size_t nzCount = 0;
+        for(size_t i_row = 0; i_row < this->numRows; i_row++){
+            size_t row_start = this->rowOffsets.get()[rl+i_row];
+            size_t row_end = this->rowOffsets.get()[rl+i_row+1];
+            for(size_t i_col = row_start; i_col < row_end; i_col++){
+                if ((this->colIdxs.get()[i_col] >= cl) && (this->colIdxs.get()[i_col] < cu)) {
+                    colIdxs[nzCount] = this->colIdxs.get()[i_col] - cl;
+                    values[nzCount]  = this->values.get()[i_col];
+                    nzCount++;
                 }
             }
-            std::cout << "K: " << kk << std::endl;
-            rowOffsets[i+1] = kk;
+            rowOffsets[i_row+1] = nzCount;
         }
-        //CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>();
-        
-        return sliced;
-    }
 
-    CSRMatrix* slice(size_t rl, size_t ru, size_t cl, size_t cu) const override {
-        // TODO add boundary validation when implementing
-        throw std::runtime_error("CSRMatrix does not support slice yet");
+        return sliced;
+
     }
 
     size_t bufferSize() {

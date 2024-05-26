@@ -3,7 +3,9 @@ n = rand($dim, $dim, 1.0, 2.0, 1.0, -1); //123457
 y=n;
 print(y);
 
-y = y[1:5,1:5];
+y = y[1:5,:];
+print(y);
+y = y[:,1:5];
 print(y);
 
 t = aggMax(y);

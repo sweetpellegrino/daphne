@@ -16,6 +16,7 @@
 
 #include "run_tests.h"
 #include "runtime/local/kernels/SliceCol.h"
+#include "runtime/local/kernels/SliceRow.h"
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/kernels/UnaryOpCode.h>
 #include <runtime/local/datagen/GenGivenVals.h>
@@ -36,44 +37,40 @@
 #include <runtime/local/kernels/RandMatrix.h>
 #include <papi.h>
 
-
-// TODO: use Fill kernel
-template<class DT, typename VT>
-void fillMatrix(DT *& m, size_t numRows, size_t numCols, VT val) {
-
-    m = DataObjectFactory::create<DT>(numRows, numCols, false);
-
-    VT * values = m->getValues();
-    const size_t numCells = numRows * numCols;
-
-    // Fill the matrix with ones of the respective value type.
-    for(size_t i = 0; i < numCells; i++)
-        values[i] = 1;
-
-}
-
 // ****************************************************************************
 // ewBinaryMat
 // ****************************************************************************
-
-template<class DT,typename VT>
-void generateBinaryMatrices(DT *& m1, DT *& m2, size_t numRows, size_t numCols, VT val1, VT val2) {
-    fillMatrix<DT, VT>(m1, numRows, numCols, val1);
-    fillMatrix<DT, VT>(m2, numRows, numCols, val2);
-}
 
 TEMPLATE_PRODUCT_TEST_CASE("", TAG_SLICEMATRIX_BENCH, (CSRMatrix), (double)) {
     using DT = TestType;
     using VT = typename DT::VT;
 
-    auto dctx = setupContextAndLogger();
+    //auto dctx = setupContextAndLogger();
 
-    DT* m1 = nullptr;
-    randMatrix(m1, 5, 5, 1.0, 5.0, 0.3, -1, nullptr);
-    m1->print(std::cout); 
+    BENCHMARK_ADVANCED("sliceCol (sym)") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        randMatrix(m1, 1000, 1000, 1.0, 2.0, 0.3, -1, nullptr);
+        DT* res = nullptr;
 
-    DT* res = nullptr;
-    sliceCol<DT, DT, size_t>(res, m1, 0, 3, nullptr);
-    m1->print(std::cout); 
-    res->print(std::cout); 
+        meter.measure([&m1, &res]() {
+            return sliceCol<DT, DT, size_t>(res, m1, 101, 599, nullptr); 
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("sliceRow (sym)") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        randMatrix(m1, 1000, 1000, 1.0, 2.0, 0.3, -1, nullptr);
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return sliceRow<DT, DT, size_t>(res, m1, 101, 599, nullptr); 
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
 }
