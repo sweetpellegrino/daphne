@@ -169,6 +169,7 @@ public:
         return rowOffsets.get()[rowIdx + 1] - rowOffsets.get()[rowIdx];
     }
 
+    //TODO
     void shrinkNumNonZeros(size_t numNonZeros) {
         assert((numNonZeros <= getNumNonZeros()) && "numNonZeros can only be shrinked");
         // TODO Here we could reduce the allocated size of the values and
@@ -402,18 +403,50 @@ public:
         size_t newNumRows = ru - rl;
         size_t newMaxNumNonZeros = 0;
 
-        // Identify zeroes
+        // Identify non-zeroes
+        // Binary search
+        // Two linear search front to back, back to front
         for(size_t i = 0; i < newNumRows; i++) {
             size_t row_start = this->rowOffsets.get()[rl+i];
             size_t row_end = this->rowOffsets.get()[rl+i+1];
             for(size_t j = row_start; j < row_end; j++){
                 if ((this->colIdxs.get()[j] >= cl) && (this->colIdxs.get()[j] < cu)) {
                     newMaxNumNonZeros++;
+                } else {
+                    break;
                 }
             }
         }
 
-        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>(newNumRows, newNumCols, newMaxNumNonZeros, true);
+        /*for(size_t i = 0; i < newNumRows; i++) {
+            size_t row_start = this->rowOffsets.get()[rl+i];
+            size_t row_end = this->rowOffsets.get()[rl+i+1];
+
+            size_t lower_bound = row_start;
+            size_t upper_bound = row_end;
+            while (lower_bound < upper_bound) {
+                size_t mid = (lower_bound + upper_bound) / 2;
+                if (this->colIdxs.get()[mid] < cl) {
+                    lower_bound = mid + 1;
+                } else {
+                    upper_bound = mid;
+                }
+            }
+
+            size_t upper = row_start;
+            upper_bound = row_end;
+            while (upper < upper_bound) {
+                size_t mid = (upper + upper_bound) / 2;
+                if (this->colIdxs.get()[mid] <= cu) {
+                    upper = mid + 1;
+                } else {
+                    upper_bound = mid;
+                }
+            }
+            newMaxNumNonZeros = newMaxNumNonZeros + (upper - lower_bound);
+        }*/
+
+        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>(newNumRows, newNumCols, this->maxNumNonZeros, true);
 
         ValueType *values   = sliced->values.get();
         size_t *colIdxs     = sliced->colIdxs.get();

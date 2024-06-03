@@ -47,9 +47,12 @@ TEMPLATE_PRODUCT_TEST_CASE("", TAG_SLICEMATRIX_BENCH, (CSRMatrix), (double)) {
 
     //auto dctx = setupContextAndLogger();
 
+    int numRows = 1000;
+    int numCols = 1000;
+
     BENCHMARK_ADVANCED("sliceCol (sym)") (Catch::Benchmark::Chronometer meter) {
         DT* m1 = nullptr;
-        randMatrix(m1, 1000, 1000, 1.0, 2.0, 0.3, -1, nullptr);
+        randMatrix(m1, numRows, numCols, 1.0, 2.0, 0.3, -1, nullptr);
         DT* res = nullptr;
 
         meter.measure([&m1, &res]() {
@@ -62,11 +65,50 @@ TEMPLATE_PRODUCT_TEST_CASE("", TAG_SLICEMATRIX_BENCH, (CSRMatrix), (double)) {
 
     BENCHMARK_ADVANCED("sliceRow (sym)") (Catch::Benchmark::Chronometer meter) {
         DT* m1 = nullptr;
-        randMatrix(m1, 1000, 1000, 1.0, 2.0, 0.3, -1, nullptr);
+        randMatrix(m1,numRows, numCols, 1.0, 2.0, 0.3, -1, nullptr);
         DT* res = nullptr;
 
         meter.measure([&m1, &res]() {
             return sliceRow<DT, DT, size_t>(res, m1, 101, 599, nullptr); 
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("sliceCol (sym) tiny slice") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        randMatrix(m1, numRows, numCols, 1.0, 2.0, 0.3, -1, nullptr);
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return sliceCol<DT, DT, size_t>(res, m1, 1, 5, nullptr); 
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("sliceCol (sym) small slice") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        randMatrix(m1,numRows, numCols, 1.0, 2.0, 0.3, -1, nullptr);
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return sliceCol<DT, DT, size_t>(res, m1, 10, 50, nullptr); 
+        });
+
+        DataObjectFactory::destroy(m1);
+        DataObjectFactory::destroy(res);
+    };
+
+    BENCHMARK_ADVANCED("sliceCol (sym) big slice") (Catch::Benchmark::Chronometer meter) {
+        DT* m1 = nullptr;
+        randMatrix(m1,numRows, numCols, 1.0, 2.0, 0.3, -1, nullptr);
+        DT* res = nullptr;
+
+        meter.measure([&m1, &res]() {
+            return sliceCol<DT, DT, size_t>(res, m1, 0, 1000, nullptr); 
         });
 
         DataObjectFactory::destroy(m1);
