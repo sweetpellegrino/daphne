@@ -403,7 +403,7 @@ public:
         size_t newNumRows = ru - rl;
         size_t newMaxNumNonZeros = 0;
 
-        // Identify non-zeroes
+        // TODO: Identify non-zeroes
         // Binary search
         // Two linear search front to back, back to front
         for(size_t i = 0; i < newNumRows; i++) {
@@ -412,9 +412,7 @@ public:
             for(size_t j = row_start; j < row_end; j++){
                 if ((this->colIdxs.get()[j] >= cl) && (this->colIdxs.get()[j] < cu)) {
                     newMaxNumNonZeros++;
-                } else {
-                    break;
-                }
+                } 
             }
         }
 
@@ -446,11 +444,11 @@ public:
             newMaxNumNonZeros = newMaxNumNonZeros + (upper - lower_bound);
         }*/
 
-        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>(newNumRows, newNumCols, this->maxNumNonZeros, true);
+        CSRMatrix * sliced = DataObjectFactory::create<CSRMatrix>(newNumRows, newNumCols, newMaxNumNonZeros, true);
 
-        ValueType *values   = sliced->values.get();
-        size_t *colIdxs     = sliced->colIdxs.get();
-        size_t *rowOffsets  = sliced->rowOffsets.get();
+        ValueType *_values   = sliced->values.get();
+        size_t *_colIdxs     = sliced->colIdxs.get();
+        size_t *_rowOffsets  = sliced->rowOffsets.get();
         
         size_t nzCount = 0;
         for(size_t i_row = 0; i_row < this->numRows; i_row++){
@@ -458,12 +456,12 @@ public:
             size_t row_end = this->rowOffsets.get()[rl+i_row+1];
             for(size_t i_col = row_start; i_col < row_end; i_col++){
                 if ((this->colIdxs.get()[i_col] >= cl) && (this->colIdxs.get()[i_col] < cu)) {
-                    colIdxs[nzCount] = this->colIdxs.get()[i_col] - cl;
-                    values[nzCount]  = this->values.get()[i_col];
+                    _colIdxs[nzCount] = this->colIdxs.get()[i_col] - cl;
+                    _values[nzCount]  = this->values.get()[i_col];
                     nzCount++;
                 }
             }
-            rowOffsets[i_row+1] = nzCount;
+            _rowOffsets[i_row+1] = nzCount;
         }
 
         return sliced;

@@ -1,0 +1,16 @@
+n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
+
+y = n * 5;
+
+if(aggMax(n) < 1.5 ) {
+    y = sqrt(n);
+}
+else if(aggMax(n) > 1.75) {
+    y = n + n;
+}
+else {
+    y = [1.0];
+}
+
+t = aggMax(y);
+print(t);

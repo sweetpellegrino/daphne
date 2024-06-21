@@ -176,7 +176,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));
     
     //std::cerr << "--- GRAPH AFTER VEC ---" << std::endl;
-    //pm.addPass(mlir::createPrintOpGraphPass());
+    pm.addPass(mlir::createPrintOpGraphPass());
 
     if (userConfig_.use_distributed)
         pm.addPass(mlir::daphne::createDistributePipelinesPass());

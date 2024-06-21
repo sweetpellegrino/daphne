@@ -4,3 +4,4 @@ y = sqrt(n);
 
 t = aggMax(y);
 print(t);
+
