@@ -25,16 +25,16 @@ const std::string dirPath = "test/codegen/";
 
 // Place all test files with FileCheck directives in the dirPath.
 // LIT will test all *.mlir files in the directory.
-TEST_CASE("codegen", TAG_CODEGEN) {
+TEST_CASE("codegen", TAG_CODEGEN TAG_MATMUL) {
     std::stringstream out;
     std::stringstream err;
 
     int status = runLIT(out, err, dirPath);
 
-#ifndef NDEBUG
+
     spdlog::info("runLIT return status: " + std::to_string(status));
     spdlog::info("runLIT out:\n" + out.str());
     spdlog::info("runLIT err:\n" + err.str());
-#endif
+
     CHECK(status == StatusCode::SUCCESS);
 }

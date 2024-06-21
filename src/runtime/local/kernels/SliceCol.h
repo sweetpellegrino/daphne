@@ -23,6 +23,7 @@
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
 #include <runtime/local/datastructures/Frame.h>
+#include <runtime/local/datastructures/Matrix.h>
 #include <runtime/local/datastructures/ValueTypeCode.h>
 #include <runtime/local/datastructures/ValueTypeUtils.h>
 
@@ -109,5 +110,27 @@ struct SliceCol<CSRMatrix<VTArg>, CSRMatrix<VTArg>, VTSel> {
     }        
 };
 
+
+// ----------------------------------------------------------------------------
+// Matrix <- Matrix
+// ----------------------------------------------------------------------------
+
+template<typename VTArg, typename VTSel>
+struct SliceCol<Matrix<VTArg>, Matrix<VTArg>, VTSel> {
+    static void apply(Matrix<VTArg> *& res, const Matrix<VTArg> * arg, const VTSel lowerIncl, const VTSel upperExcl, DCTX(ctx)) {
+        const size_t numRowsArg = arg->getNumRows();
+        const size_t numColsRes = static_cast<size_t>(upperExcl - lowerIncl);
+        validateArgsSliceCol(lowerIncl, upperExcl, arg->getNumCols());
+
+        if (res == nullptr)
+            res = DataObjectFactory::create<DenseMatrix<VTArg>>(numRowsArg, numColsRes, false);
+
+        res->prepareAppend();
+        for (size_t r = 0; r < numRowsArg; ++r)
+            for (size_t c = 0; c < numColsRes; ++c)
+                res->append(r, c, arg->get(r, static_cast<const size_t>(lowerIncl) + c));
+        res->finishAppend();
+    }        
+};
 
 #endif //SRC_RUNTIME_LOCAL_KERNELS_SLICECOL_H

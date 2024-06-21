@@ -18,6 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <ir/daphneir/Daphne.h>
 #include <ir/daphneir/Passes.h>
+#include <util/ErrorHandler.h>
 
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/IR/Operation.h>

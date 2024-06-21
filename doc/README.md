@@ -1,6 +1,5 @@
 # Overview
 
-- [Quickstart](/doc/Quickstart.md)
 - [Getting Started](/doc/GettingStarted.md)
 
 ## User Documentation
@@ -17,6 +16,7 @@
 - [A Few Early Example Algorithms in DaphneDSL](/scripts/algorithms/)
 - [FileMetaData Format (reading and writing data)](/doc/FileMetaDataFormat.md)
 - [Profiling DAPHNE using PAPI](/doc/Profiling.md)
+- [Custom Extensions to DAPHNE](/doc/Extensions.md)
 
 ## Developer Documentation
 
@@ -34,6 +34,7 @@
 - [Building DAPHNE with the build.sh script](/doc/development/BuildingDaphne.md)
 - [Logging in DAPHNE](/doc/development/Logging.md)
 - [Profiling in DAPHNE](/doc/development/Profiling.md)
+- [Testing](/doc/development/Testing.md)
 
 ### Source Code Documentation
 

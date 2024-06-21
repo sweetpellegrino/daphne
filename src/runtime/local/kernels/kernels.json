@@ -650,6 +650,8 @@
             [["DenseMatrix", "uint32_t"], "double"],
             [["DenseMatrix", "uint8_t"], "double"], 
 
+            [["DenseMatrix", "float"], "float"],
+
             [["DenseMatrix", "double"], "int64_t"],
             [["DenseMatrix", "float"], "int64_t"],
             [["DenseMatrix", "int64_t"], "int64_t"],
@@ -658,6 +660,20 @@
             [["DenseMatrix", "uint64_t"], "int64_t"],
             [["DenseMatrix", "uint32_t"], "int64_t"],
             [["DenseMatrix", "uint8_t"], "int64_t"], 
+
+            [["DenseMatrix", "int32_t"], "int32_t"],
+
+            [["DenseMatrix", "int8_t"], "int8_t"],
+
+            [["DenseMatrix", "uint64_t"], "uint64_t"],
+
+            [["DenseMatrix", "uint32_t"], "uint32_t"],
+
+            [["DenseMatrix", "uint8_t"], "uint8_t"], 
+
+            [["DenseMatrix", "int64_t"], "size_t"],
+
+            [["DenseMatrix", "bool"], "bool"],
 
             ["Frame", "double"],
             ["Frame", "int64_t"]
@@ -720,13 +736,9 @@
         "kernelTemplate": {
             "header": "StringEq.h",
             "opName": "stringEq",
-            "returnType": "void",
+            "returnType": "bool",
             "templateParams": [],
             "runtimeParams": [
-                {
-                    "type": "bool *",
-                    "name": "res"
-                },
                 {
                     "type": "const char *",
                     "name": "lhs"
@@ -780,6 +792,14 @@
                 {
                     "type": "uint64_t",
                     "name": "configPtr"
+                },
+                {
+                    "type": "uint64_t",
+                    "name": "dispatchMappingPtr"
+                },
+                {
+                    "type": "uint64_t",
+                    "name": "statisticsPtr"
                 }
             ]
         },
@@ -1618,7 +1638,8 @@
                     [["DenseMatrix", "double"], "double"],
                     [["DenseMatrix", "int64_t"], "int64_t"],
                     [["DenseMatrix", "uint64_t"], "uint64_t"],
-                    [["DenseMatrix", "uint8_t"], "uint8_t"]]
+                    [["DenseMatrix", "uint8_t"], "uint8_t"],
+                    [["DenseMatrix", "bool"], "bool"]]
             }
         ]
     },
@@ -1649,7 +1670,10 @@
             [["DenseMatrix", "float"]],
             [["DenseMatrix", "double"]],
             [["DenseMatrix", "int64_t"]],
+            [["DenseMatrix", "int32_t"]],
+            [["DenseMatrix", "int8_t"]],
             [["DenseMatrix", "uint64_t"]],
+            [["DenseMatrix", "uint32_t"]],
             [["DenseMatrix", "uint8_t"]],
             [["DenseMatrix", "bool"]]
         ]
@@ -2560,8 +2584,24 @@
             [["DenseMatrix", "int8_t"]],
             [["DenseMatrix", "uint64_t"]],
             [["DenseMatrix", "uint32_t"]],
-            [["DenseMatrix", "uint8_t"]]
+            [["DenseMatrix", "uint8_t"]],
+            ["Frame"]
         ]
+    },
+    {
+        "kernelTemplate": {
+            "header": "Stop.h",
+            "opName": "stop",
+            "returnType": "void",
+            "templateParams": [],
+            "runtimeParams": [
+                {
+                    "type": "const char *",
+                    "name": "message"
+                }
+            ]
+        },
+        "instantiations": [[]]
     },
     {
         "kernelTemplate": {
@@ -2687,7 +2727,13 @@
         },
         "instantiations": [
             [["DenseMatrix", "double"], ["DenseMatrix", "double"]],
+            [["DenseMatrix", "float"], ["DenseMatrix", "float"]],
             [["DenseMatrix", "int64_t"], ["DenseMatrix", "int64_t"]],
+            [["DenseMatrix", "int32_t"], ["DenseMatrix", "int32_t"]],
+            [["DenseMatrix", "int8_t"], ["DenseMatrix", "int8_t"]],
+            [["DenseMatrix", "uint64_t"], ["DenseMatrix", "uint64_t"]],
+            [["DenseMatrix", "uint32_t"], ["DenseMatrix", "uint32_t"]],
+            [["DenseMatrix", "uint8_t"], ["DenseMatrix", "uint8_t"]],
             [["DenseMatrix", "bool"], ["DenseMatrix", "bool"]]
         ]
     },
@@ -3408,7 +3454,13 @@
         "instantiations": [
             [["DenseMatrix", "double"], ["DenseMatrix", "double"], "int64_t"],
             [["DenseMatrix", "float"], ["DenseMatrix", "float"], "int64_t"],
-            [["DenseMatrix", "int64_t"], ["DenseMatrix", "int64_t"], "int64_t"]
+            [["DenseMatrix", "int64_t"], ["DenseMatrix", "int64_t"], "int64_t"],
+            [["DenseMatrix", "int32_t"], ["DenseMatrix", "int32_t"], "int64_t"],
+            [["DenseMatrix", "int8_t"], ["DenseMatrix", "int8_t"], "int64_t"],
+            [["DenseMatrix", "uint64_t"], ["DenseMatrix", "uint64_t"], "int64_t"],
+            [["DenseMatrix", "uint32_t"], ["DenseMatrix", "uint32_t"], "int64_t"],
+            [["DenseMatrix", "uint8_t"], ["DenseMatrix", "uint8_t"], "int64_t"],
+            [["DenseMatrix", "bool"], ["DenseMatrix", "bool"], "int64_t"]
         ]
     },
     {
@@ -3462,7 +3514,7 @@
     {
         "kernelTemplate": {
             "header": "Pooling.h",
-            "opName": "Pooling::Forward",
+            "opName": "NN::Pooling::Forward",
             "returnType": "void",
             "opCodeAsTemplateParam": 1,
             "templateParams": [
@@ -3477,15 +3529,15 @@
             ],
             "runtimeParams": [
                 {
-                    "type": "PoolingOpCode",
+                    "type": "NN::PoolingOpCode",
                     "name": "opcode"
                 },
                 {
                     "type": "DTRes *&",
                     "name": "res"
                 },
-                { "type": "size_t& ", "name": "res_h" },
-                { "type": "size_t& ", "name": "res_w" },
+                { "type": "size_t&", "name": "res_h" },
+                { "type": "size_t&", "name": "res_w" },
                 {
                     "type": "const DTArg *",
                     "name": "data"
@@ -3590,7 +3642,7 @@
     {
         "kernelTemplate": {
             "header": "Activation.h",
-            "opName": "Activation::Forward",
+            "opName": "NN::Activation::Forward",
             "returnType": "void",
             "opCodeAsTemplateParam": 1,
             "templateParams": [
@@ -3605,7 +3657,7 @@
             ],
             "runtimeParams": [
                 {
-                    "type": "ActivationOpCode",
+                    "type": "NN::ActivationOpCode",
                     "name": "opcode"
                 },
                 {
@@ -3632,7 +3684,7 @@
     {
         "kernelTemplate": {
             "header": "Affine.h",
-            "opName": "Affine::Forward",
+            "opName": "NN::Affine::Forward",
             "returnType": "void",
             "opCodeAsTemplateParam": 1,
             "templateParams": [
@@ -3753,11 +3805,11 @@
                     "name": "res"
                 },
                 {
-                    "type": "size_t& ",
+                    "type": "size_t&",
                     "name": "res_h"
                 },
                 {
-                    "type": "size_t& ",
+                    "type": "size_t&",
                     "name": "res_w"
                 },
                 {

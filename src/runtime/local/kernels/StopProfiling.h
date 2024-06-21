@@ -18,16 +18,22 @@
 
 #include <runtime/local/context/DaphneContext.h>
 
+#ifdef USE_PAPI
 #include <papi.h>
+#endif
 
 // ****************************************************************************
 // Convenience function
 // ****************************************************************************
 
 void stopProfiling(DCTX(ctx)) {
+#ifdef USE_PAPI
     int retval;
-    retval = PAPI_hl_region_end("computation");
+    retval = PAPI_hl_region_end("fixme");
     if ( retval != PAPI_OK )
         std::cerr << "PAPI error " << retval << ": " << PAPI_strerror(retval) << std::endl;
     std::cout << "STOP_PROFILING" << std::endl;
+#else
+    throw std::runtime_error("daphne was built without support for PAPI");
+#endif
 }

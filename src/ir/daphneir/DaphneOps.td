@@ -448,7 +448,7 @@ class Daphne_AllAggOp<string name, Type scalarType, list<Trait> traits = []>
     let results = (outs scalarType:$res);
 }
 
-def Daphne_AllAggSumOp    : Daphne_AllAggOp<"sumAll", NumScalar, [ValueTypeFromFirstArg,CUDASupport]>;
+def Daphne_AllAggSumOp    : Daphne_AllAggOp<"sumAll", NumScalar, [ValueTypeFromFirstArg]>;
 def Daphne_AllAggMinOp    : Daphne_AllAggOp<"minAll", NumScalar, [ValueTypeFromFirstArg]>;
 def Daphne_AllAggMaxOp    : Daphne_AllAggOp<"maxAll", NumScalar, [ValueTypeFromFirstArg]>;
 def Daphne_AllAggMeanOp   : Daphne_AllAggOp<"meanAll", NumScalar, [ValueTypeFromArgsFP]>;
@@ -782,13 +782,13 @@ class Daphne_ActivationForwardOp<string name, list<Trait> traits = []> :
     let results = (outs MatrixOf<[FloatScalar]>:$data);
 }
 
-def Daphne_ReluForwardOp : Daphne_ActivationForwardOp<"Relu_Forward", [ CUDASupport ]>;
+def Daphne_ReluForwardOp : Daphne_ActivationForwardOp<"NN_Relu_Forward", [ ValueTypeFromFirstArg, DataTypeFromFirstArg, CUDASupport ]>;
 
 // ----------------------------------------------------------------------------
 // Affine
 // ----------------------------------------------------------------------------
 
-def Daphne_AffineForwardOp : Daphne_Op<"affineForward", [ CUDASupport ]> {
+def Daphne_AffineForwardOp : Daphne_Op<"NN_Affine_Forward", [ CUDASupport ]> {
     let arguments = (ins  MatrixOf<[FloatScalar]>:$input, MatrixOf<[FloatScalar]>:$weights,
             MatrixOf<[FloatScalar]>:$bias);
 
@@ -821,7 +821,9 @@ def Daphne_BiasAddForwardOp : Daphne_Op<"biasAddForward", [ CUDASupport ]> {
 // ----------------------------------------------------------------------------
 
 def Daphne_Conv2DForwardOp : Daphne_Op<"Convolution_Forward",
-    [ DeclareOpInterfaceMethods<InferTypesOpInterface>, CUDASupport ]> {
+    [ DeclareOpInterfaceMethods<InferTypesOpInterface>,
+      DeclareOpInterfaceMethods<InferShapeOpInterface>,
+      CUDASupport ]> {
     let arguments = (ins
         MatrixOf<[FloatScalar]>:$input, MatrixOf<[FloatScalar]>:$filter, MatrixOf<[FloatScalar]>:$bias,
         // input shape
@@ -873,8 +875,12 @@ class Daphne_PoolForwardOp<string name, list<Trait> traits = []> : Daphne_Op<nam
     let results = (outs MatrixOf<[FloatScalar]>:$data, Size:$outHeight, Size:$outWidth);
 }
 
-def Daphne_MaxPoolForwardOp : Daphne_PoolForwardOp<"maxPoolForward", [ CUDASupport ]>;
-def Daphne_AvgPoolForwardOp : Daphne_PoolForwardOp<"avgPoolForward", [ CUDASupport ]>;
+def Daphne_MaxPoolForwardOp : Daphne_PoolForwardOp<"NN_Max_Forward", [ DeclareOpInterfaceMethods<InferTypesOpInterface>,
+                                                                       DeclareOpInterfaceMethods<InferShapeOpInterface>,
+                                                                       CUDASupport ]>;
+def Daphne_AvgPoolForwardOp : Daphne_PoolForwardOp<"NN_Avg_Forward", [ DeclareOpInterfaceMethods<InferTypesOpInterface>,
+                                                                       DeclareOpInterfaceMethods<InferShapeOpInterface>,
+                                                                       CUDASupport ]>;
 
 // ----------------------------------------------------------------------------
 // Softmax
@@ -1215,7 +1221,7 @@ def Daphne_SetColLabelsPrefixOp : Daphne_Op<"setColLabelsPrefix", [
 }
 
 // ****************************************************************************
-// Conversions, casts, and copying
+// Conversions and casts
 // ****************************************************************************
 
 def Daphne_ToStringOp : Daphne_Op<"toString", [DataTypeSca, ValueTypeStr]> {
@@ -1259,11 +1265,12 @@ def Daphne_CastOp : Daphne_Op<"cast", [
     }];
 }
 
-def Daphne_CopyOp : Daphne_Op<"copy", [
+def Daphne_RenameOp : Daphne_Op<"rename", [
     TypeFromFirstArg
 ]> {
-    let arguments = (ins MatrixOrFrame:$arg);
-    let results = (outs MatrixOrFrame:$res);
+    let arguments = (ins AnyType:$arg);
+    let results = (outs AnyType:$res);
+    let hasCanonicalizeMethod = 1;
 }
 
 def Daphne_QuantizeOp : Daphne_Op<"quantize", [
@@ -1360,6 +1367,11 @@ def Daphne_SaveDaphneLibResultOp : Daphne_Op<"saveDaphneLibResult"> {
     let results = (outs); // no results
 }
 
+def Daphne_StopOp : Daphne_Op<"stop"> {
+    let arguments = (ins StrScalar:$message);
+    let results = (outs); // no results
+}
+
 // ----------------------------------------------------------------------------
 // Low-level
 // ----------------------------------------------------------------------------
@@ -1453,8 +1465,11 @@ def Daphne_CreateDaphneContextOp : Daphne_Op<"createDaphneContext"> {
         always relevant) might require additional DaphneIR operations.
     }];
 
-    let arguments = (ins UI64:$userConfigPtr);
-    let results = (outs DaphneContext:$ctx);
+    let arguments = (ins
+                    UI64 : $userConfigPtr,
+                    UI64 : $dispatchMappingPtr,
+                    UI64 : $statisticsPtr);
+    let results = (outs DaphneContext : $ctx);
 }
 
 def Daphne_DestroyDaphneContextOp : Daphne_Op<"destroyDaphneContext"> {
@@ -1653,7 +1668,7 @@ def Daphne_CallKernelOp : Daphne_Op<"call_kernel"> {
     ];
 }
 
-def Daphne_GenericCallOp : Daphne_Op<"generic_call"> {
+def Daphne_GenericCallOp : Daphne_Op<"generic_call", [DeclareOpInterfaceMethods<InferTypesOpInterface>]> {
     let summary = "User defined function call";
 
     let arguments = (ins SymbolNameAttr:$callee, Variadic<AnyType>:$inputs);

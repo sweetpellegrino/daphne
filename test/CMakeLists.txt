@@ -27,7 +27,10 @@ set(TEST_SOURCES
         api/cli/distributed/DistributedTest.cpp
         api/cli/expressions/CastTest.cpp
         api/cli/expressions/CondTest.cpp
+        api/cli/expressions/FrameLiteralTest.cpp
         api/cli/expressions/MatrixLiteralTest.cpp
+        api/cli/extensibility/ExtensionTest.cpp
+        api/cli/extensibility/HintTest.cpp
         api/cli/functions/FunctionsTest.cpp
         api/cli/functions/RecursiveFunctionsTest.cpp
         api/cli/io/ReadTest.cpp
@@ -59,6 +62,7 @@ set(TEST_SOURCES
         api/cli/codegen/AggAllTest.cpp
         api/cli/codegen/MapOpTest.cpp
         codegen/CodegenTest.cpp
+        codegen/MatMulAccuracyTest.cpp
 
         ir/daphneir/InferTypesTest.cpp
 
@@ -74,6 +78,7 @@ set(TEST_SOURCES
         runtime/local/datastructures/CSCMatrixTest.cpp
         runtime/local/datastructures/MCSRMatrixTest.cpp
         runtime/local/datastructures/MCSCMatrixTest.cpp
+        runtime/local/datastructures/TensorTest.cpp
 
         runtime/local/io/ReadCsvTest.cpp
         runtime/local/io/ReadParquetTest.cpp
@@ -93,7 +98,12 @@ set(TEST_SOURCES
         runtime/local/kernels/CastScaTest.cpp
         runtime/local/kernels/CastScaObjTest.cpp
         runtime/local/kernels/CheckEqTest.cpp
+        runtime/local/kernels/CheckEqApproxTest.cpp
         runtime/local/kernels/ColBindTest.cpp
+        runtime/local/kernels/CondMatMatMatTest.cpp
+        runtime/local/kernels/CondMatMatScaTest.cpp
+        runtime/local/kernels/CondMatScaMatTest.cpp
+        runtime/local/kernels/CondMatScaScaTest.cpp
         runtime/local/kernels/CreateFrameTest.cpp
         runtime/local/kernels/CTableTest.cpp
         runtime/local/kernels/DiagMatrixTest.cpp
@@ -108,6 +118,7 @@ set(TEST_SOURCES
         runtime/local/kernels/EwUnaryScaTest.cpp
         runtime/local/kernels/ExtractColTest.cpp
         runtime/local/kernels/ExtractRowTest.cpp
+        runtime/local/kernels/FillTest.cpp
         runtime/local/kernels/FilterColTest.cpp
         runtime/local/kernels/FilterRowTest.cpp
         runtime/local/kernels/GroupJoinTest.cpp
@@ -120,6 +131,7 @@ set(TEST_SOURCES
         runtime/local/kernels/NumDistinctApproxTest.cpp
         runtime/local/kernels/MapTest.cpp
         runtime/local/kernels/MatMulTest.cpp
+        runtime/local/kernels/OneHotTest.cpp
         runtime/local/kernels/OrderTest.cpp
         runtime/local/kernels/OuterBinaryTest.cpp
         runtime/local/kernels/QuantizeTest.cpp
@@ -131,18 +143,24 @@ set(TEST_SOURCES
         runtime/local/kernels/ReverseTest.cpp
         runtime/local/kernels/RowBindTest.cpp
         runtime/local/kernels/SampleTest.cpp
+        runtime/local/kernels/SemiJoinTest.cpp
         runtime/local/kernels/SeqTest.cpp
         runtime/local/kernels/SetColLabelsTest.cpp
         runtime/local/kernels/SetColLabelsPrefixTest.cpp
         runtime/local/kernels/SliceColTest.cpp
         runtime/local/kernels/SliceRowTest.cpp
         runtime/local/kernels/SolveTest.cpp
+        runtime/local/kernels/StopTest.cpp
         runtime/local/kernels/SyrkTest.cpp
         runtime/local/kernels/ThetaJoinTest.cpp
         runtime/local/kernels/TransposeTest.cpp
         runtime/local/kernels/TriTest.cpp
+        
         runtime/local/vectorized/MultiThreadedKernelTest.cpp
-        runtime/local/kernels/CheckEqApproxTest.cpp
+
+        bench/SparseMatrixMB.cpp
+        bench/SplitCombineMB.cpp
+        bench/SliceMatrixMB.cpp
 
         bench/SparseMatrixMB.cpp
         bench/SplitCombineMB.cpp
