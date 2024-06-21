@@ -29,7 +29,7 @@ def VectorSplitAttr : I64EnumAttr<"VectorSplit", "", [VECTOR_SPLIT_NONE, VECTOR_
 
 def VECTOR_COMBINE_ROWS : I64EnumAttrCase<"ROWS", 1>;
 def VECTOR_COMBINE_COLS : I64EnumAttrCase<"COLS", 2>;
-def VECTOR_COMBINE_ADD : I64EnumAttrCase<"ADD", 3>;
+def VECTOR_COMBINE_ADD : I64EnumAttrCase<"ADD", 3>; //TODO: Parametersierung
 
 def VectorCombineAttr : I64EnumAttr<"VectorCombine", "", [VECTOR_COMBINE_ROWS, VECTOR_COMBINE_COLS, VECTOR_COMBINE_ADD]> {
     let cppNamespace = "::mlir::daphne";
