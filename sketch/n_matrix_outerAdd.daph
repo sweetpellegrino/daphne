@@ -1,0 +1,7 @@
+n = rand(10, 1, 0.0, 1.0, 1.0, -1);
+m = rand(1, 10, 0.0, 1.0, 1.0, -1);
+
+print(n);
+print(m);
+
+print(outerAdd(n,m));

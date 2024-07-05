@@ -1,0 +1,9 @@
+n = rand(10, 20, 0.0, 1.0, 1.0, -1); //123457
+
+print(n);
+
+
+print(sum(n, 0));
+print(min(n, 0));
+print(max(n, 0));
+print(mean(n, 0));

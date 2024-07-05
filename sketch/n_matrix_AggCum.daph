@@ -1,0 +1,8 @@
+n = rand(10, 20, 0.0, 1.0, 1.0, -1); //123457
+
+print(n);
+
+print(cumSum(n));
+print(cumProd(n));
+print(cumMin(n));
+print(cumMax(n));

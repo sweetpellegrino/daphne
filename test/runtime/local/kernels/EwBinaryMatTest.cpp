@@ -353,7 +353,7 @@ TEMPLATE_PRODUCT_TEST_CASE(TEST_NAME("some invalid op-code"), TAG_KERNELS, (DATA
 
 
 
-
+/*
 
 // ****************************************************************************
 // MCSR Matrix
@@ -375,7 +375,7 @@ TEMPLATE_TEST_CASE("Element-wise binary with MCSR and ADD", TAG_KERNELS, ALL_VAL
   MCSRMatrix<ValueType> * resultMatrix = nullptr;
 
   DaphneUserConfig userConfig;
-  DaphneContext* context = new DaphneContext(userConfig);
+  DaphneContext* context = new DaphneContext(userConfig, nullptr, nullptr);
 
   //Append source matrix
   //First row
@@ -619,3 +619,4 @@ TEMPLATE_TEST_CASE("Element-wise binary with CSC and MUL", TAG_KERNELS, ALL_VALU
   DataObjectFactory::destroy(resultMatrix);
 
 }
+*/

@@ -1,0 +1,10 @@
+n = rand(10, 20, 100.0, 200.0, 1.0, -1); //123457
+
+print(n);
+print(reverse(n));
+
+print(reshape(n, 20, 10));
+print(reshape(n, 25, 8));
+print(reshape(n, 8, 25));
+print(reshape(n, 200, 1));
+print(reshape(n, 1, 200));

@@ -86,15 +86,15 @@ public:
                                     break;
                             }
                             res.setType(matTy.withRepresentation(matrixRep));
-                            std::string outType;
+                            /*std::string outType;
                             if (matrixRep == daphne::MatrixRepresentation::SparseCSR) {
                                 outType = "SparseCSR";
                             } else if (matrixRep == daphne::MatrixRepresentation::SparseCSC) {
                                 outType = "SparseCSC";
                             } else {
                                 outType = "Dense";
-                            }
-                            llvm::errs() << op->getName() << " at line: " << fileLoc.getLine() << " and chosen matrix rep " << outType << "\n";
+                            }*/
+                            //llvm::errs() << op->getName() << " at line: " << fileLoc.getLine() << " and chosen matrix rep " << outType << "\n";
     //                        if(sparsity < 0.1) {
     //                            res.setType(matTy.withRepresentation(daphne::MatrixRepresentation::SparseCSR));
     //                        }

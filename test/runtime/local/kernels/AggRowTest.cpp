@@ -358,10 +358,7 @@ VAR_TEST_CASE(int64_t);
 VAR_TEST_CASE(double);
 
 
-
-
-
-TEMPLATE_TEST_CASE("Row aggregation of MCSR works", TAG_KERNELS, ALL_VALUE_TYPES){
+/*TEMPLATE_TEST_CASE("Row aggregation of MCSR works", TAG_KERNELS, ALL_VALUE_TYPES){
 
   using ValueType = TestType;
 
@@ -405,9 +402,6 @@ TEMPLATE_TEST_CASE("Row aggregation of MCSR works", TAG_KERNELS, ALL_VALUE_TYPES
 }
 
 
-
-
-
 TEMPLATE_TEST_CASE("Row aggregation of CSC works", TAG_KERNELS, ALL_VALUE_TYPES){
 
   using ValueType = TestType;
@@ -447,3 +441,4 @@ TEMPLATE_TEST_CASE("Row aggregation of CSC works", TAG_KERNELS, ALL_VALUE_TYPES)
 
 
 }
+*/

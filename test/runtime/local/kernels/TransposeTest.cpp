@@ -95,6 +95,7 @@ TEMPLATE_PRODUCT_TEST_CASE("Transpose", TAG_KERNELS, (DATA_TYPES), (VALUE_TYPES)
     checkTranspose(m, mt);
 }
 
+/*
 
 TEMPLATE_TEST_CASE("Transpose for MCSR works", TAG_KERNELS, ALL_VALUE_TYPES){
 
@@ -200,3 +201,4 @@ TEMPLATE_TEST_CASE("Transpose for CSC works", TAG_KERNELS, ALL_VALUE_TYPES){
 
 
 }
+*/

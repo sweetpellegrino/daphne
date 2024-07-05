@@ -59,6 +59,9 @@ KernelCatalogParser::KernelCatalogParser(mlir::MLIRContext * mctx) {
         // Matrix type for CSRMatrix.
         mlir::Type mtCSR = mlir::daphne::MatrixType::get(mctx, st).withRepresentation(mlir::daphne::MatrixRepresentation::Sparse);
         typeMap.emplace(CompilerUtils::mlirTypeToCppTypeName(mtCSR), mtCSR);
+        // Matrix type for CSCMatrix.
+        mlir::Type mtCSC = mlir::daphne::MatrixType::get(mctx, st).withRepresentation(mlir::daphne::MatrixRepresentation::SparseCSC);
+        typeMap.emplace(CompilerUtils::mlirTypeToCppTypeName(mtCSC), mtCSC);
         // MemRef type.
         if(!st.isa<mlir::daphne::StringType>()) {
             // DAPHNE's StringType is not supported as the element type of a MemRef.

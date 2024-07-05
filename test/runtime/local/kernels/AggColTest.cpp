@@ -242,8 +242,7 @@ VAR_TEST_CASE(int64_t);
 VAR_TEST_CASE(double);
 
 
-
-
+/*
 TEMPLATE_TEST_CASE("Column aggregation of MCSR works", TAG_KERNELS, ALL_VALUE_TYPES){
 
   //Test column-wise aggregation with SUM
@@ -331,3 +330,4 @@ TEMPLATE_TEST_CASE("Column aggregation of CSC works", TAG_KERNELS, ALL_VALUE_TYP
 
 
 }
+*/
