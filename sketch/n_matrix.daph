@@ -1,0 +1,6 @@
+n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
+
+y = sqrt(n);
+
+t = aggMax(y);
+print(t);

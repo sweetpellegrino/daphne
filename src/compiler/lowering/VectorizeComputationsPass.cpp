@@ -31,8 +31,7 @@
 using namespace mlir;
 
 std::unique_ptr<mlir::Pass> daphne::createVectorizeComputationsPass(const DaphneUserConfig& cfg) {
-    VectorizeType type = VectorizeType::DAPHNE;
-    switch (type) {
+    switch (cfg.vectorized_exec_type) {
         case VectorizeType::DAPHNE:
             return mlir::daphne::createDaphneVectorizeComputationsPass();
         case VectorizeType::GREEDY:
