@@ -159,7 +159,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
         // TODO: add inference here if we have rewrites that could apply to
         // vectorized pipelines due to smaller sizes
         pm.addNestedPass<mlir::func::FuncOp>(
-            mlir::daphne::createVectorizeComputationsPass());
+            mlir::daphne::createVectorizeComputationsPass(userConfig_));
         pm.addPass(mlir::createCanonicalizerPass());
     }
     if (userConfig_.explain_vectorized)

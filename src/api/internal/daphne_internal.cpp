@@ -25,6 +25,7 @@
 #include <api/daphnelib/DaphneLibResult.h>
 #include <parser/daphnedsl/DaphneDSLParser.h>
 #include "compiler/execution/DaphneIrExecutor.h"
+#include "compiler/lowering/vectorize/VectorizeComputationsBase.h"
 #include <runtime/local/vectorized/LoadPartitioning.h>
 #include <parser/catalog/KernelCatalogParser.h>
 #include <parser/config/ConfigParser.h>
@@ -353,6 +354,15 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
             clEnumVal(llvm, "Show DaphneIR after llvm lowering"),
             clEnumVal(mlir_codegen, "Show DaphneIR after MLIR codegen")),
         CommaSeparated);
+    
+    static opt<VectorizeType> vectorizeTypeList(
+        "vec-type", cat(daphneOptions),
+        llvm::cl::desc("Apply specific Vectorization pass"),
+        llvm::cl::values(
+            clEnumVal(VectorizeType::DAPHNE, "Use original DAPHNE Vectorization pass"),
+            clEnumVal(VectorizeType::GREEDY, "Use greedy Vectorization pass")),
+            init(VectorizeType::DAPHNE)
+    );
 
     static llvm::cl::list<string> scriptArgs1(
             "args", cat(daphneOptions),
@@ -432,6 +442,8 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
         logger = std::make_unique<DaphneLogger>(user_config);
 
     user_config.use_vectorized_exec = useVectorizedPipelines;
+    user_config.vectorized_exec_type = vectorizeTypeList;
+
     user_config.use_distributed = useDistributedRuntime; 
     user_config.use_obj_ref_mgnt = !noObjRefMgnt;
     user_config.use_ipa_const_propa = !noIPAConstPropa;
