@@ -14,17 +14,9 @@
  *  limitations under the License.
  */
 
-#include "compiler/utils/CompilerUtils.h"
 #include <util/ErrorHandler.h>
-#include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
-
-#include "mlir/Dialect/SCF/IR/SCF.h"
-#include "mlir/Transforms/DialectConversion.h"
-
 #include <memory>
-#include <set>
-#include <iostream>
 
 #include "compiler/lowering/vectorize/VectorizeComputationsBase.h"
 
