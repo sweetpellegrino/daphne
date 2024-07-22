@@ -22,6 +22,7 @@
 
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <memory>
 #include <set>
@@ -184,8 +185,6 @@ void DaphneVectorizeComputationsPass::runOnOperation()
     // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
     //  This requires multi-returns in way more cases, which is not implemented yet.
 
-    std::cout << "DAPHNE" << std::endl;
-
     // Find vectorizable operations and their inputs of vectorizable operations
     std::vector<daphne::Vectorizable> vectOps;
     func->walk([&](daphne::Vectorizable op)
@@ -196,7 +195,8 @@ void DaphneVectorizeComputationsPass::runOnOperation()
     std::vector<daphne::Vectorizable> vectorizables(vectOps.begin(), vectOps.end());
     std::multimap<daphne::Vectorizable, daphne::Vectorizable> possibleMerges;
     for(auto v : vectorizables) {
-        for(auto e : llvm::zip(v->getOperands(), v.getVectorSplits())) {
+        auto splits = v.getVectorSplits()[0];
+        for(auto e : llvm::zip(v->getOperands(), splits)) {
             auto operand = std::get<0>(e);
             auto defOp = operand.getDefiningOp<daphne::Vectorizable>();
             if(defOp && v->getBlock() == defOp->getBlock() && CompilerUtils::isMatrixComputation(defOp)) {
@@ -226,9 +226,17 @@ void DaphneVectorizeComputationsPass::runOnOperation()
 
                 if(qualified){
                     auto split = std::get<1>(e);
+
+                    v.dump();
+                    defOp.dump();
+
+                    llvm::outs() << "split:" << split << "\n";
+
                     // find the corresponding `OpResult` to figure out combine
                     auto opResult = *llvm::find(defOp->getResults(), operand);
-                    auto combine = defOp.getVectorCombines()[opResult.getResultNumber()];
+                    auto combine = defOp.getVectorCombines()[0][opResult.getResultNumber()];
+
+                    llvm::outs() << "combine:" << combine << "\n";
 
                     if(split == daphne::VectorSplit::ROWS) {
                         if(combine == daphne::VectorCombine::ROWS)
@@ -274,6 +282,11 @@ void DaphneVectorizeComputationsPass::runOnOperation()
         }
     }
 
+    llvm::outs() << "Pipelines: " << pipelines.size() << "\n";
+    llvm::outs() << "Create PipelineOps" << "\n";
+
+    llvm::outs() << "Step X" << "\n";
+
     OpBuilder builder(func);
     // Create the `VectorizedPipelineOp`s
     for(auto pipeline : pipelines) {
@@ -298,13 +311,30 @@ void DaphneVectorizeComputationsPass::runOnOperation()
         movePipelineInterleavedOperations(builder.getInsertionPoint(), pipeline);
         for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
             auto v = *vIt;
-            auto vSplits = v.getVectorSplits();
-            auto vCombines = v.getVectorCombines();
+            auto vSplits = v.getVectorSplits()[0];
+            auto vCombines = v.getVectorCombines()[0];
+
+            //print vecotr splits and vector combine
+            llvm::outs() << "vSplit: ";
+            for(auto i : vSplits) {
+                llvm::outs() << i;
+            }
+            llvm::outs() << "\n";
+
+            llvm::outs() << "vCombine: ";
+            for(auto j : vCombines) {
+                llvm::outs() << j;
+            }
+            llvm::outs() << "\n";
+
             // TODO: although we do create enum attributes, it might make sense/make it easier to
             //  just directly use an I64ArrayAttribute
             for(auto i = 0u; i < v->getNumOperands(); ++i) {
                 auto operand = v->getOperand(i);
                 if(!valueIsPartOfPipeline(operand)) {
+                    llvm::outs() << operand << "\n";
+                    llvm::outs() << vSplits[i] << "\n";
+
                     vSplitAttrs.push_back(daphne::VectorSplitAttr::get(&getContext(), vSplits[i]));
                     operands.push_back(operand);
                 }

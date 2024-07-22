@@ -1,8 +1,10 @@
 n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 m = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 
-y = sqrt(n);
-z = y + m;
+f = n + 1;
+x = sqrt(f);
+y = sqrt(m);
+z = x + y;
 
 t = aggMax(z);
 print(t);

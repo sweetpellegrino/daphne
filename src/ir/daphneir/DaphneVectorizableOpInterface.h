@@ -18,8 +18,19 @@
 #define SRC_IR_DAPHNEIR_DAPHNEVECTORIZABLEOPINTERFACE_H
 namespace mlir::OpTrait {
     template<class ConcreteOp>
-    class CUDASupport : public TraitBase<ConcreteOp, CUDASupport> {
-    };
+    class CUDASupport : public TraitBase<ConcreteOp, CUDASupport> {};
+
+    template<class ConcreteOp>
+    class VectorElementWise : public TraitBase<ConcreteOp, VectorElementWise> {};
+
+    template<class ConcreteOp>
+    class VectorReduction : public TraitBase<ConcreteOp, VectorReduction> {};
+
+    template<class ConcreteOp>
+    class VectorTranspose : public TraitBase<ConcreteOp, VectorTranspose> {};
+
+    template<class ConcreteOp>
+    class VectorMatMul : public TraitBase<ConcreteOp, VectorMatMul> {};
 }
 namespace mlir::daphne {
 #include <ir/daphneir/DaphneVectorizableOpInterface.h.inc>

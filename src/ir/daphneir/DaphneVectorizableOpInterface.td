@@ -20,10 +20,11 @@
 include "mlir/IR/EnumAttr.td"
 include "mlir/IR/OpBase.td"
 
-def VECTOR_SPLIT_NONE : I64EnumAttrCase<"NONE", 0>;
+def VECTOR_SPLIT_NONE : I64EnumAttrCase<"NONE", 0>; //Broadcast
 def VECTOR_SPLIT_ROWS : I64EnumAttrCase<"ROWS", 1>;
+def VECTOR_SPLIT_COLS : I64EnumAttrCase<"COLS", 2>;
 
-def VectorSplitAttr : I64EnumAttr<"VectorSplit", "", [VECTOR_SPLIT_NONE, VECTOR_SPLIT_ROWS]> {
+def VectorSplitAttr : I64EnumAttr<"VectorSplit", "", [VECTOR_SPLIT_NONE, VECTOR_SPLIT_ROWS, VECTOR_SPLIT_COLS]> {
     let cppNamespace = "::mlir::daphne";
 }
 
@@ -37,14 +38,14 @@ def VectorCombineAttr : I64EnumAttr<"VectorCombine", "", [VECTOR_COMBINE_ROWS, V
 
 def VectorizableOpInterface : OpInterface<"Vectorizable"> {
     let description = [{
-        Enables the computation in the form of vectors.
+        Enables the computation in the form of vectors. 
     }];
 
     let methods = [
         InterfaceMethod<"Get the vector split kind for each input.",
-                        "std::vector<daphne::VectorSplit>", "getVectorSplits", (ins)>,
+                        "std::vector<std::vector<daphne::VectorSplit>>", "getVectorSplits", (ins)>,
         InterfaceMethod<"Get the vector combine kind for each output.",
-                        "std::vector<daphne::VectorCombine>", "getVectorCombines", (ins)>,
+                        "std::vector<std::vector<daphne::VectorCombine>>", "getVectorCombines", (ins)>,
         InterfaceMethod<"Create values for #rows and #cols of each output. -1 for dynamic/unknown.",
                         "std::vector<std::pair<Value, Value>>", "createOpsOutputSizes", (ins "mlir::OpBuilder&":$builder)>,
         // TODO: for complex operations (non element-wise) where the computation per vector is not equal to the operation

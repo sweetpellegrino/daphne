@@ -28,6 +28,7 @@ include "ir/daphneir/DaphneInferSparsityOpInterface.td"
 include "ir/daphneir/DaphneInferSparsityTraits.td"
 include "ir/daphneir/DaphneInferTypesOpInterface.td"
 include "ir/daphneir/DaphneVectorizableOpInterface.td"
+include "ir/daphneir/DaphneVectorizableTraits.td"
 include "ir/daphneir/DaphneShapeInferenceTraits.td"
 include "ir/daphneir/DaphneTypeAdaptationTraits.td"
 include "ir/daphneir/DaphneTypeInferenceTraits.td"
@@ -183,7 +184,8 @@ def Daphne_MatMulOp : Daphne_Op<"matMul", [
     DataTypeMat, ValueTypeFromArgs,
     DeclareOpInterfaceMethods<InferShapeOpInterface>,
     DeclareOpInterfaceMethods<InferSparsityOpInterface>, CUDASupport, FPGAOPENCLSupport,
-    CastFirstTwoArgsToResType
+    CastFirstTwoArgsToResType,
+    VectorMatMul
 ]> {
     let arguments = (ins MatrixOf<[NumScalar]>:$lhs, MatrixOf<[NumScalar]>:$rhs, BoolScalar:$transa, BoolScalar:$transb);
     let results = (outs MatrixOf<[NumScalar]>:$res);
@@ -198,7 +200,8 @@ class Daphne_EwUnaryOp<string name, Type scalarType, list<Trait> traits = []> : 
     DataTypeFromFirstArg,
     ShapeFromArg,
     CastArgsToResType,
-    NoMemoryEffect
+    NoMemoryEffect,
+    VectorElementWise
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$arg);
     let results = (outs AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$res);
@@ -254,7 +257,8 @@ class Daphne_EwBinaryOp<string name, Type scalarType, list<Trait> traits = []>
     DeclareOpInterfaceMethods<VectorizableOpInterface>,
     ShapeEwBinary,
     CastArgsToResType,
-    NoMemoryEffect
+    NoMemoryEffect,
+    VectorElementWise
 ])> {
     let arguments = (ins AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$lhs, AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$rhs);
     let results = (outs AnyTypeOf<[MatrixOf<[scalarType]>, scalarType, Unknown]>:$res);
@@ -444,7 +448,7 @@ class Daphne_AggOp<string name, Type inScalarType, list<Trait> traits = []> : Da
 // ----------------------------------------------------------------------------
 
 class Daphne_AllAggOp<string name, Type scalarType, list<Trait> traits = []>
-: Daphne_AggOp<name, scalarType, !listconcat(traits, [DataTypeSca, CastArgsToResType])> {
+: Daphne_AggOp<name, scalarType, !listconcat(traits, [DataTypeSca, CastArgsToResType, VectorReduction])> {
     let results = (outs scalarType:$res);
 }
 
@@ -688,7 +692,8 @@ def Daphne_TransposeOp : Daphne_Op<"transpose", [
     TypeFromFirstArg,
     DeclareOpInterfaceMethods<VectorizableOpInterface>,
     NumRowsFromArgNumCols, NumColsFromArgNumRows, SparsityFromArg, CUDASupport,
-    Pure
+    Pure,
+    VectorTranspose
 ]> {
     let arguments = (ins MatrixOrU:$arg);
     let results = (outs MatrixOrU:$res);
