@@ -375,7 +375,13 @@ void GreedyVectorizeComputationsPass::runOnOperation()
             //Get producer of operand
             auto producer = opv->getOperand(i).getDefiningOp();
             if(isVectorizable(producer)) {
-                //print pair
+
+                //Check if producer & consumer are in the same block
+                if(producer->getBlock()!= opv->getBlock())
+                    continue;
+                //Currently not needed: checking the split/combine.
+                //cf. Algo
+
                 llvm::outs() << "Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
                 candidates.push_back({producer, opv});
             }
@@ -397,6 +403,7 @@ void GreedyVectorizeComputationsPass::runOnOperation()
         auto itProducer = operationToPipelineIx.find(candidate.first);
         auto itConsumer = operationToPipelineIx.find(candidate.second);
 
+        // Line 22: Algo
         //Consumer and producer are not in a pipeline yet
         if (itProducer == operationToPipelineIx.end() && itConsumer == operationToPipelineIx.end()) {
             llvm::outs() << "both not in a pipeline" << "\n";
@@ -404,20 +411,22 @@ void GreedyVectorizeComputationsPass::runOnOperation()
             operationToPipelineIx[candidate.first] = pipelines.size() - 1;
             operationToPipelineIx[candidate.second] = pipelines.size() - 1;
         }
-        //Consumer is in a pipeline, producer not
+        // Line 28: Algo
+        // {
+        //Producer is in a pipeline, consumer not
         else if (itProducer != operationToPipelineIx.end() && itConsumer == operationToPipelineIx.end()) {
             llvm::outs() << "producer in a pipeline" << "\n";
             size_t ix = itProducer->second;
             //pipelines[ix].insert(pipelines[ix].begin(), candidate.second);
             pipelines[ix].push_back(candidate.second);
-            operationToPipelineIx[candidate.first] = ix;
+            operationToPipelineIx[candidate.second] = ix;
         }
-        //Producer is in a pipeline, consumer not
+        //Consumer is in a pipeline, producer not
         else if (itProducer == operationToPipelineIx.end() && itConsumer != operationToPipelineIx.end()) {
             llvm::outs() << "consumer in a pipeline" << "\n";
             size_t ix = itConsumer->second;
-            pipelines[ix].push_back(candidate.second);
-            operationToPipelineIx[candidate.second] = ix;
+            pipelines[ix].push_back(candidate.first);
+            operationToPipelineIx[candidate.first] = ix;
         }
         //Both are in a pipeline
         else if (itProducer != operationToPipelineIx.end() && itConsumer != operationToPipelineIx.end()) {
@@ -441,6 +450,7 @@ void GreedyVectorizeComputationsPass::runOnOperation()
             }
         }
         llvm::outs() << candidate.first->getName().getStringRef() << " -> " << candidate.second->getName().getStringRef() << "\n";
+        // }
     }
     llvm::outs() << "######## END ########" << "\n";
 
