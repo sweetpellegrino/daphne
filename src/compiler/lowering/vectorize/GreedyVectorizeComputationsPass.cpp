@@ -41,25 +41,27 @@
 #include <vector>
 
 #include "compiler/lowering/vectorize/VectorizeComputationsBase.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace mlir;
 
 namespace
 {
-    /*
-    bool isVectorizable(func::FuncOp &op) {
-        return true;
+
+    bool isVectorizable(Operation *op) {
+
+        if (op->hasTrait<mlir::OpTrait::VectorElementWise>() ||
+            //op->hasTrait<mlir::OpTrait::VectorReduction>() ||
+            op->hasTrait<mlir::OpTrait::VectorTranspose>() ||
+            op->hasTrait<mlir::OpTrait::VectorMatMul>() ||
+            llvm::dyn_cast<daphne::Vectorizable>(op)) {
+                return true;
+        }
+
+        return false;
     }
 
-    bool isFusible(daphne::Vectorizable opi, daphne::Vectorizable opv) {
-        if (opi->getBlock() != opv->getBlock())
-            return false;
-
-        return true;
-    }
-    */
-    
     /**
      * @brief Recursive function checking if the given value is transitively dependant on the operation `op`.
      * @param value The value to check
@@ -144,6 +146,10 @@ namespace
             pipelinePosition = moveAfterOp->getIterator();
         }
     }
+
+    bool pipelinesShareSameInputs(std::vector<mlir::Operation *> p1, std::vector<mlir::Operation *> p2) {
+        //TODO: implement
+    }
     
     struct GreedyVectorizeComputationsPass : public PassWrapper<GreedyVectorizeComputationsPass, OperationPass<func::FuncOp>> {
         void runOnOperation() final;
@@ -151,8 +157,34 @@ namespace
 
         //Function that modifies existing mlir programm structure
         //Currently only gets a pipeline as a list of nodes that | cf. Formalisation 
-        void createVectorizedPipelineOps(func::FuncOp func, std::vector<std::vector<daphne::Vectorizable>> pipelines) {
+        void createVectorizedPipelineOps(func::FuncOp func, std::vector<std::vector<mlir::Operation *>> op_pipelines) {
             OpBuilder builder(func);
+
+            //make Opertion to daphne::Vectorizable
+            std::vector<std::vector<daphne::Vectorizable>> pipelines;
+            for(auto pipe : op_pipelines) {
+                std::vector<daphne::Vectorizable> vecPipeline;
+                for (auto it = pipe.rbegin(); it != pipe.rend(); ++it) {
+
+                    auto op = *it;
+
+                    llvm::outs() << "op: " << op->getName().getStringRef() << "\n";
+
+                    auto vec = llvm::dyn_cast<daphne::Vectorizable>(op);
+                    if (vec != nullptr) {
+                        vecPipeline.push_back(vec);
+                    }
+                    else {
+                        //TODO: ewAbs is not vectorizable
+                        throw ErrorHandler::compilerError(
+                                op, "GreedyVectorizeComputationsPass",
+                                "ERROR #1: interface error @nik"
+                                );
+                    }
+                }
+                pipelines.push_back(vecPipeline);
+            }
+
             // Create the `VectorizedPipelineOp`s
             for(auto pipeline : pipelines) {
                 if(pipeline.empty()) {
@@ -294,84 +326,6 @@ namespace
             }
         }
     };
-
-    //Split: before consumer
-    //Combine: after producer
-    //Split size: also relevant for tiles?
-    struct VectorCandidateOption {
-        daphne::VectorCombine combine;
-        daphne::VectorSplit split;
-        //double score; ??
-        //size_t split_size; ???
-        //size_t combine_size; ???
-        //size_t tile_width;
-        //size_t tile_height;
-    };
-
-    struct VectorCandidate {
-        //std::shared_ptr<daphne::Vectorizable> producer;
-        //std::shared_ptr<daphne::Vectorizable> consumer;
-        daphne::Vectorizable producer;
-        daphne::Vectorizable consumer;
-
-        size_t argNumberOfConsumer = -1;
-
-        //   a   f        a        a  f
-        //  / \ /   =>    |  and   | /
-        // b   c          b        c   
-        //bool redundant = false; what about redudant computation?
-
-        std::vector<VectorCandidateOption> options;
-        std::vector<std::string> deps;
-    };
-
-    /*
-    struct VectorPipelineCandidates {
-        std::vector<daphne::Vectorizable> options; 
-        std::vector<mlir::Result> isFusible; 
-        std::vector<> isFusible; 
-        std::vector<mlir::Result> isFusible; 
-    }
-    */
-
-    struct VectorizationPlan {
-        std::unordered_map<std::string, VectorCandidate> candidates;
-
-        void addCandidate(const VectorCandidate& candidate) {
-            auto key = getKey(candidate);
-            if (candidates.find(key) == candidates.end()) {
-                candidates[key] = candidate;
-            } else {
-                //merge?
-                throw new std::runtime_error("Duplicate vectorization candidate");
-            }
-        }
-
-        std::string getKey(const VectorCandidate& candidate) const {
-            return candidate.producer->getName().getStringRef().str() + "_" + candidate.consumer->getName().getStringRef().str() + "_" + std::to_string(candidate.argNumberOfConsumer);
-        }
-
-        bool validateAndCollapse(const VectorCandidate& candidate) const {
-            return false;
-        }
-
-        std::vector<std::vector<std::pair<daphne::Vectorizable, size_t>>> getPipelines() {
-            return {};
-        }
-
-    };
-    
-    void printVC(const VectorCandidate& candidate) {
-        llvm::outs() << "##################" << "\n";
-        llvm::outs() << "Producer: ";
-        candidate.producer->dump();
-        llvm::outs() << "Consumer: ";
-        candidate.consumer->dump();
-        for (auto& option : candidate.options) {
-            llvm::outs() << "Split: " << option.split << ", Combine: " << option.combine << "\n";
-        }
-        llvm::outs() << "##################" << "\n";
-     }
 }
 
 void GreedyVectorizeComputationsPass::runOnOperation()
@@ -381,162 +335,134 @@ void GreedyVectorizeComputationsPass::runOnOperation()
 
     llvm::outs() << "GREEDY" << "\n";
 
-    //Step 1: Reverse Topological Sorting & Filtering of Vectorizable functions
-    std::vector<daphne::Vectorizable> vectOps;
-    func->walk<WalkOrder::PostOrder>([&](mlir::Operation *op) {
-        if(auto vec = llvm::dyn_cast<daphne::Vectorizable>(op)) {
-            vectOps.push_back(vec);
-            llvm::outs() << "vec func name: " << op->getName() << "\n";
-        }
+    //Step 1: Filter vectorizbale operations
+    //Slice Analysis for reverse topological sorting?
+    //Good illustration here: PostOrder https://mlir.llvm.org/doxygen/SliceAnalysis_8h_source.html
+    //Implementation of walk here: https://mlir.llvm.org/doxygen/Visitors_8h_source.html#l00062
+
+    llvm::outs() << "######## STEP 1 ########" << "\n";
+
+    std::vector<mlir::Operation *> vectOps;
+    func->walk([&](mlir::Operation* op)
+    {
+      if(isVectorizable(op))
+          vectOps.emplace_back(op);
     });
 
-    llvm::outs() << "######## Step 2 ########" << "\n";
+    for (auto &opv : vectOps) {
+        llvm::outs() << "Op: ";
+        opv->dump();
+        llvm::outs() << "\n";
+    }
+
+    llvm::outs() << "######## END ########" << "\n";
 
     //Improvment: can we already know that some operations can not be fused??? 
-
     //Step 2: Identify merging candidates
-    std::vector<VectorCandidate> candidates;
+    llvm::outs() << "######## STEP 2 ########" << "\n";
+    std::vector<std::pair<mlir::Operation *, mlir::Operation *>> candidates;
+
+    //reverse vectOps
+    std::reverse(vectOps.begin(), vectOps.end());
     for (auto &opv : vectOps) {
-
-        llvm::outs() << "opv name: " << opv->getName() << "\n";
-
+        
         //Get incoming edges of operation opv
-        //Fusible: Check of producer<->consumer relationship (opv->getOperand())
-        //For every operation of incoming argument of opv, check the additioanl conditions
+        //One condition for Fusible: Check of producer<->consumer relationship (opv->getOperand())
+        //Improvement: For every operation of incoming argument of opv, check the additional conditions
         //True: push into possible merge candidates list
         for (size_t i = 0; i < opv->getNumOperands(); i++) {
-            auto arg = opv->getOperand(i);
-            llvm::outs() << "arg id: " << i << "\n";
-            
-            //Fusible: Check if both operations are vectorizable
-            if(auto opi = arg.getDefiningOp<daphne::Vectorizable>()) {
 
-                llvm::outs() << "opi name: " << opi->getName() << "\n";
-                
-                //Fusible: Check if both operations are in the same block
-                if(opi->getBlock() != opv->getBlock())
-                    continue;
-
-                //flatten of split in VectorSplit list
-                auto _splits = opv.getVectorSplits();
-                std::vector<daphne::VectorSplit> splitsOfArgI;
-                //from {{1,1},{2,2},{1,0}} to
-                //e.g. for arg 0 it would be {1,2,1}
-                //e.g. for arg 1 it would be {1,2,0}
-                std::transform(_splits.begin(), _splits.end(), std::back_inserter(splitsOfArgI),
-                    [i](const auto& vec) { return i < vec.size() ? vec[i] : daphne::VectorSplit::NONE; });
-
-                //print splitsOfArgI
-                llvm::outs() << "split: ";
-                for (auto split : splitsOfArgI) {
-                    llvm::outs() << (int) split << " ";
-                }
-                llvm::outs() << "\n";
-                
-                //Fusible: Determine the matching split, combines...
-                //Vector splits should be about the arguments of opv, we need to map the argument to the position of the split in list
-                std::vector<VectorCandidateOption> options;
-
-                if(opi->hasTrait<mlir::OpTrait::VectorElementWise>()) {
-                    if (opv->hasTrait<mlir::OpTrait::VectorElementWise>() || opv->hasTrait<mlir::OpTrait::VectorTranspose>() || opv->hasTrait<mlir::OpTrait::VectorReduction>()) {
-                        options.push_back({daphne::VectorCombine::ROWS, daphne::VectorSplit::ROWS});
-                        options.push_back({daphne::VectorCombine::COLS, daphne::VectorSplit::COLS});
-                    }
-                    else if (opv->hasTrait<mlir::OpTrait::VectorMatMul>()) {
-                        options.push_back({});
-                        options.push_back({});
-                    }
-                }
-                else if (opv->hasTrait<mlir::OpTrait::VectorTranspose>()) {
-                    if(opi->hasTrait<mlir::OpTrait::VectorElementWise>() || opi->hasTrait<mlir::OpTrait::VectorTranspose>()) {
-                        options.push_back({daphne::VectorCombine::ROWS, daphne::VectorSplit::ROWS});
-                        options.push_back({daphne::VectorCombine::COLS, daphne::VectorSplit::COLS});
-                    }
-                }
-                
-                /*
-                for(auto split : splitsOfArgI) {
-
-                    opv->dump();
-                    opi.dump();
-
-                    //flatten of combine in VectorCombine list
-                    auto _combines = opi.getVectorCombines();
-                    std::vector<daphne::VectorCombine> combineOfOPI;
-                    std::transform(_combines.begin(), _combines.end(), std::back_inserter(combineOfOPI),
-                        [i](const auto& vec) { return i < vec.size() ? vec[i] : throw std::exception(); });
-
-                    for(auto combine : combineOfOPI) {
-                        
-                        llvm::outs() << ":" << (int) split << " " << (int) combine << "\n";
-
-                        if ((int) split == (int) combine) {
-                            VectorCandidateOption option {combine, split};
-                            options.push_back(option);
-                            break;
-                        }
-                    }
-                }
-                */
-                if(!options.empty()) {
-                    VectorCandidate candidate {opi, opv, i, options};
-                    candidates.push_back(candidate);
-                }
+            //Get producer of operand
+            auto producer = opv->getOperand(i).getDefiningOp();
+            if(isVectorizable(producer)) {
+                //print pair
+                llvm::outs() << "Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
+                candidates.push_back({producer, opv});
             }
         }
     }
-
     llvm::outs() << "######## END ########" << "\n";
-
-    llvm::outs() << "VectorCandidates: " << candidates.size() << "\n";
-
-    for(auto cand : candidates) {
-        printVC(cand);
-    }
-
-
-    llvm::outs() << "######## Step 3 ########" << "\n";
 
     //Step 3: Greedy merge pipelines
-    std::map<daphne::Vectorizable, size_t> operationToPipelineIx;
-    std::vector<std::vector<daphne::Vectorizable>> pipelines;
+    llvm::outs() << "######## STEP 3 ########" << "\n";
+    
+    // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
+    // This requires multi-returns in way more cases, which is not implemented yet.
+    std::map<mlir::Operation*, size_t> operationToPipelineIx;
+    std::vector<std::vector<mlir::Operation*>> pipelines;
     while(!candidates.empty()) {
-        VectorCandidate candidate = candidates.back();
+        auto candidate = candidates.back();
         candidates.pop_back();
 
-        llvm::outs() << "Producer: " << candidate.producer->getName() << "\n";
-        llvm::outs() << "Consumer: " << candidate.consumer->getName() << "\n";
+        auto itProducer = operationToPipelineIx.find(candidate.first);
+        auto itConsumer = operationToPipelineIx.find(candidate.second);
 
-        size_t consumerPipelineIndex = -1;
-        for (size_t ix = 0; ix < pipelines.size(); ++ix) {
-            auto& p = pipelines[ix];
-            if(std::find(p.begin(), p.end(), candidate.consumer) != p.end()) {
-                llvm::outs() << "Found consumer: " << candidate.consumer->getName() << "\n";
-                consumerPipelineIndex = ix;
-                break;
+        //Consumer and producer are not in a pipeline yet
+        if (itProducer == operationToPipelineIx.end() && itConsumer == operationToPipelineIx.end()) {
+            llvm::outs() << "both not in a pipeline" << "\n";
+            pipelines.push_back({candidate.first, candidate.second});
+            operationToPipelineIx[candidate.first] = pipelines.size() - 1;
+            operationToPipelineIx[candidate.second] = pipelines.size() - 1;
+        }
+        //Consumer is in a pipeline, producer not
+        else if (itProducer != operationToPipelineIx.end() && itConsumer == operationToPipelineIx.end()) {
+            llvm::outs() << "producer in a pipeline" << "\n";
+            size_t ix = itProducer->second;
+            //pipelines[ix].insert(pipelines[ix].begin(), candidate.second);
+            pipelines[ix].push_back(candidate.second);
+            operationToPipelineIx[candidate.first] = ix;
+        }
+        //Producer is in a pipeline, consumer not
+        else if (itProducer == operationToPipelineIx.end() && itConsumer != operationToPipelineIx.end()) {
+            llvm::outs() << "consumer in a pipeline" << "\n";
+            size_t ix = itConsumer->second;
+            pipelines[ix].push_back(candidate.second);
+            operationToPipelineIx[candidate.second] = ix;
+        }
+        //Both are in a pipeline
+        else if (itProducer != operationToPipelineIx.end() && itConsumer != operationToPipelineIx.end()) {
+            size_t ixProducer = itProducer->second;
+            size_t ixCosumer = itConsumer->second;
+            llvm::outs() << ixProducer << " " << ixCosumer << "\n";
+            llvm::outs() << "both in a pipeline" << "\n";
+            if (ixProducer < ixCosumer) {
+                pipelines[ixProducer].insert(pipelines[ixProducer].end(), pipelines[ixCosumer].begin(), pipelines[ixCosumer].end());
+                for (auto& op : pipelines[ixCosumer]) {
+                    operationToPipelineIx[op] = ixProducer;
+                }
+                pipelines.erase(pipelines.begin() + ixCosumer);
+            }
+            else if (ixCosumer < ixProducer) {
+                pipelines[ixCosumer].insert(pipelines[ixCosumer].end(), pipelines[ixProducer].begin(), pipelines[ixProducer].end());
+                for (auto& op : pipelines[ixProducer]) {
+                    operationToPipelineIx[op] = ixCosumer;
+                }
+                pipelines.erase(pipelines.begin() + ixProducer);
             }
         }
-
-        if (consumerPipelineIndex == -1) {
-            std::vector<daphne::Vectorizable> newPipeline = {candidate.consumer, candidate.producer};
-            pipelines.push_back(newPipeline);
-            operationToPipelineIx[candidate.producer] = pipelines.size() - 1;
-
-        } else if (operationToPipelineIx.find(candidate.producer) == operationToPipelineIx.end()) { // Producer not found in any pipeline
-
-            auto& consumerPipeline = pipelines[consumerPipelineIndex];
-            consumerPipeline.push_back(candidate.producer);
-            operationToPipelineIx[candidate.producer] = consumerPipelineIndex;
-        }
-    }
-
-    for (auto p : pipelines) {
-        llvm::outs() << "Pipeline: \n";
-        for(auto v : p) {
-            llvm::outs() << v->getName() << "\n";
-        }
+        llvm::outs() << candidate.first->getName().getStringRef() << " -> " << candidate.second->getName().getStringRef() << "\n";
     }
     llvm::outs() << "######## END ########" << "\n";
+
+    //remove all pipelines that only have one element
+    //maxAll gets into a single pipeline how?
+    //current mitigation
+    auto it = pipelines.begin();
+    while (it != pipelines.end()) {
+        if (it->size() == 1) {
+            it = pipelines.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    //print pipelines
+    for (auto pipeline : pipelines) {
+        llvm::outs() << "Pipeline: " << "\n";
+        for (auto op : pipeline) {
+            op->dump();
+        }
+    }
 
     //Step X: create pipeline ops
     GreedyVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines);

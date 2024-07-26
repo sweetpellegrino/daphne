@@ -31,19 +31,6 @@ using namespace mlir;
 // ****************************************************************************
 // For families of operations.
 
-struct VectorSplitCombine {
-
-    //E.g.
-    //EwBinary:
-    //Splits: (lhs: 1, rhs: 1) or (lhs: 2, rhs: 2)
-    //Combines: (1) or (2)
-    //Multiple Results possible
-
-    std::vector<daphne::VectorSplit> arg_splits;
-    std::vector<daphne::VectorCombine> res_combines;
-
-};
-
 template<class EwBinaryOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_EwBinaryOp(EwBinaryOp *op)
 {
@@ -249,6 +236,7 @@ IMPL_SPLIT_COMBINE_EWBINARYOP(EwGeOp)
     }
 
 IMPL_SPLIT_COMBINE_EWUNARYOP(EwSqrtOp)
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwAbsOp)
 
 #undef IMPL_SPLIT_COMBINE_EWUNARYOP
 // ----------------------------------------------------------------------------

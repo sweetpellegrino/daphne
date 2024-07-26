@@ -23,6 +23,15 @@ namespace mlir::OpTrait {
     template<class ConcreteOp>
     class VectorElementWise : public TraitBase<ConcreteOp, VectorElementWise> {};
 
+    /*template<size_t i>
+    struct VectorTrait {
+        template<class ConcreteOp>
+        class Impl: public TraitBase<ConcreteOp, Impl> {};
+    };
+
+    template<class ConcreteOp>
+    class VectorElementWise : public TraitBase<ConcreteOp, VectorElementWise> {};*/
+
     template<class ConcreteOp>
     class VectorReduction : public TraitBase<ConcreteOp, VectorReduction> {};
 

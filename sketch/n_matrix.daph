@@ -2,9 +2,9 @@ n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 m = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 
 f = n + 1;
-x = sqrt(f);
+x = abs(f);
 y = sqrt(m);
-z = x + y;
+z = x * y;
 
 t = aggMax(z);
 print(t);
