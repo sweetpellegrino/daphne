@@ -75,6 +75,7 @@ namespace mlir::daphne {
 
     std::unique_ptr<Pass> createVectorizeComputationsPass(const DaphneUserConfig& cfg);
     std::unique_ptr<Pass> createGreedyVectorizeComputationsPass();
+    std::unique_ptr<Pass> createThGreedyVectorizeComputationsPass();
     std::unique_ptr<Pass> createDaphneVectorizeComputationsPass();
 
     std::unique_ptr<Pass> createWhileLoopInvariantCodeMotionPass();

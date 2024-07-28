@@ -28,6 +28,7 @@ add_mlir_dialect_library(MLIRDaphneTransforms
 
     vectorize/DaphneVectorizeComputationsPass.cpp
     vectorize/GreedyVectorizeComputationsPass.cpp
+    vectorize/ThGreedyVectorizeComputationsPass.cpp
     VectorizeComputationsPass.cpp
     
     WhileLoopInvariantCodeMotionPass.cpp

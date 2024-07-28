@@ -20,7 +20,8 @@
 
 enum VectorizeType {
     DAPHNE,
-    GREEDY
+    GREEDY,
+    TH_GREEDY
 };
 
 using namespace mlir;

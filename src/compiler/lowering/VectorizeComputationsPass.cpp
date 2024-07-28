@@ -28,6 +28,8 @@ std::unique_ptr<mlir::Pass> daphne::createVectorizeComputationsPass(const Daphne
             return mlir::daphne::createDaphneVectorizeComputationsPass();
         case VectorizeType::GREEDY:
             return mlir::daphne::createGreedyVectorizeComputationsPass();
+        case VectorizeType::TH_GREEDY:
+            return mlir::daphne::createThGreedyVectorizeComputationsPass();
         default:
             return mlir::daphne::createDaphneVectorizeComputationsPass();
     }
