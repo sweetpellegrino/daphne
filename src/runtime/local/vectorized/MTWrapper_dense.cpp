@@ -15,6 +15,7 @@
  */
 
 #include "MTWrapper.h"
+#include <llvm/Support/raw_ostream.h>
 #include <runtime/local/vectorized/Tasks.h>
 
 #ifdef USE_CUDA
@@ -30,6 +31,10 @@ template<typename VT>
     auto len = inputProps.first;
     auto mem_required = inputProps.second;
     mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines);
+    //TODO: needs fix
+    //only for debugging purposes:
+    if(len == 0)
+        len = 1;
     auto row_mem = mem_required / len;
 
     // create task queue (w/o size-based blocking)
@@ -84,6 +89,16 @@ template<typename VT>
     auto len = inputProps.first;
     auto mem_required = inputProps.second;
     mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines);
+    //TODO: needs fix
+    //only for debugging purposes:
+    if(len == 0) {
+        for (size_t i = 0; i < numInputs; ++i) {
+            std::cout << "Input: " << i << "\n";
+            std::cout << "isScalar: " << isScalar[i] << "\n";
+            std::cout << "END" << "\n";
+        }
+        len = 50;
+    }
     auto row_mem = mem_required / len;
 
     std::vector<std::unique_ptr<TaskQueue>> q;

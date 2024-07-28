@@ -26,6 +26,7 @@
 #include <filesystem>
 
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
 #include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
 #include "mlir/Conversion/LinalgToLLVM/LinalgToLLVM.h"
 #include "mlir/Conversion/MathToLLVM/MathToLLVM.h"
@@ -164,6 +165,8 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     }
     if (userConfig_.explain_vectorized)
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));
+
+    llvm::outs() << "Finished pipeline creation\n";
 
     if (userConfig_.use_distributed)
         pm.addPass(mlir::daphne::createDistributePipelinesPass());

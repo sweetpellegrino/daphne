@@ -36,9 +36,18 @@ def VectorCombineAttr : I64EnumAttr<"VectorCombine", "", [VECTOR_COMBINE_ROWS, V
     let cppNamespace = "::mlir::daphne";
 }
 
+// class VectorTrait<I64EnumAttrCase value> :
+// ParamNativeOpTrait<"VectorTrait", !cast<string>(value.value)>;
+
+//class VectorTrait : NativeOpTrait<"VectorTrait">;
+
+/*class SparsityFromIthScalar<int i> : ParamNativeOpTrait<"SparsityFromIthScalar", !cast<string>(i)>;
+class SparsityFromIthArg<int i> : ParamNativeOpTrait<"SparsityFromIthArg", !cast<string>(i)>;
+def SparsityFromArg : SparsityFromIthArg<0>;*/
+
 def VectorizableOpInterface : OpInterface<"Vectorizable"> {
     let description = [{
-        Enables the computation in the form of vectors. 
+        Enables the computation in the form of vectors.
     }];
 
     let methods = [
@@ -53,5 +62,34 @@ def VectorizableOpInterface : OpInterface<"Vectorizable"> {
         //  the same behaviour as with `Distributable` Ops, and therefore combining them might make sense.
     ];
 }
+
+/*
+class VectorizableOpInterface2<int i> : OpInterface<"Vectorizable"> {
+    let description = [{
+        Enables the computation in the form of vectors.
+    }];
+
+    let methods = [
+        InterfaceMethod<"Get the vector split kind for each input.",
+                        "std::vector<std::vector<daphne::VectorSplit>>", "getVectorSplits", (ins)>,
+        InterfaceMethod<"Get the vector combine kind for each output.",
+                        "std::vector<std::vector<daphne::VectorCombine>>", "getVectorCombines", (ins)>,
+        InterfaceMethod<"Create values for #rows and #cols of each output. -1 for dynamic/unknown.",
+                        "std::vector<std::pair<Value, Value>>", "createOpsOutputSizes", (ins "mlir::OpBuilder&":$builder)>,
+        // TODO: for complex operations (non element-wise) where the computation per vector is not equal to the operation
+        //  itself on the whole input, we will require a new method generating the operations in the pipeline. This is
+        //  the same behaviour as with `Distributable` Ops, and therefore combining them might make sense.
+    ];
+
+    let extraClassDeclaration = [{
+        static constexpr int parameter = }] # i # [{;
+    }];
+}
+
+def VectorizableOpInterface : VectorizableOpInterface2<1> {
+    let description = [{
+    }];
+}
+*/
 
 #endif // SRC_IR_DAPHNEIR_DAPHNEVECTORIZABLEOPINTERFACE_TD
