@@ -159,8 +159,23 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     if (userConfig_.use_vectorized_exec || userConfig_.use_distributed) {
         // TODO: add inference here if we have rewrites that could apply to
         // vectorized pipelines due to smaller sizes
-        pm.addNestedPass<mlir::func::FuncOp>(
-            mlir::daphne::createVectorizeComputationsPass(userConfig_));
+        switch (userConfig_.vectorized_exec_type) {
+            case VectorizeType::DAPHNE:
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createDaphneVectorizeComputationsPass());
+                break;
+            case VectorizeType::GREEDY:
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createGreedyVectorizeComputationsPass());
+                break;
+            case VectorizeType::TH_GREEDY:
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createThGreedyVectorizeComputationsPass());
+                break;
+            default:
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createDaphneVectorizeComputationsPass());
+        }
         pm.addPass(mlir::createCanonicalizerPass());
     }
     if (userConfig_.explain_vectorized)

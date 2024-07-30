@@ -20,7 +20,7 @@
 #include <api/daphnelib/DaphneLibResult.h>
 #include <compiler/catalog/KernelCatalog.h>
 #include <runtime/local/vectorized/LoadPartitioningDefs.h>
-#include <compiler/lowering/vectorize/VectorizeComputationsBase.h>
+#include <compiler/lowering/vectorize/VectorizeComputationsUtils.h>
 #include <runtime/local/datastructures/IAllocationDescriptor.h>
 #include <util/LogConfig.h>
 #include <util/DaphneLogger.h>
@@ -41,7 +41,7 @@ struct DaphneUserConfig {
     bool use_cuda = false;
     
     bool use_vectorized_exec = false;
-    VectorizeType vectorized_exec_type = VectorizeType::DAPHNE;
+    VectorizeType vectorized_exec_type = DAPHNE;
 
     bool use_distributed = false;
     bool use_obj_ref_mgnt = true;

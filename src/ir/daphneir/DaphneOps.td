@@ -1540,6 +1540,11 @@ def Daphne_DistributedPipelineOp : Daphne_Op<"distributedPipeline", [AttrSizedOp
     let results = (outs Variadic<MatrixOrFrame>:$outputs);
 }
 
+def Daphne_GeneratorOp : Daphne_Op<"generator", []> {
+    let arguments = (ins AnyScalar:$arg, Size:$numRows, Size:$numCols);
+    let results = (outs MatrixOrU:$res);
+}
+
 // ****************************************************************************
 // Higher-order operations
 // ****************************************************************************

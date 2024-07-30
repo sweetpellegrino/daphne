@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <llvm/Support/raw_ostream.h>
 #ifdef USE_CUDA
 #include "runtime/local/datastructures/AllocationDescriptorCUDA.h"
 #endif
@@ -63,6 +64,9 @@ protected:
         auto len = 0ul;
         auto mem_required = 0ul;
 
+        //print numInputs and splits
+        llvm::outs() << "NumInputs: " << numInputs << "\n";
+
         // due to possible broadcasting we have to check all inputs
         for (auto i = 0u; i < numInputs; ++i) {
             if (splits[i] == mlir::daphne::VectorSplit::ROWS) {
@@ -70,7 +74,9 @@ protected:
                 mem_required += inputs[i]->getNumItems() * sizeof(typename DT::VT);
             }
         }
-        return std::make_pair(len, mem_required);
+        auto _pair = std::make_pair(len, mem_required);
+        llvm::outs() << "Input properties: " << _pair.first << ", " << _pair.second << "\n";
+        return _pair;
     }
 
     void hwloc_recurse_topology(hwloc_topology_t topo, hwloc_obj_t obj,

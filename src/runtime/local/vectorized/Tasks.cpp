@@ -16,6 +16,7 @@
 
 #include "runtime/local/vectorized/Tasks.h"
 #include "runtime/local/kernels/EwBinaryMat.h"
+#include <llvm/Support/raw_ostream.h>
 
 template<typename VT>
 void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
@@ -25,9 +26,13 @@ void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batch
     std::vector<DenseMatrix<VT>**> outputs;
     for (auto &lres : localResults)
         outputs.push_back(&lres);
+    llvm::outs() << _data._rl << ", " << _data._ru  << "\n";
     for(uint64_t r = _data._rl ; r < _data._ru ; r += batchSize) {
         //create zero-copy views of inputs/outputs
         uint64_t r2 = std::min(r + batchSize, _data._ru);
+        llvm::outs() << r + batchSize << "\n";
+        
+        llvm::outs() << "r=" << r << ", r2=" << r2 << ", batchsize=" << batchSize << "\n";
         
         auto linputs = this->createFuncInputs(r, r2);
         

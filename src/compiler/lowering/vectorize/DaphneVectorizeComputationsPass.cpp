@@ -38,7 +38,7 @@ namespace
      * @param op The operation to check
      * @return true if there is a dependency, false otherwise
      */
-    bool valueDependsOnResultOf(Value value, Operation *op) {
+    bool valueDependsOnResultOf2(Value value, Operation *op) {
         if (auto defOp = value.getDefiningOp()) {
             if (defOp == op)
                 return true;
@@ -54,7 +54,7 @@ namespace
                 return false;
 #endif
             for (auto operand : defOp->getOperands()) {
-                if (valueDependsOnResultOf(operand, op))
+                if (valueDependsOnResultOf2(operand, op))
                     return true;
             }
         }
@@ -75,7 +75,7 @@ namespace
                     // transitive dependencies inside the pipeline are of course fine.
                     continue;
                 }
-                if (operand.getDefiningOp() != opBefore && valueDependsOnResultOf(operand, opBefore)) {
+                if (operand.getDefiningOp() != opBefore && valueDependsOnResultOf2(operand, opBefore)) {
                     return false;
                 }
             }
@@ -124,7 +124,7 @@ namespace
      * @param pipelinePosition The position where the pipeline will be
      * @param pipeline The pipeline for which this function should be executed
      */
-    void movePipelineInterleavedOperations(Block::iterator pipelinePosition, const std::vector<daphne::Vectorizable> &pipeline) {
+    void movePipelineInterleavedOperationsV(Block::iterator pipelinePosition, const std::vector<daphne::Vectorizable> &pipeline) {
         // first operation in pipeline vector is last in IR, and the last is the first
         auto startPos = pipeline.back()->getIterator();
         auto endPos = pipeline.front()->getIterator();
@@ -141,7 +141,7 @@ namespace
             auto pipelineOpsBeforeIt = currSkip;
             while (--pipelineOpsBeforeIt != pipeline.rbegin()) {
                 for (auto operand : it->getOperands()) {
-                    if(valueDependsOnResultOf(operand, *pipelineOpsBeforeIt)) {
+                    if(valueDependsOnResultOf2(operand, *pipelineOpsBeforeIt)) {
                         dependsOnPipeline = true;
                         break;
                     }
@@ -152,7 +152,7 @@ namespace
             }
             // check first pipeline op
             for (auto operand : it->getOperands()) {
-                if(valueDependsOnResultOf(operand, *pipelineOpsBeforeIt)) {
+                if(valueDependsOnResultOf2(operand, *pipelineOpsBeforeIt)) {
                     dependsOnPipeline = true;
                     break;
                 }
@@ -299,7 +299,7 @@ void DaphneVectorizeComputationsPass::runOnOperation()
         builder.setInsertionPoint(pipeline.front());
         // move all operations, between the operations that will be part of the pipeline, before or after the
         // completed pipeline
-        movePipelineInterleavedOperations(builder.getInsertionPoint(), pipeline);
+        movePipelineInterleavedOperationsV(builder.getInsertionPoint(), pipeline);
         for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
             auto v = *vIt;
             auto vSplits = v.getVectorSplits()[0];
@@ -390,7 +390,7 @@ void DaphneVectorizeComputationsPass::runOnOperation()
                 // TODO: switch to type based size inference instead
                 // FIXME: if output is dynamic sized, we can't do this
                 // replace `NumRowOp` and `NumColOp`s for output size inference
-            int count3 = 0;
+                int count3 = 0;
                 for(auto& use: old.getUses()) {
                     count3++;
                     auto* op = use.getOwner();

@@ -15,8 +15,11 @@
  */
 
 #include "MTWrapper.h"
+#include "ir/daphneir/Daphne.h"
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/Support/raw_ostream.h>
 #include <runtime/local/vectorized/Tasks.h>
+#include <runtime/local/kernels/Fill.h>
 
 #ifdef USE_CUDA
 #include <runtime/local/vectorized/TasksCUDA.h>
@@ -91,6 +94,15 @@ template<typename VT>
     mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines);
     //TODO: needs fix
     //only for debugging purposes:
+
+    auto fillFuncPtr = &Fill<DenseMatrix<VT>, VT>::apply;
+    std::cout << "fill ptr: " << &fillFuncPtr << "\n";
+
+    //print out every func ptr of funcs
+    for (const auto& func : funcs) {
+        std::cout << "func ptr: " << &func << "\n";
+    }
+  
     if(len == 0) {
         for (size_t i = 0; i < numInputs; ++i) {
             std::cout << "Input: " << i << "\n";
@@ -122,6 +134,8 @@ template<typename VT>
     }
 
     auto batchSize8M = std::max(100ul, static_cast<size_t>(std::ceil(8388608 / row_mem)));
+    std::cout << "batchSize8M: " << batchSize8M << "\n";
+
     this->initCPPWorkers(qvector, batchSize8M, verbose, this->_numQueues, this->_queueMode, ctx->getUserConfig().pinWorkers);
 
     // lock for aggregation combine

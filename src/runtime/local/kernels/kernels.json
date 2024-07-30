@@ -3150,6 +3150,49 @@
     },
     {
         "kernelTemplate": {
+            "header": "Generator.h",
+            "opName": "generator",
+            "returnType": "void",
+            "templateParams": [
+                {
+                    "name": "DTRes",
+                    "isDataType": true
+                },
+                {
+                    "name": "VTArg",
+                    "isDataType": false
+                }
+            ],
+            "runtimeParams": [
+                {
+                    "type": "DTRes *&",
+                    "name": "res"
+                },
+                {
+                    "type": "VTArg",
+                    "name": "arg"
+                },
+                {
+                    "type": "size_t",
+                    "name": "numRows"
+                },
+                {
+                    "type": "size_t",
+                    "name": "numCols"
+                }
+            ]
+        },
+        "api": [
+            {
+                "name":  ["CPP"],
+                "instantiations": [
+                    [["DenseMatrix", "int64_t"], "int64_t"]
+                ]
+            }
+       ]
+    },
+    {
+        "kernelTemplate": {
             "header": "Tri.h",
             "opName": "tri",
             "returnType": "void",

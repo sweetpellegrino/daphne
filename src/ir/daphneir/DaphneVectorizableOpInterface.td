@@ -20,11 +20,12 @@
 include "mlir/IR/EnumAttr.td"
 include "mlir/IR/OpBase.td"
 
+def VECTOR_SPLIT_GEN : I64EnumAttrCase<"GEN", 9>; //COPY?
 def VECTOR_SPLIT_NONE : I64EnumAttrCase<"NONE", 0>; //Broadcast
 def VECTOR_SPLIT_ROWS : I64EnumAttrCase<"ROWS", 1>;
 def VECTOR_SPLIT_COLS : I64EnumAttrCase<"COLS", 2>;
 
-def VectorSplitAttr : I64EnumAttr<"VectorSplit", "", [VECTOR_SPLIT_NONE, VECTOR_SPLIT_ROWS, VECTOR_SPLIT_COLS]> {
+def VectorSplitAttr : I64EnumAttr<"VectorSplit", "", [VECTOR_SPLIT_NONE, VECTOR_SPLIT_ROWS, VECTOR_SPLIT_COLS, VECTOR_SPLIT_GEN]> {
     let cppNamespace = "::mlir::daphne";
 }
 

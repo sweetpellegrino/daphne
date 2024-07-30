@@ -44,6 +44,13 @@
  * An instance of this class is passed to every kernel at run-time. It allows
  * the kernel to retrieve information about the run-time environment.
  */
+
+//TODO:
+struct VectorizedRuntimeInfo {
+    size_t r = -1;
+    size_t r2 = -1;
+};
+
 struct DaphneContext {
     // Feel free to extend this class with any kind of run-time information
     // that might be relevant to some kernel. Each kernel can extract the
@@ -60,6 +67,8 @@ struct DaphneContext {
 
 
     std::unique_ptr<IContext> distributed_context;
+
+    VectorizedRuntimeInfo* vecInfo = nullptr;
 
     /**
      * @brief The user configuration (including information passed via CLI

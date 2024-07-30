@@ -25,7 +25,7 @@
 #include <api/daphnelib/DaphneLibResult.h>
 #include <parser/daphnedsl/DaphneDSLParser.h>
 #include "compiler/execution/DaphneIrExecutor.h"
-#include "compiler/lowering/vectorize/VectorizeComputationsBase.h"
+#include "compiler/lowering/vectorize/VectorizeComputationsUtils.h"
 #include <runtime/local/vectorized/LoadPartitioning.h>
 #include <parser/catalog/KernelCatalogParser.h>
 #include <parser/config/ConfigParser.h>
@@ -359,10 +359,10 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
         "vec-type", cat(daphneOptions),
         llvm::cl::desc("Apply specific Vectorization pass"),
         llvm::cl::values(
-            clEnumVal(VectorizeType::DAPHNE, "Use original DAPHNE Vectorization pass"),
-            clEnumVal(VectorizeType::GREEDY, "Use greedy Vectorization pass"),
-            clEnumVal(VectorizeType::TH_GREEDY, "Use th. greedy Vectorization pass")),
-            init(VectorizeType::DAPHNE)
+            clEnumVal(DAPHNE, "Use original DAPHNE Vectorization pass"),
+            clEnumVal(GREEDY, "Use greedy Vectorization pass"),
+            clEnumVal(TH_GREEDY, "Use th. greedy Vectorization pass")),
+            init(DAPHNE)
     );
 
     static llvm::cl::list<string> scriptArgs1(

@@ -41,7 +41,7 @@
 #include <utility>
 #include <vector>
 
-#include "compiler/lowering/vectorize/VectorizeComputationsBase.h"
+#include "compiler/lowering/vectorize/VectorizeComputationsUtils.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -107,95 +107,6 @@ namespace
         return vecPipeline;
     }
 
-    /**
-     * @brief Recursive function checking if the given value is transitively dependant on the operation `op`.
-     * @param value The value to check
-     * @param op The operation to check
-     * @return true if there is a dependency, false otherwise
-     */
-    bool valueDependsOnResultOf(Value value, Operation *op) {
-        if (auto defOp = value.getDefiningOp()) {
-            if (defOp == op)
-                return true;
-#if 1
-            // TODO This crashes if defOp and op are not in the same block.
-            // At the same time, it does not seem to be strictly required.
-//            if (defOp->isBeforeInBlock(op))
-            // Nevertheless, this modified line seems to be a good soft-filter;
-            // without that, the vectorization pass may take very long on
-            // programs with 100s of operations.
-            if (defOp->getBlock() == op->getBlock() && defOp->isBeforeInBlock(op))
-                // can't have results of `op` as inputs, as it is defined before
-                return false;
-#endif
-            for (auto operand : defOp->getOperands()) {
-                if (valueDependsOnResultOf(operand, op))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @brief Moves operation which are between the operations, which should be fused into a single pipeline, before
-     * or after the position where the pipeline will be placed.
-     * @param pipelinePosition The position where the pipeline will be
-     * @param pipeline The pipeline for which this function should be executed
-     */
-    void movePipelineInterleavedOperations(Block::iterator pipelinePosition, const std::vector<mlir::Operation*> &pipeline) {
-        // first operation in pipeline vector is last in IR, and the last is the first
-        auto startPos = pipeline.back()->getIterator();
-        auto endPos = pipeline.front()->getIterator();
-        auto currSkip = pipeline.rbegin();
-        std::vector<Operation*> moveBeforeOps;
-        std::vector<Operation*> moveAfterOps;
-        for(auto it = startPos; it != endPos; ++it) {
-            if (it == (*currSkip)->getIterator()) {
-                ++currSkip;
-                continue;
-            }
-
-            bool dependsOnPipeline = false;
-            auto pipelineOpsBeforeIt = currSkip;
-            while (--pipelineOpsBeforeIt != pipeline.rbegin()) {
-                for (auto operand : it->getOperands()) {
-                    if(valueDependsOnResultOf(operand, *pipelineOpsBeforeIt)) {
-                        dependsOnPipeline = true;
-                        break;
-                    }
-                }
-                if (dependsOnPipeline) {
-                    break;
-                }
-            }
-            // check first pipeline op
-            for (auto operand : it->getOperands()) {
-                if(valueDependsOnResultOf(operand, *pipelineOpsBeforeIt)) {
-                    dependsOnPipeline = true;
-                    break;
-                }
-            }
-            if (dependsOnPipeline) {
-                moveAfterOps.push_back(&(*it));
-            }
-            else {
-                moveBeforeOps.push_back(&(*it));
-            }
-        }
-
-        for(auto moveBeforeOp: moveBeforeOps) {
-            moveBeforeOp->moveBefore(pipelinePosition->getBlock(), pipelinePosition);
-        }
-        for(auto moveAfterOp: moveAfterOps) {
-            moveAfterOp->moveAfter(pipelinePosition->getBlock(), pipelinePosition);
-            pipelinePosition = moveAfterOp->getIterator();
-        }
-    }
-
-    bool pipelinesShareSameInputs(std::vector<mlir::Operation *> p1, std::vector<mlir::Operation *> p2) {
-        //TODO: implement
-    }
-    
     struct GreedyVectorizeComputationsPass : public PassWrapper<GreedyVectorizeComputationsPass, OperationPass<func::FuncOp>> {
         void runOnOperation() final;
 
@@ -266,10 +177,6 @@ namespace
                         if(auto fillOp = llvm::dyn_cast<daphne::FillOp>(v)) {
                             vSplits = {daphne::VectorSplit::NONE, daphne::VectorSplit::NONE, daphne::VectorSplit::NONE};
                             vCombines = {daphne::VectorCombine::ROWS};
-                            auto loc = fillOp->getLoc();
-                            auto sizeTy = builder.getIndexType();
-                            //auto lhsRows = builder.create<daphne::NumRowsOp>(loc, sizeTy, fillOp->getOperands()[0]);
-                            //auto lhsCols = builder.create<daphne::NumColsOp>(loc, sizeTy, fillOp->getOperands()[0]);
                             opsOutputSizes = {{fillOp.getOperands()[1], fillOp.getOperands()[2]},};
                         }
                         else {
@@ -278,14 +185,11 @@ namespace
                                 vSplits.push_back(split);
                             }
 
-                            for (auto result : v->getResults()) {
-                                auto combine = result.getType().template isa<daphne::MatrixType>() ? daphne::VectorCombine::ROWS : daphne::VectorCombine::ROWS;
-                                vCombines.push_back(combine);
-                            }
-
                             auto loc = v->getLoc();
                             auto sizeTy = builder.getIndexType();
                             for (auto result : v->getResults()) {
+                                auto combine = result.getType().template isa<daphne::MatrixType>() ? daphne::VectorCombine::ROWS : daphne::VectorCombine::ROWS;
+                                vCombines.push_back(combine);
                                 opsOutputSizes.push_back({builder.create<daphne::NumRowsOp>(loc, sizeTy, v->getOperands()[0]),
                                                            builder.create<daphne::NumColsOp>(loc, sizeTy, v->getOperands()[0])});
                             }

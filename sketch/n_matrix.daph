@@ -1,10 +1,10 @@
 //n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 //m = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 
-n = fill(2, $dim, $dim);
-m = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
+n = fill(4.4, $dim, $dim*20);
+m = rand($dim, $dim*20, 1.0, 2.0, 0.2, -1);
 
-f = n + 1;
+f = n + 50;
 x = abs(f);
 y = sqrt(m);
 z = x * y;
