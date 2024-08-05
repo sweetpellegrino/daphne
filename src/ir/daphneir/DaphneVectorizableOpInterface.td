@@ -65,7 +65,7 @@ def VectorizableOpInterface : OpInterface<"Vectorizable"> {
 }
 
 /*
-class VectorizableOpInterface2<int i> : OpInterface<"Vectorizable"> {
+class VectorizableOpInterface2<enum i> : OpInterface<"Vectorizable"> {
     let description = [{
         Enables the computation in the form of vectors.
     }];
@@ -87,7 +87,7 @@ class VectorizableOpInterface2<int i> : OpInterface<"Vectorizable"> {
     }];
 }
 
-def VectorizableOpInterface : VectorizableOpInterface2<1> {
+def VectorizableOpInterface : VectorizableOpInterface2<Ve> {
     let description = [{
     }];
 }

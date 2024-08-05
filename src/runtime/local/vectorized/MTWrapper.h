@@ -73,6 +73,11 @@ protected:
                 len = std::max(len, inputs[i]->getNumRows());
                 mem_required += inputs[i]->getNumItems() * sizeof(typename DT::VT);
             }
+            else if (splits[i] == mlir::daphne::VectorSplit::GEN) {
+                llvm::outs() << "VectorSplit::GEN\n";
+                len = std::max(len, inputs[i]->getNumRows());
+                //mem_required += inputs[i]->getNumItems() * sizeof(typename DT::VT);
+            }
         }
         auto _pair = std::make_pair(len, mem_required);
         llvm::outs() << "Input properties: " << _pair.first << ", " << _pair.second << "\n";

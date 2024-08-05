@@ -46,10 +46,16 @@
  */
 
 //TODO:
-struct VectorizedRuntimeInfo {
+/*struct VectorizedRuntimeInfo {
     size_t r = -1;
     size_t r2 = -1;
 };
+
+struct NewDaphneConntext {
+
+    VectorizedRuntimeInfo runtimeInfo;
+    DaphneConntext *global;
+}*/
 
 struct DaphneContext {
     // Feel free to extend this class with any kind of run-time information
@@ -67,8 +73,6 @@ struct DaphneContext {
 
 
     std::unique_ptr<IContext> distributed_context;
-
-    VectorizedRuntimeInfo* vecInfo = nullptr;
 
     /**
      * @brief The user configuration (including information passed via CLI

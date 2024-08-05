@@ -104,6 +104,14 @@ def Daphne_FillOp : Daphne_Op<"fill", [
     let results = (outs MatrixOrU:$res);
 }
 
+def Daphne_FillShapeOp : Daphne_Op<"fillShape", [
+    DataTypeMat, ValueTypeFromFirstArg,
+    NumRowsFromIthScalar<1>, NumColsFromIthScalar<2>, CUDASupport, VectorElementWise
+]> {
+    let arguments = (ins AnyScalar:$arg, MatrixOf<[NumScalar]>:$shape);
+    let results = (outs MatrixOrU:$res);
+}
+
 def Daphne_MatrixConstantOp : Daphne_Op<"matrixConstant", [
     DataTypeMat,
     DeclareOpInterfaceMethods<InferShapeOpInterface>
@@ -1541,7 +1549,7 @@ def Daphne_DistributedPipelineOp : Daphne_Op<"distributedPipeline", [AttrSizedOp
 }
 
 def Daphne_GeneratorOp : Daphne_Op<"generator", []> {
-    let arguments = (ins AnyScalar:$arg, Size:$numRows, Size:$numCols);
+    let arguments = (ins Size:$numRows, Size:$numCols);
     let results = (outs MatrixOrU:$res);
 }
 

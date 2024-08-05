@@ -1,7 +1,7 @@
 //n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 //m = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 
-n = fill(4.4, $dim, $dim*20);
+n = fill(4.0, $dim, $dim*20);
 m = rand($dim, $dim*20, 1.0, 2.0, 0.2, -1);
 
 f = n + 50;

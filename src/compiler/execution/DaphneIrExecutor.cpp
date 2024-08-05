@@ -176,6 +176,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
                 pm.addNestedPass<mlir::func::FuncOp>(
                     mlir::daphne::createDaphneVectorizeComputationsPass());
         }
+        pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization (before canon):"));
         pm.addPass(mlir::createCanonicalizerPass());
     }
     if (userConfig_.explain_vectorized)

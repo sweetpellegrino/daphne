@@ -28,18 +28,18 @@
 // Struct for partial template specialization
 // ****************************************************************************
 
-template<class DTRes, typename VTArg>
+template<class DTRes>
 struct Generator {
-    static void apply(DTRes *& res, VTArg arg, size_t numRows, size_t numCols, DCTX(ctx)) = delete;
+    static void apply(DTRes *& res, size_t numRows, size_t numCols, DCTX(ctx)) = delete;
 };
 
 // ****************************************************************************
 // Convenience function
 // ****************************************************************************
 
-template<class DTRes, typename VTArg>
-void generator(DTRes *& res, VTArg arg, size_t numRows, size_t numCols, DCTX(ctx)) {
-    Generator<DTRes, VTArg>::apply(res, arg, numRows, numCols, ctx);
+template<class DTRes>
+void generator(DTRes *& res, size_t numRows, size_t numCols, DCTX(ctx)) {
+    Generator<DTRes>::apply(res, numRows, numCols, ctx);
 }
 
 // ****************************************************************************
@@ -50,13 +50,13 @@ void generator(DTRes *& res, VTArg arg, size_t numRows, size_t numCols, DCTX(ctx
 // DenseMatrix
 // ----------------------------------------------------------------------------
 
-template<typename VT>
-struct Generator<DenseMatrix<VT>, VT> {
-    static void apply(DenseMatrix<VT> *& res, VT arg, size_t numRows, size_t numCols, DCTX(ctx)) {
+template<>
+struct Generator<DenseMatrix<int64_t>> {
+    static void apply(DenseMatrix<int64_t> *& res, size_t numRows, size_t numCols, DCTX(ctx)) {
 
-        std::shared_ptr<VT[]> ptr(nullptr);
+        std::shared_ptr<int64_t[]> ptr(nullptr);
         if(res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, ptr);
+            res = DataObjectFactory::create<DenseMatrix<int64_t>>(numRows, numCols, ptr);
 
     }
 };

@@ -331,6 +331,17 @@ void DaphneVectorizeComputationsPass::runOnOperation()
         for(auto op: pipeline) {
             locs.push_back(op->getLoc());
         }
+        llvm::outs() << "####2####\n";
+        func.dump();
+        llvm::outs() << "####2####\n";
+
+        llvm::outs() << ValueRange(results).getTypes().size() << "\n";
+        llvm::outs() << operands.size() << "\n";
+        llvm::outs() << outRows.size() << "\n";
+        llvm::outs() << outCols.size()  << "\n";
+        llvm::outs() << vSplitAttrs.size() << "\n";
+        llvm::outs() << vCombineAttrs.size() << "\n";
+
         auto loc = builder.getFusedLoc(locs);
         auto pipelineOp = builder.create<daphne::VectorizedPipelineOp>(loc,
             ValueRange(results).getTypes(),
@@ -341,6 +352,18 @@ void DaphneVectorizeComputationsPass::runOnOperation()
             builder.getArrayAttr(vCombineAttrs),
             nullptr);
         Block *bodyBlock = builder.createBlock(&pipelineOp.getBody());
+
+        llvm::outs() << "#### ####\n";
+        pipelineOp.dump();
+        llvm::outs() << "#### ####\n";
+
+        llvm::outs() << "####3####\n";
+        func.dump();
+        llvm::outs() << "####3####\n";
+
+        llvm::outs() << "####4####\n";
+        func.dump();
+        llvm::outs() << "####4####\n";
 
         int count0 = 0;
         for(size_t i = 0u; i < operands.size(); ++i) {
@@ -363,10 +386,9 @@ void DaphneVectorizeComputationsPass::runOnOperation()
 
         auto argsIx = 0u;
         auto resultsIx = 0u;
-        int count = 0;
         for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
-            count++;
             auto v = *vIt;
+            llvm::outs() << "########" << "\n";
             v->dump();
             auto numOperands = v->getNumOperands();
             auto numResults = v->getNumResults();
@@ -381,37 +403,44 @@ void DaphneVectorizeComputationsPass::runOnOperation()
 
             auto pipelineReplaceResults = pipelineOp->getResults().drop_front(resultsIx).take_front(numResults);
             resultsIx += numResults;
-            int count2 = 0;
             for(auto z: llvm::zip(v->getResults(), pipelineReplaceResults)) {
-                count2++;
                 auto old = std::get<0>(z);
                 auto replacement = std::get<1>(z);
+
+                llvm::outs() << "OLD: ";
+                old.dump();
+                llvm::outs() << "NEW: ";
+                replacement.dump();
 
                 // TODO: switch to type based size inference instead
                 // FIXME: if output is dynamic sized, we can't do this
                 // replace `NumRowOp` and `NumColOp`s for output size inference
-                int count3 = 0;
                 for(auto& use: old.getUses()) {
-                    count3++;
                     auto* op = use.getOwner();
                     if(auto nrowOp = llvm::dyn_cast<daphne::NumRowsOp>(op)) {
                         nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
+                        llvm::outs() << "Replacing ";
+                        nrowOp->dump();
+                        llvm::outs() << "Replacement: " << pipelineOp.getOutRows()[replacement.getResultNumber()] << "\n";
                         nrowOp.erase();
                     }
                     if(auto ncolOp = llvm::dyn_cast<daphne::NumColsOp>(op)) {
                         ncolOp.replaceAllUsesWith(pipelineOp.getOutCols()[replacement.getResultNumber()]);
+                        llvm::outs() << "Replacing ";
+                        ncolOp->dump();
+                        llvm::outs() << "Replacement: " << pipelineOp.getOutCols()[replacement.getResultNumber()] << "\n";
                         ncolOp.erase();
                     }
                 }
-                llvm::outs() << "count3: " << count3 << "\n";
                 // Replace only if not used by pipeline op
                 old.replaceUsesWithIf(replacement, [&](OpOperand& opOperand) {
                     return llvm::count(pipeline, opOperand.getOwner()) == 0;
                 });
             }
-            llvm::outs() << "count2: "  << count2 << "\n";
+            llvm::outs() << "###--###" << "\n";
+            func->dump();
+            llvm::outs() << "########" << "\n";
         }
-        llvm::outs() << "count: " << count << "\n";
         bodyBlock->walk([](Operation* op) {
             for(auto resVal: op->getResults()) {
                 if(auto ty = resVal.getType().dyn_cast<daphne::MatrixType>()) {
@@ -420,7 +449,17 @@ void DaphneVectorizeComputationsPass::runOnOperation()
             }
         });
         builder.setInsertionPointToEnd(bodyBlock);
-        builder.create<daphne::ReturnOp>(loc, results);
+
+        //print results:
+        llvm::outs() << "###--###" << "\n";
+        llvm::outs() << results.size() << "\n";
+        for( auto res: results) {
+            llvm::outs() << "Result: ";
+            res.dump();
+        }
+        llvm::outs() << "########" << "\n";
+        auto ret = builder.create<daphne::ReturnOp>(loc, results);
+        ret.dump();
     }
 }
 

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
 #include <runtime/local/kernels/EwBinaryMat.h>
@@ -104,7 +105,13 @@ protected:
                     _data._inputs[i]->increaseRefCounter();
             }
             else if (VectorSplit::ROWS == _data._splits[i]) {
+                //data gets copied? No, sliceRow creates a shallow copy
                 linputs.push_back(_data._inputs[i]->sliceRow(rowStart, rowEnd));
+            }
+            else if (VectorSplit::GEN == _data._splits[i]) {
+                uint64_t numCols = _data._inputs[i]->getNumCols();
+                std::shared_ptr<int64_t[]> ptr(nullptr);
+                linputs.push_back(DataObjectFactory::create<DenseMatrix<int64_t>>(rowEnd-rowStart, numCols, ptr));
             }
             else {
                 llvm_unreachable("Not all vector splits handled");
