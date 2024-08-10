@@ -40,7 +40,7 @@ However, as the methods largely map to DaphneDSL built-in functions, you can fin
 **Generating data in DAPHNE:**
 
 - **`fill`**`(arg, rows:int, cols:int) -> Matrix`
-- **`seq`**`(start, end, inc) -> Matrix`
+- **`seq`**`(start, end, inc = 1) -> Matrix`
 - **`rand`**`(rows: int, cols: int, min: Union[float, int] = None, max: Union[float, int] = None, sparsity: Union[float, int] = 0, seed: Union[float, int] = 0) -> Matrix`
 - **`createFrame`**`(columns: List[Matrix], labels: List[str] = None) -> 'Frame'`
 - **`diagMatrix`**`(self, arg: Matrix) -> 'Matrix'`
@@ -87,6 +87,7 @@ In the following, we describe only the latter.
 - **`sinh`**`()`
 - **`cosh`**`()`
 - **`tanh`**`()`
+- **`isNan`**`()`
 
 **Elementwise binary:**
 
@@ -148,6 +149,11 @@ In the following, we describe only the latter.
 - **`replace`**`(pattern, replacement)`
 - **`order`**`(colIdxs: List[int], ascs: List[bool], returnIndexes: bool)`
 
+**Data preprocessing:**
+
+- **`oneHot`**`(info:matrix)`
+- **`bin`**`(numBins:int, Min = None, Max = None)`
+
 **Other matrix operations:**
 
 - **`diagVector`**`()`
@@ -157,6 +163,14 @@ In the following, we describe only the latter.
 
 - **`print`**`()`
 - **`write`**`(file: str)`
+
+**Conversions and casts:**
+
+- **`asType`**`(dtype=None, vtype=None) -> Matrix`
+
+**Conditional:**
+
+- **`ifElse`**`(thenVal: Union['Matrix', 'Scalar'], elseVal: Union['Matrix', 'Scalar'])`
 
 ### `Frame` API Reference
 
@@ -213,6 +227,7 @@ In the following, we describe only the latter.
 - **`sinh`**`()`
 - **`cosh`**`()`
 - **`tanh`**`()`
+- **`isNan`**`()`
 
 **Elementwise binary:**
 
