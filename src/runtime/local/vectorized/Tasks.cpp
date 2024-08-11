@@ -23,6 +23,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batch
     // local add aggregation to minimize locking
     std::vector<DenseMatrix<VT>*> localAddRes(_data._numOutputs);
     std::vector<DenseMatrix<VT>*> localResults(_data._numOutputs);
+    llvm::outs() << "NumOutputs: " << _data._numOutputs << "\n";
     std::vector<DenseMatrix<VT>**> outputs;
     for (auto &lres : localResults)
         outputs.push_back(&lres);

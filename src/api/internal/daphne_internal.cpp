@@ -361,7 +361,8 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
         llvm::cl::values(
             clEnumVal(DAPHNE, "Use original DAPHNE Vectorization pass"),
             clEnumVal(GREEDY, "Use greedy Vectorization pass"),
-            clEnumVal(TH_GREEDY, "Use th. greedy Vectorization pass")),
+            clEnumVal(TH_GREEDY, "Use th. greedy Vectorization pass"),
+            clEnumVal(TH_GREEDY_RED, "Use th. greedy Vectorization pass")),
             init(DAPHNE)
     );
 

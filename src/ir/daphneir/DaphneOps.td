@@ -1545,7 +1545,7 @@ def Daphne_VectorizedPipelineOp : Daphne_Op<"vectorizedPipeline", [AttrSizedOper
             TypedArrayAttrBase<VectorSplitAttr, "Vector-Splits">:$splits,
             TypedArrayAttrBase<VectorCombineAttr, "Vector-Combines">:$combines,
             Optional<DaphneContext>:$ctx);
-    let results = (outs Variadic<MatrixOrFrame>:$outputs);
+    let results = (outs Variadic<AnyType>:$outputs);
     let regions = (region SizedRegion<1>:$body, AnyRegion:$cuda);
 
     let hasCanonicalizeMethod = 1;

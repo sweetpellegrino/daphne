@@ -23,7 +23,8 @@ using namespace mlir;
 enum VectorizeType {
     DAPHNE,
     GREEDY,
-    TH_GREEDY
+    TH_GREEDY,
+    TH_GREEDY_RED
 };
 
 /**

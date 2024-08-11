@@ -29,11 +29,13 @@ def VectorSplitAttr : I64EnumAttr<"VectorSplit", "", [VECTOR_SPLIT_NONE, VECTOR_
     let cppNamespace = "::mlir::daphne";
 }
 
-def VECTOR_COMBINE_ROWS : I64EnumAttrCase<"ROWS", 1>;
-def VECTOR_COMBINE_COLS : I64EnumAttrCase<"COLS", 2>;
-def VECTOR_COMBINE_ADD : I64EnumAttrCase<"ADD", 3>;
+def VECTOR_COMBINE_ROWS : I64EnumAttrCase<"ROWS", 1>; //concat
+def VECTOR_COMBINE_COLS : I64EnumAttrCase<"COLS", 2>; //concat
+def VECTOR_COMBINE_ADD : I64EnumAttrCase<"ADD", 3>; //reduce
+def VECTOR_COMBINE_CONCAT : I64EnumAttrCase<"CONCAT", 4>; //reduce
+def VECTOR_COMBINE_REDUCE : I64EnumAttrCase<"REDUCE", 5>; //reduce
 
-def VectorCombineAttr : I64EnumAttr<"VectorCombine", "", [VECTOR_COMBINE_ROWS, VECTOR_COMBINE_COLS, VECTOR_COMBINE_ADD]> {
+def VectorCombineAttr : I64EnumAttr<"VectorCombine", "", [VECTOR_COMBINE_ROWS, VECTOR_COMBINE_COLS, VECTOR_COMBINE_ADD, VECTOR_COMBINE_REDUCE, VECTOR_COMBINE_CONCAT]> {
     let cppNamespace = "::mlir::daphne";
 }
 
@@ -63,34 +65,5 @@ def VectorizableOpInterface : OpInterface<"Vectorizable"> {
         //  the same behaviour as with `Distributable` Ops, and therefore combining them might make sense.
     ];
 }
-
-/*
-class VectorizableOpInterface2<enum i> : OpInterface<"Vectorizable"> {
-    let description = [{
-        Enables the computation in the form of vectors.
-    }];
-
-    let methods = [
-        InterfaceMethod<"Get the vector split kind for each input.",
-                        "std::vector<std::vector<daphne::VectorSplit>>", "getVectorSplits", (ins)>,
-        InterfaceMethod<"Get the vector combine kind for each output.",
-                        "std::vector<std::vector<daphne::VectorCombine>>", "getVectorCombines", (ins)>,
-        InterfaceMethod<"Create values for #rows and #cols of each output. -1 for dynamic/unknown.",
-                        "std::vector<std::pair<Value, Value>>", "createOpsOutputSizes", (ins "mlir::OpBuilder&":$builder)>,
-        // TODO: for complex operations (non element-wise) where the computation per vector is not equal to the operation
-        //  itself on the whole input, we will require a new method generating the operations in the pipeline. This is
-        //  the same behaviour as with `Distributable` Ops, and therefore combining them might make sense.
-    ];
-
-    let extraClassDeclaration = [{
-        static constexpr int parameter = }] # i # [{;
-    }];
-}
-
-def VectorizableOpInterface : VectorizableOpInterface2<Ve> {
-    let description = [{
-    }];
-}
-*/
 
 #endif // SRC_IR_DAPHNEIR_DAPHNEVECTORIZABLEOPINTERFACE_TD
