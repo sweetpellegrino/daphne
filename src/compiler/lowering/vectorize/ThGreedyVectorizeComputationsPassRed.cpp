@@ -104,7 +104,7 @@ namespace
                     auto vSplits = std::vector<daphne::VectorSplit>();
                     auto vCombines = std::vector<daphne::VectorCombine>();
                     auto opsOutputSizes = std::vector<std::pair<Value, Value>>();
-                    if (auto maxAgg = llvm::dyn_cast<daphne::AllAggMaxOp>(v)) {
+                    if (auto maxAgg = llvm::dyn_cast<daphne::AllAggSumOp>(v)) {
                         //probably need gen row and col
                         vSplits = {daphne::VectorSplit::ROWS};
                         vCombines = {daphne::VectorCombine::REDUCE};
@@ -353,6 +353,15 @@ namespace
             //remove first two returns as they corresponds to the return of genshape numCol and numRows -> error
             //results.erase(results.begin(), results.begin() + 2);
             builder.create<daphne::ReturnOp>(loc, results);
+
+            for ( auto resVal : results) {
+                llvm::outs() << "Result: ";
+                resVal.dump();
+                resVal.getType().dump();
+                //llvm::outs() << resVal.getType().getTypeID() <<  "\n";
+                llvm::outs() << "\n";
+            
+            }
             }
         }
     };
@@ -407,7 +416,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             if(isVectorizable(producer)) {
 
                 //Check if producer & consumer are in the same block
-                if(producer->getBlock()!= opv->getBlock())
+                if(producer->getBlock() != opv->getBlock())
                     continue;
                 //Currently not needed: checking the split/combine.
                 //cf. Algo

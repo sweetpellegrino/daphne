@@ -3504,12 +3504,16 @@
             ],
             "runtimeParams": [
                 {
-                    "type": "DTRes **",
+                    "type": "void **",
                     "name": "outputs"
                 },
                 {
                     "type": "size_t",
                     "name": "numOutputs"
+                },
+                {
+                    "type": "int64_t *",
+                    "name": "outputTypes"
                 },
                 {
                     "type": "bool *",
@@ -3550,11 +3554,7 @@
             ]
         },
         "instantiations": [
-            [["DenseMatrix", "double"]],
-            [["DenseMatrix", "float"]],
-            [["DenseMatrix", "int64_t"]],
-            [["CSRMatrix", "double"]],
-            [["CSRMatrix", "float"]]
+            ["void"]
         ]
     },
     {

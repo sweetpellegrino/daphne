@@ -54,6 +54,7 @@ struct CompiledPipelineTaskData {
     const bool* _isScalar;
     Structure **_inputs;
     const size_t _numInputs;
+    const int64_t* outputTypes;
     const size_t _numOutputs;
     const int64_t *_outRows;
     const int64_t *_outCols;
@@ -138,6 +139,23 @@ public:
 
 private:
     void accumulateOutputs(std::vector<DenseMatrix<VT>*>& localResults, std::vector<DenseMatrix<VT> *> &localAddRes,
+            uint64_t rowStart, uint64_t rowEnd);
+};
+
+template<>
+class CompiledPipelineTask<void> : public CompiledPipelineTaskBase<void> {
+    std::mutex &_resLock;
+    void ***_res;
+    using CompiledPipelineTaskBase<void>::_data;
+public:
+    CompiledPipelineTask(CompiledPipelineTaskData<void> data, std::mutex &resLock, void ***res)
+        : CompiledPipelineTaskBase<void>(data), _resLock(resLock), _res(res) {}
+
+    void execute(uint32_t fid, uint32_t batchSize) override;
+    uint64_t getTaskSize() override;
+
+private:
+    void accumulateOutputs(std::vector<void *>& localResults, std::vector<void *> &localAddRes,
             uint64_t rowStart, uint64_t rowEnd);
 };
 

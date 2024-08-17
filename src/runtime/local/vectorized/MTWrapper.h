@@ -16,6 +16,11 @@
 
 #pragma once
 
+#include "runtime/local/datastructures/CSRMatrix.h"
+#include "runtime/local/datastructures/DenseMatrix.h"
+#include "runtime/local/datastructures/Structure.h"
+#include <cstddef>
+#include <cstdint>
 #include <llvm/Support/raw_ostream.h>
 #ifdef USE_CUDA
 #include "runtime/local/datastructures/AllocationDescriptorCUDA.h"
@@ -181,7 +186,7 @@ protected:
         return mem_required;
     }
 
-    virtual void combineOutputs(DT***& res, DT***& res_cuda, size_t numOutputs, mlir::daphne::VectorCombine* combines,
+    virtual void combineOutputs(DT ***& res, DT***& res_cuda, size_t numOutputs, mlir::daphne::VectorCombine* combines,
             DCTX(ctx)) = 0;
 
     void joinAll() {
@@ -255,6 +260,113 @@ public:
 
 template<typename DT>
 class MTWrapper : public MTWrapperBase<DT> {};
+
+
+template<>
+class MTWrapper<void> : public MTWrapperBase<void> {
+public:
+    using PipelineFunc = void(void ***, Structure **, DCTX(ctx));
+
+    explicit MTWrapper(uint32_t numFunctions, DCTX(ctx)) : MTWrapperBase<void>(numFunctions, ctx){}
+
+    [[maybe_unused]] void executeCpuQueues(std::vector<std::function<PipelineFunc>> funcs, void*** res,
+            const bool* isScalar, Structure** inputs, size_t numInputs, int64_t* outputTypes, size_t numOutputs, int64_t *outRows,
+            int64_t* outCols, VectorSplit* splits, VectorCombine* combines, DCTX(ctx), bool verbose);
+
+    void combineOutputs(void ***& res, void ***& res_cuda, [[maybe_unused]] size_t numOutputs,
+                        [[maybe_unused]] mlir::daphne::VectorCombine* combines, DCTX(ctx)) override {}
+
+    std::pair<size_t, size_t> getInputProperties(Structure** inputs, size_t numInputs, VectorSplit* splits) {
+        auto len = 0ul;
+        auto mem_required = 0ul;
+
+        //print numInputs and splits
+        llvm::outs() << "NumInputs: " << numInputs << "\n";
+
+        // due to possible broadcasting we have to check all inputs
+        for (auto i = 0u; i < numInputs; ++i) {
+            if (splits[i] == mlir::daphne::VectorSplit::ROWS) {
+                len = std::max(len, inputs[i]->getNumRows());
+                mem_required += inputs[i]->getNumItems() * determineInputValueTypeSize(inputs[i]);
+            }
+            else if (splits[i] == mlir::daphne::VectorSplit::GEN) {
+                llvm::outs() << "VectorSplit::GEN\n";
+                len = std::max(len, inputs[i]->getNumRows());
+                //mem_required += inputs[i]->getNumItems() * sizeof(typename DT::VT);
+            }
+        }
+        auto _pair = std::make_pair(len, mem_required);
+        llvm::outs() << "Input properties: " << _pair.first << ", " << _pair.second << "\n";
+        return _pair;
+    }
+
+    size_t determineInputValueTypeSize(Structure* input) {
+
+        if(dynamic_cast<DenseMatrix<float>*>(input) || dynamic_cast<CSRMatrix<float>*>(input))
+            return sizeof(float);
+        else if(dynamic_cast<DenseMatrix<int64_t>*>(input) || dynamic_cast<CSRMatrix<int64_t>*>(input))
+            return sizeof(int64_t);
+        else if(dynamic_cast<DenseMatrix<double>*>(input) || dynamic_cast<CSRMatrix<double>*>(input))
+            return sizeof(int64_t);
+
+        //throw std::runtime_error("Unknown input type");
+        return 0;
+    }
+
+    size_t allocateOutput(void***& res, size_t numOutputs, const int64_t* outputTypes, const int64_t* outRows, const int64_t* outCols,
+            mlir::daphne::VectorCombine* combines) {
+        auto mem_required = 0ul;
+        // output allocation for row-wise combine
+        for(size_t i = 0; i < numOutputs; ++i) {
+            if((*res[i]) == nullptr && outRows[i] != -1 && outCols[i] != -1) {
+                llvm::outs() << "Allocate: " << "\n";
+                llvm::outs() << outputTypes[i] << "\n";
+                auto zeroOut = combines[i] == mlir::daphne::VectorCombine::ADD;
+                if (outputTypes[i] == 20) {
+                    (*res[i]) = DataObjectFactory::create<DenseMatrix<double>>(outRows[i], outCols[i], zeroOut);
+                    mem_required += static_cast<DenseMatrix<double>*>((*res[i]))->getBufferSize();
+                } else if (outputTypes[i] == 0) {
+                    double zero = 0;
+                    double* test = &zero;
+                    (*res[i]) = &test;
+                    mem_required += sizeof(double);
+                }
+                //(*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut);
+                //mem_required += static_cast<DT*>((*res[i]))->getBufferSize();
+            }
+        }
+        return mem_required;
+    }
+};
+
+template<>
+class MTWrapper<Structure> : public MTWrapperBase<Structure> {
+public:
+    using PipelineFunc = void(Structure ***, Structure **, DCTX(ctx));
+
+    explicit MTWrapper(uint32_t numFunctions, DCTX(ctx)) : MTWrapperBase<Structure>(numFunctions, ctx){}
+
+    [[maybe_unused]] void executeCpuQueues(std::vector<std::function<PipelineFunc>> funcs, Structure*** res,
+            const bool* isScalar, Structure** inputs, size_t numInputs, size_t numOutputs, int64_t *outRows,
+            int64_t* outCols, VectorSplit* splits, VectorCombine* combines, DCTX(ctx), bool verbose);
+
+    void combineOutputs(Structure ***& res, Structure ***& res_cuda, [[maybe_unused]] size_t numOutputs,
+                        [[maybe_unused]] mlir::daphne::VectorCombine* combines, DCTX(ctx)) override {}
+    
+    size_t allocateOutput(Structure***& res, size_t numOutputs, const int64_t* outRows, const int64_t* outCols,
+            mlir::daphne::VectorCombine* combines) {
+        auto mem_required = 0ul;
+        // output allocation for row-wise combine
+        for(size_t i = 0; i < numOutputs; ++i) {
+            if((*res[i]) == nullptr && outRows[i] != -1 && outCols[i] != -1) {
+                auto zeroOut = combines[i] == mlir::daphne::VectorCombine::ADD;
+                //(*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut);
+                //mem_required += static_cast<DT*>((*res[i]))->getBufferSize();
+            }
+        }
+        return mem_required;
+    }
+};
 
 template<typename VT>
 class MTWrapper<DenseMatrix<VT>> : public  MTWrapperBase<DenseMatrix<VT>> {

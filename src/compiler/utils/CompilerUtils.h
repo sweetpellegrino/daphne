@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <ir/daphneir/Daphne.h>
 #include <parser/metadata/MetaDataParser.h>
 #include "util/ErrorHandler.h"
@@ -204,6 +205,54 @@ public:
         else if(auto memRefType = t.dyn_cast<mlir::MemRefType>()) {
             const std::string vtName = mlirTypeToCppTypeName(memRefType.getElementType(), angleBrackets, false);
             return angleBrackets ? ("StridedMemRefType<" + vtName + ",2>") : ("StridedMemRefType_" + vtName + "_2");
+        }
+
+        std::string typeName;
+        llvm::raw_string_ostream rsos(typeName);
+        t.print(rsos);
+        throw std::runtime_error(
+            "no C++ type name known for the given MLIR type: " + typeName
+        );
+    }
+
+    static int64_t mlirTypeToCppTypeNameId(mlir::Type t, bool angleBrackets = true, bool generalizeToStructure = false) { // NOLINT(misc-no-recursion)
+        if(t.isF64())
+            return 0;
+        else if(t.isF32())
+            return 1;
+        else if(t.isSignedInteger(8))
+            return 2;
+        else if(t.isSignedInteger(32))
+            return 3;
+        else if(t.isSignedInteger(64))
+            return 4;
+        else if(t.isUnsignedInteger(8))
+            return 5;
+        else if(t.isUnsignedInteger(32))
+            return 6;
+        else if(t.isUnsignedInteger(64))
+            return 7;
+        else if(t.isSignlessInteger(1))
+            return 8;
+        else if(t.isIndex())
+            return 9;
+        else if(t.isa<mlir::daphne::StructureType>())
+            return 10;
+        else if(auto matTy = t.dyn_cast<mlir::daphne::MatrixType>()) {
+            if(generalizeToStructure)
+                return 10;
+            else {
+                switch (matTy.getRepresentation()) {
+                    case mlir::daphne::MatrixRepresentation::Dense: {
+                        const int64_t vtId = mlirTypeToCppTypeNameId(matTy.getElementType(), angleBrackets, false);
+                        return 20 + vtId;
+                    }
+                    case mlir::daphne::MatrixRepresentation::Sparse: {
+                        const int64_t vtId = mlirTypeToCppTypeNameId(matTy.getElementType(), angleBrackets, false);
+                        return 50 + vtId;
+                    }
+                }
+            }
         }
 
         std::string typeName;

@@ -36,7 +36,9 @@
 #include "mlir/Dialect/Func/Transforms/FuncConversions.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
+#include "mlir/IR/BuiltinOps.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <memory>
 #include <utility>
@@ -181,7 +183,7 @@ class CallKernelOpLowering : public OpConversionPattern<daphne::CallKernelOp>
             // mapped to the superclass Structure (see #397).
             // Check if all results have the same type.
             Type t0 = resultTypes[0];
-            Type mt0 = t0.dyn_cast<daphne::MatrixType>().withSameElementTypeAndRepr();
+            /*Type mt0 = t0.dyn_cast<daphne::MatrixType>().withSameElementTypeAndRepr();
             for(size_t i = 1; i < numRes; i++)
                 if (mt0 != resultTypes[i]
                                .dyn_cast<daphne::MatrixType>()
@@ -190,7 +192,7 @@ class CallKernelOpLowering : public OpConversionPattern<daphne::CallKernelOp>
                         loc, "LowerToLLVMPass",
                         "all results of a CallKernelOp must have the same "
                         "type to combine them into a single variadic result");
-                }
+                }*/
             // Wrap the common result type into a pointer, since we need an
             // array of that type.
             args.push_back(LLVM::LLVMPointerType::get(
@@ -452,6 +454,7 @@ public:
     {
         Type contType = op.getRes().getType().dyn_cast<daphne::VariadicPackType>().getContainedType();
         Type convType = typeConverter->convertType(contType);
+
         rewriter.replaceOpWithNewOp<LLVM::AllocaOp>(
                 op.getOperation(),
                 LLVM::LLVMPointerType::get(convType),
@@ -580,12 +583,14 @@ public:
         }
         auto loc = op->getLoc();
         auto numDataOperands = op.getInputs().size();
+        auto numResults  = op->getResults().size(); //why not getOutputs, what is the difference?
         std::vector<mlir::Value> func_ptrs;
 
         auto i1Ty = IntegerType::get(getContext(), 1);
         auto ptrI1Ty = LLVM::LLVMPointerType::get(i1Ty);
         auto ptrPtrI1Ty = LLVM::LLVMPointerType::get(ptrI1Ty);
         auto pppI1Ty = LLVM::LLVMPointerType::get(ptrPtrI1Ty);
+
 
         LLVM::LLVMFuncOp fOp;
         {
@@ -729,6 +734,8 @@ public:
 
             func_ptrs.push_back(fnPtr2);
         }
+
+        //void _vectorizedPipeline
         std::stringstream callee;
         callee << '_' << op->getName().stripDialect().str();
 
@@ -736,9 +743,11 @@ public:
         Operation::result_type_range resultTypes = op->getResultTypes();
         const size_t numRes = op->getNumResults();
 
+        //void _vectorizedPipeline__DenseMatrix_double_variadic
         if(numRes > 0) {
             // TODO Support individual types for all outputs (see #397).
             // Check if all results have the same type.
+            /*
             Type mt0 = resultTypes[0].dyn_cast<daphne::MatrixType>().withSameElementTypeAndRepr();
             for (size_t i = 1; i < numRes; i++) {
                 if (mt0 != resultTypes[i]
@@ -751,13 +760,39 @@ public:
                         "results to have the same type");
                 }
             }
+            */
             // Append the name of the common type of all results to the kernel name.
-            callee << "__" << CompilerUtils::mlirTypeToCppTypeName(resultTypes[0], false) << "_variadic__size_t";
-        }
+            //callee << "__" << CompilerUtils::mlirTypeToCppTypeName(resultTypes[0], true) << "_variadic__size_t";
+            callee << "__" << "void" << "_variadic__size_t";
+        }        
 
         mlir::Type operandType;
         std::vector<Value> newOperands;
+
+        callee << "__int64_t";
+        auto attrNumOutputs = rewriter.getI64IntegerAttr(numResults);
+        auto vpOutputTypes = rewriter.create<daphne::CreateVariadicPackOp>(loc,
+            daphne::VariadicPackType::get(rewriter.getContext(), rewriter.getI64Type()),
+            attrNumOutputs);
+        // Populate the variadic packs for isScalar and inputs.
+        for(size_t k = 0; k < numResults; k++) {
+
+            auto outputType = CompilerUtils::mlirTypeToCppTypeNameId(resultTypes[k], true);
+            auto attrK = rewriter.getI64IntegerAttr(k);
+            rewriter.create<daphne::StoreVariadicPackOp>(
+                    loc,
+                    vpOutputTypes,
+                    rewriter.create<daphne::ConstantOp>(
+                            loc,
+                            outputType
+                    ),
+                    attrK
+            );
+        }
+        newOperands.push_back(vpOutputTypes);
+
         if(numRes > 0) {
+            /*
             auto m32type = rewriter.getF32Type();
             auto m64type = rewriter.getF64Type();
             auto msi64type = rewriter.getIntegerType(64, true);
@@ -777,7 +812,8 @@ public:
                     op, "LowerToLLVMPass",
                     "Unsupported result type for vectorizedPipeline op: " +
                         str);
-            }
+            }*/
+            operandType = mlir::daphne::StructureType::get(getContext());
         }
         else {
             throw ErrorHandler::compilerError(
@@ -865,6 +901,7 @@ public:
             newOperands.push_back(op.getCtx());
         // Create a CallKernelOp for the kernel function to call and return
         // success().
+
         auto kernel = rewriter.create<daphne::CallKernelOp>(
             loc,
             callee.str(),
@@ -940,6 +977,11 @@ void DaphneLowerToLLVMPass::runOnOperation()
                 IntegerType::get(t.getContext(), 1));
     });
     typeConverter.addConversion([&](daphne::FrameType t)
+    {
+        return LLVM::LLVMPointerType::get(
+                IntegerType::get(t.getContext(), 1));
+    });
+    typeConverter.addConversion([&](daphne::StructureType t)
     {
         return LLVM::LLVMPointerType::get(
                 IntegerType::get(t.getContext(), 1));

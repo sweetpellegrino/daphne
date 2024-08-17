@@ -15,8 +15,168 @@
  */
 
 #include "runtime/local/vectorized/Tasks.h"
+#include "runtime/local/datastructures/DenseMatrix.h"
+#include "runtime/local/datastructures/Structure.h"
+#include "runtime/local/kernels/AggAll.h"
+#include "runtime/local/kernels/AggOpCode.h"
 #include "runtime/local/kernels/EwBinaryMat.h"
+#include <cstdint>
 #include <llvm/Support/raw_ostream.h>
+
+void CompiledPipelineTask<void>::execute(uint32_t fid, uint32_t batchSize) {
+    // local add aggregation to minimize locking
+    std::vector<void *> localAddRes(_data._numOutputs);
+    std::vector<void *> localResults(_data._numOutputs);
+    llvm::outs() << "NumOutputs: " << _data._numOutputs << "\n";
+    std::vector<void **> outputs;
+    for (auto &lres : localResults)
+        outputs.push_back(&lres);
+    llvm::outs() << _data._rl << ", " << _data._ru  << "\n";
+    for(uint64_t r = _data._rl ; r < _data._ru ; r += batchSize) {
+        //create zero-copy views of inputs/outputs
+        uint64_t r2 = std::min(r + batchSize, _data._ru);
+        llvm::outs() << r + batchSize << "\n";
+        
+        llvm::outs() << "r=" << r << ", r2=" << r2 << ", batchsize=" << batchSize << "\n";
+        
+        auto linputs = this->createFuncInputs(r, r2);
+        
+        //execute function on given data binding (batch size)
+        _data._funcs[fid](outputs.data(), linputs.data(), _data._ctx);
+        /*for (auto &lres : outputs) {
+            llvm::outs() << "<<<<<<<<<<<<<" << "\n";
+            llvm::outs() << lres << "\n";
+            llvm::outs() << *reinterpret_cast<double*>(lres) << "\n";
+            llvm::outs() << *lres << "\n";
+            llvm::outs() << &lres << "\n";
+            llvm::outs() << (int64_t*)*lres << "\n";
+            llvm::outs() << *&lres << "\n";
+        }
+
+        for (size_t i = 0; i < localResults.size(); ++i) {
+            auto &localResult = localResults[i];
+            if (_data.outputTypes[i] > 19) {
+                llvm::outs() << "Structure"  << "\n";
+            }
+            else {
+                llvm::outs() << "scalar" << "\n";
+                llvm::outs() << localResults[i] << "\n";
+                if (localResult == nullptr) { 
+                    llvm::outs() << "nullptr";
+                }
+            }
+        }*/
+
+        accumulateOutputs(localResults, localAddRes, r, r2);
+        
+        // cleanup
+        for (int i = 0; i < localResults.size(); i++) {
+            auto &localResult = localResults[i];
+            if(localResult && _data.outputTypes[i] > 9) {
+                Structure* localStructure = static_cast<Structure*>(localResult);
+                DataObjectFactory::destroy(localStructure);
+                localResult = nullptr;
+            }
+        }
+
+        // Note that a pipeline manages the reference counters of its inputs
+        // internally. Thus, we do not need to care about freeing the inputs
+        // here.
+    }
+    
+    for(size_t o = 0; o < _data._numOutputs; ++o) {
+        if(_data._combines[o] == VectorCombine::ADD) {
+            /*
+            auto &result = (*_res[o]);
+            _resLock.lock();
+            if(result == nullptr) {
+                result = localAddRes[o];
+                _resLock.unlock();
+            }
+            else {
+                ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
+                _resLock.unlock();
+                //cleanup
+                DataObjectFactory::destroy(localAddRes[o]);
+            }*/
+        }
+    }
+}
+
+uint64_t CompiledPipelineTask<void>::getTaskSize() {
+    return _data._ru-_data._rl;
+}
+
+void CompiledPipelineTask<void>::accumulateOutputs(std::vector<void *> &localResults,
+        std::vector<void *> &localAddRes, uint64_t rowStart, uint64_t rowEnd) {
+    //TODO: in-place computation via better compiled pipelines
+    //TODO: multi-return
+    for(auto o = 0u ; o < _data._numOutputs ; ++o) {
+        //llvm::outs() << "<<<<<<<<<<<<<" << "\n";
+        //llvm::outs() << _res[o] << "\n";
+        //llvm::outs() << *reinterpret_cast<double*>(_res[o]) << "\n";
+        //llvm::outs() << *_res[o] << "\n";
+        //llvm::outs() << &_res[o] << "\n";
+        //llvm::outs() << (int64_t*)*_res[o] << "\n";
+        //llvm::outs() << *&_res[o] << "\n";
+        auto &result = (*_res[o]);
+        switch (_data._combines[o]) {
+            case VectorCombine::ROWS: {
+                if(auto test = static_cast<DenseMatrix<double>*>(result)) {
+                    auto slice = test->sliceRow(rowStart-_data._offset, rowEnd-_data._offset);
+                    // TODO It's probably more efficient to memcpy than to get/set.
+                    // But eventually, we don't want to copy at all.
+                    for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
+                        for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
+                            slice->set(i, j, static_cast<DenseMatrix<double>*>(localResults[o])->get(i, j));
+                        }
+                    }
+                    DataObjectFactory::destroy(slice);
+                }
+                break;
+            }
+            case VectorCombine::COLS: {
+                break;
+            }
+            case VectorCombine::ADD: {
+                if(localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                }
+                else {
+                    //ewBinaryMat(BinaryOpCode::ADD, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
+                break;
+            }
+            //only sum / no mutex
+            case VectorCombine::REDUCE: {
+                /*if(localResults[o] == nullptr) {
+                    double l = 0;
+                    localResults[o] = &l;
+                }*/
+                //llvm::outs() << "<<<<<<<<<<<" << "\n";
+                //llvm::outs() << *reinterpret_cast<double*>(result) << "\n";
+                double result_value = *static_cast<double*>(result);
+                double local_result_value = *reinterpret_cast<double*>(&localResults[o]);
+                double newResult = result_value + local_result_value;
+                result = reinterpret_cast<void*&>(newResult);;
+                //llvm::outs() << result << "\n";
+                //llvm::outs() << &result << "\n";
+                break;
+            }
+            default: {
+                throw std::runtime_error(("VectorCombine case `"
+                                          + std::to_string(static_cast<int64_t>(_data._combines[o])) + "` not supported"));
+            }
+        }
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+// CompiledPipelineTask
+//-----------------------------------------------------------------------------
 
 template<typename VT>
 void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
@@ -195,6 +355,7 @@ return _data._ru-_data._rl;
 template class CompiledPipelineTask<DenseMatrix<double>>;
 template class CompiledPipelineTask<DenseMatrix<float>>;
 template class CompiledPipelineTask<DenseMatrix<int64_t>>;
+template class CompiledPipelineTask<void>;
 
 template class CompiledPipelineTask<CSRMatrix<double>>;
 template class CompiledPipelineTask<CSRMatrix<float>>;
