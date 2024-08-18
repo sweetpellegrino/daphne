@@ -1,0 +1,9 @@
+n = fill(1.0, $dim, $dim*2);
+
+z = sqrt(n) + 5.0;
+t = sum(z);
+print(t);
+
+u = abs(n);
+j = sum(u);
+print(j);

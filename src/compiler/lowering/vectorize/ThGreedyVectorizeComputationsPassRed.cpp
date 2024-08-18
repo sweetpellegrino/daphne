@@ -54,7 +54,7 @@ namespace
 
         auto fillOp = llvm::dyn_cast<daphne::FillOp>(op);
         if ((op->hasTrait<mlir::OpTrait::VectorElementWise>() ||
-            op->hasTrait<mlir::OpTrait::VectorReduction>() ||
+            //op->hasTrait<mlir::OpTrait::VectorReduction>() ||
             op->hasTrait<mlir::OpTrait::VectorTranspose>() ||
             op->hasTrait<mlir::OpTrait::VectorMatMul>() ||
             llvm::dyn_cast<daphne::Vectorizable>(op)) &&
@@ -400,9 +400,13 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     //Improvment: can we already know that some operations can not be fused???
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
-    std::vector<std::pair<mlir::Operation *, mlir::Operation *>> candidates;
 
-    //reverse vectOps
+    //TODO: what about duplicated candidates?
+    //unordered set? with custom hash andqual function
+    std::vector<std::pair<mlir::Operation *, mlir::Operation *>> candidates_producer_consumer;
+    std::vector<std::pair<mlir::Operation *, mlir::Operation *>> candidates_horizontal_consumers;
+
+    //reversed vectOps
     for (auto &opv : vectOps) {
 
         //Get incoming edges of operation opv
@@ -411,22 +415,59 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
         //True: push into possible merge candidates list
         for (size_t i = 0; i < opv->getNumOperands(); i++) {
 
-            //Get producer of operand
-            auto producer = opv->getOperand(i).getDefiningOp();
-            if(isVectorizable(producer)) {
+            //-----------------------------------------------------------------
+            // Consumer <- Producer -> Consumer
+            //-----------------------------------------------------------------
 
-                //Check if producer & consumer are in the same block
-                if(producer->getBlock() != opv->getBlock())
-                    continue;
+            //Based on the operand, check if the operand is also used from another operation
+            //If yes, these are potentially candidates for horizontal fusion
+            //Horizontal Fusion:
+            //
+            //          producer
+            //         /        \
+            //        opv       user
+            //
+            // => (opv, user)
+            auto operand = opv->getOperand(i);
+            for (auto user : operand.getUsers()) {
+                //We need to check that opv and user are not in a producer / consumer relationship
+                for (auto rel : user->getOperands()) {
+                    if (rel.getDefiningOp() == opv) {
+                        throw std::runtime_error("not implemented");
+                    }
+                }
+                //We should not consider current operation opv
+                //Also the related operation should be vectorizable
+                if (user != opv && isVectorizable(user)) {
+                    //??
+                    if (user->getBlock() == opv->getBlock()) {
+                        candidates_horizontal_consumers.push_back({opv, user});
+                    }       
+                }
+            }
+
+            //-----------------------------------------------------------------
+            // Producer -> Consumer
+            //-----------------------------------------------------------------
+
+            //Get producer of operand
+            auto producer = operand.getDefiningOp();
+            //Check if producer & consumer are in the same block
+            if(isVectorizable(producer) && (producer->getBlock() == opv->getBlock())) {
                 //Currently not needed: checking the split/combine.
                 //cf. Algo
-
                 llvm::outs() << "Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
-                candidates.push_back({producer, opv});
+                candidates_producer_consumer.push_back({producer, opv});
             }
         }
     }
     llvm::outs() << "######## END ########" << "\n";
+    for (auto cand : candidates_horizontal_consumers) {
+        llvm::outs() << "Horz. Cand.: ";
+        cand.first->dump();
+        cand.second->dump();
+        llvm::outs() << "\n";
+    }
 
     //Step 3: Greedy merge pipelines
     llvm::outs() << "######## STEP 3 ########" << "\n";
@@ -452,8 +493,8 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
         size_t opv_pipeId = opv_it->second;
         llvm::outs() << "opv_pipeId: " << opv_pipeId << "\n";
 
-        std::vector<decltype(candidates)::value_type> rel_candidates;
-        std::copy_if(candidates.begin(), candidates.end(), std::back_inserter(rel_candidates), [opv](const auto& c) {
+        std::vector<decltype(candidates_producer_consumer)::value_type> rel_candidates;
+        std::copy_if(candidates_producer_consumer.begin(), candidates_producer_consumer.end(), std::back_inserter(rel_candidates), [opv](const auto& c) {
             return (std::get<1>(c) == opv);
         });
 

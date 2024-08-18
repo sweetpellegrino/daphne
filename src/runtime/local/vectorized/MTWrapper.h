@@ -318,6 +318,7 @@ public:
         auto mem_required = 0ul;
         // output allocation for row-wise combine
         for(size_t i = 0; i < numOutputs; ++i) {
+            llvm::outs() << "i: " << i << "\n";
             if((*res[i]) == nullptr && outRows[i] != -1 && outCols[i] != -1) {
                 llvm::outs() << "Allocate: " << "\n";
                 llvm::outs() << outputTypes[i] << "\n";

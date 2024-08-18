@@ -42,6 +42,8 @@ struct VectorizedPipeline {
     //static void apply(DTRes **outputs, size_t numOutputs, bool* isScalar, Structure **inputs, size_t numInputs, int64_t *outRows,
             int64_t *outCols, int64_t *splits, int64_t *combines, size_t numFuncs, void** fun, DCTX(ctx)) {
         auto wrapper = std::make_unique<MTWrapper<DTRes>>(numFuncs, ctx);
+        
+        printArgs(outputs, numOutputs, outputTypes, isScalar, inputs, numInputs, outRows, outCols, splits, combines, numFuncs, fun);
 
         std::vector<std::function<void(DTRes ***, Structure **, DCTX(ctx))>> funcs;
         for (auto i = 0ul; i < numFuncs; ++i) {
@@ -75,6 +77,57 @@ struct VectorizedPipeline {
         delete[] outputs2;
     }
 };
+
+template<class DTRes>
+void printArgs(DTRes **outputs, size_t numOutputs, int64_t *outputTypes, bool* isScalar, Structure **inputs, size_t numInputs, int64_t *outRows, 
+                int64_t *outCols, int64_t *splits, int64_t *combines, size_t numFuncs, void** fun) {
+    
+    llvm::outs() << "Outputs: ";
+    for (size_t i = 0; i < numOutputs; ++i)
+        llvm::outs() << outputs[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "numOutputs: " << numOutputs << "\n";
+
+    llvm::outs() << "outputTypes: ";
+    for (size_t i = 0; i < numOutputs; ++i)
+        llvm::outs() << outputTypes[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "isScalar: ";
+    for (size_t i = 0; i < numOutputs; ++i)
+        llvm::outs() << isScalar[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "inputs: ";
+    for (size_t i = 0; i < numInputs; ++i)
+        llvm::outs() << inputs[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "numInputs: " << numInputs << "\n";
+
+    llvm::outs() << "outRows: ";
+    for (size_t i = 0; i < numOutputs; ++i)
+        llvm::outs() << outRows[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "outCols: ";
+    for (size_t i = 0; i < numOutputs; ++i)
+        llvm::outs() << outCols[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "splits: ";
+    for (size_t i = 0; i < numInputs; ++i)
+        llvm::outs() << splits[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "combines: ";
+    for (size_t i = 0; i < numOutputs; ++i)
+        llvm::outs() << combines[i] << " ";
+    llvm::outs() << "\n";
+
+    llvm::outs() << "numFuncs: " << numFuncs << "\n";
+}
 
 // ****************************************************************************
 // Convenience function
