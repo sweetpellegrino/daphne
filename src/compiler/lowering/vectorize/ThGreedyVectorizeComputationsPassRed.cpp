@@ -18,8 +18,11 @@
 #include "compiler/utils/CompilerUtils.h"
 #include <cstddef>
 #include <exception>
+#include <map>
 #include <stdexcept>
 #include <unordered_map>
+#include <functional>
+#include <unordered_set>
 #include <util/ErrorHandler.h>
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
@@ -49,7 +52,6 @@ using namespace mlir;
 
 namespace
 {
-
     bool isVectorizable(Operation *op) {
 
         auto fillOp = llvm::dyn_cast<daphne::FillOp>(op);
@@ -304,6 +306,58 @@ namespace
             }
         }
     };
+
+    void mergePipelines(std::vector<std::vector<mlir::Operation*>>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t mergeIntoId, size_t mergeFromId){
+        llvm::outs() << "merge both pipelines\n";
+        std::vector<mlir::Operation*> mergedPipeline(pipelines.at(mergeIntoId));
+        for (auto op : pipelines.at(mergeFromId)) {
+            if  (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
+                mergedPipeline.push_back(op);
+                operationToPipelineIx[op] = mergeIntoId;
+            }
+        }
+        pipelines.at(mergeIntoId) = std::move(mergedPipeline);
+        pipelines.erase(pipelines.begin()+mergeFromId);
+    }
+
+    struct HCandidate {
+        HCandidate(mlir::Operation *op1, mlir::Operation *op2) : op1(op1), op2(op2) {}
+        mlir::Operation *op1;
+        mlir::Operation *op2;
+       
+    };
+    bool operator==(const HCandidate& c1, const HCandidate& c2) {
+        return (c1.op1 == c2.op1 && c1.op2 == c2.op2) ||
+                (c1.op1 == c2.op2 && c1.op2 == c2.op1);
+    }
+
+    struct PCCandidate {
+        PCCandidate(mlir::Operation *op1, mlir::Operation *op2) : op1(op1), op2(op2) {}
+        mlir::Operation *op1;
+        mlir::Operation *op2;
+    };
+
+    bool operator==(const PCCandidate& c1, const PCCandidate& c2) {
+        return (c1.op1 == c2.op1 && c1.op2 == c2.op2);
+    }
+}
+
+namespace std {
+    template<>
+    struct hash<HCandidate> {
+        std::size_t operator()(const HCandidate& c) const {
+            //https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes
+            //careful if c.op1 == c.op2 defaults to 0, for all c
+            return hash<mlir::Operation *>()(c.op1) ^ hash<mlir::Operation *>()(c.op2);
+        }
+    };
+    template<>
+    struct hash<PCCandidate> {
+        std::size_t operator()(const PCCandidate& c) const {
+            //https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes
+            return (hash<mlir::Operation *>()(c.op1) << 1) + hash<mlir::Operation *>()(c.op1) + hash<mlir::Operation *>()(c.op2);
+        }
+    };
 }
 
 void ThGreedyVectorizeComputationsPassRed::runOnOperation()
@@ -340,12 +394,9 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
 
-    //TODO: what about duplicated candidates?
-    using Candidate = std::pair<mlir::Operation *, mlir::Operation *>;
-    std::vector<Candidate> candidates_producer_consumer;
+    std::unordered_set<PCCandidate> candidates_producer_consumer;
     //TODO: Should this make a weak connection? So in case of not being greedy; first to broken up, if necessary
-    //unordered set? with custom hash andqual function
-    std::vector<Candidate> candidates_horizontal_consumers;
+    std::unordered_set<HCandidate> candidates_horizontal_consumers;
 
     //reversed vectOps
     for (auto &opv : vectOps) {
@@ -372,9 +423,8 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             //TODO: What about the producer itself? if it is vectorizable, both vectorizable consumers will probably also land into same pipeline anyway?
             //Optimize by flipping order and early exist if producer, consumer relationship was created
             auto operand = opv->getOperand(i);
-            //If not in a separate variable it does not work?
-            //auto users = operand.getUsers();
-            //for (auto user : users) {
+            //TODO: Do I need to check whether the operands are even from object type?
+            //e.g. what would it mean, if the opv and user shares a constantOp result?
             for (auto user : operand.getUsers()) {
                 
                 if (user == opv || //Does not make sense to consider the opv with itself
@@ -393,7 +443,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
                 if (is_only_horizontal) {
                     llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
-                    candidates_horizontal_consumers.push_back({opv, user});
+                    candidates_horizontal_consumers.insert({opv, user});
                 }
             }
 
@@ -408,7 +458,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
                 //Currently not needed: checking the split/combine.
                 //cf. Algo
                 llvm::outs() << "PC-Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
-                candidates_producer_consumer.push_back({producer, opv});
+                candidates_producer_consumer.insert({producer, opv});
             }
         }
     }
@@ -441,31 +491,26 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
         std::vector<decltype(candidates_producer_consumer)::value_type> rel_candidates;
         std::copy_if(candidates_producer_consumer.begin(), candidates_producer_consumer.end(), std::back_inserter(rel_candidates), [opv](const auto& c) {
-            return (std::get<1>(c) == opv);
+            return (c.op2 == opv);
         });
 
         for (auto candidate : rel_candidates) {
 
-            auto opi_it = operationToPipelineIx.find(std::get<0>(candidate));
-            llvm::outs() << "opi: " << std::get<0>(candidate)->getName().getStringRef() << "\n";
+            //auto opi_it = operationToPipelineIx.find(std::get<0>(candidate));
+            auto opi_it = operationToPipelineIx.find(candidate.op1);
+            llvm::outs() << "opi: " << candidate.op1->getName().getStringRef() << "\n";
 
             if (opi_it == operationToPipelineIx.end()) {
-                pipelines.at(opv_pipeId).push_back(std::get<0>(candidate));
-                operationToPipelineIx.insert({std::get<0>(candidate), opv_pipeId});
+                //pipelines.at(opv_pipeId).push_back(std::get<0>(candidate));
+                pipelines.at(opv_pipeId).push_back(candidate.op1);
+                //operationToPipelineIx.insert({std::get<0>(candidate), opv_pipeId});
+                operationToPipelineIx.insert({candidate.op1, opv_pipeId});
             }
             //merge both pipelines
             else {
                 llvm::outs() << "merge both pipelines\n";
                 size_t opi_pipeId = opi_it->second;
-                std::vector<mlir::Operation*> mergedPipeline(pipelines.at(opv_pipeId));
-                for (auto op : pipelines.at(opi_pipeId)) {
-                    if  (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
-                        mergedPipeline.push_back(op);
-                        operationToPipelineIx[op] = opv_pipeId;
-                    }
-                }
-                pipelines.at(opv_pipeId) = std::move(mergedPipeline);
-                pipelines.erase(pipelines.begin()+opi_pipeId);
+                mergePipelines(pipelines, operationToPipelineIx, opv_pipeId, opi_pipeId);
             }
         }
         llvm::outs() << "######" << "\n";
@@ -473,8 +518,28 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
     llvm::outs() << "######## END ########" << "\n";
 
-    //Step 4: Horizontal Fusion, if possible (utilize also at graph level)
-    //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individual and merge together if constraints are met
+    //Step 4: Horizontal Fusion
+    //Separate step as it allows for the producer -> consumer relationship to be exploited first
+    for (auto hcand : candidates_horizontal_consumers) {
+        
+        auto op1_it = operationToPipelineIx.find(hcand.op1);
+        auto op2_it = operationToPipelineIx.find(hcand.op2);
+
+        // Check if id is identical, if yes do nothing
+        if (op1_it->second == op2_it->second)
+            continue;
+
+        mergePipelines(pipelines, operationToPipelineIx, op1_it->second, op2_it->second);
+    }
+
+    //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individuals pipelines 
+    // and their overhead (e.g. runtime) and merge together if constraints are met (input dimension)
+
+    //identify small pipelines
+    //e.g. #ops in pipeline <= 4
+
+    //check if according to the input dimension we can merge them
+    //TODO: check what about SourceOps
 
     //print pipelines
     for (auto pipeline : pipelines) {
