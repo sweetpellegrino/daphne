@@ -14,13 +14,8 @@
  *  limitations under the License.
  */
 
-
-#include "compiler/utils/CompilerUtils.h"
 #include <cstddef>
-#include <exception>
 #include <map>
-#include <stdexcept>
-#include <unordered_map>
 #include <functional>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
@@ -29,7 +24,6 @@
 #include "ir/daphneir/Passes.h"
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
-#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Operation.h"
@@ -37,11 +31,6 @@
 #include "mlir/Transforms/DialectConversion.h"
 
 #include <memory>
-#include <set>
-#include <iostream>
-
-#include <iostream>
-#include <utility>
 #include <vector>
 
 #include "compiler/lowering/vectorize/VectorizeComputationsUtils.h"
@@ -52,25 +41,12 @@ using namespace mlir;
 
 namespace
 {
-    bool isVectorizable(Operation *op) {
-
-        auto fillOp = llvm::dyn_cast<daphne::FillOp>(op);
-        if ((op->hasTrait<mlir::OpTrait::VectorElementWise>() ||
-            //op->hasTrait<mlir::OpTrait::VectorReduction>() ||
-            op->hasTrait<mlir::OpTrait::VectorTranspose>() ||
-            op->hasTrait<mlir::OpTrait::VectorMatMul>() ||
-            llvm::dyn_cast<daphne::Vectorizable>(op)) &&
-            fillOp == nullptr) {
-                return true;
-        }
-        return false;
-    }
 
     struct ThGreedyVectorizeComputationsPassRed : public PassWrapper<ThGreedyVectorizeComputationsPassRed, OperationPass<func::FuncOp>> {
         void runOnOperation() final;
 
         //Function that modifies existing mlir programm structure
-        //Currently only gets a pipeline as a list of nodes that | cf. Formalisation
+        //Currently only gets a pipeline as a list of nodes | cf. Formalisation
         void createVectorizedPipelineOps(func::FuncOp func, std::vector<std::vector<mlir::Operation *>> pipelines) {
             OpBuilder builder(func);
 
@@ -95,10 +71,8 @@ namespace
                 // move all operations, between the operations that will be part of the pipeline, before or after the
                 // completed pipeline
                 movePipelineInterleavedOperations(builder.getInsertionPoint(), pipeline);
-                //looks at one operation at a time!
                 for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
                     auto v = *vIt;
-                    v->dump();
 
                     auto vSplits = std::vector<daphne::VectorSplit>();
                     auto vCombines = std::vector<daphne::VectorCombine>();
@@ -177,16 +151,12 @@ namespace
                         break;
                     }
                     case daphne::VectorSplit::COLS: {
-                        throw std::runtime_error("Not implemented");
-
-                        /*auto matTy = argTy.cast<daphne::MatrixType>();
+                        auto matTy = argTy.cast<daphne::MatrixType>();
                         // only remove col information
                         argTy = matTy.withShape(matTy.getNumRows(), -1);
-                        break;*/
-                    }
-                    case daphne::VectorSplit::GEN: {
                         break;
                     }
+                    case daphne::VectorSplit::GEN:
                     case daphne::VectorSplit::NONE:
                         // keep any size information
                         break;
@@ -215,131 +185,93 @@ namespace
 
                 auto pipelineReplaceResults = pipelineOp->getResults().drop_front(resultsIx).take_front(numResults);
                 resultsIx += numResults;
-                for (auto z :
-                    llvm::zip(v->getResults(), pipelineReplaceResults)) {
-                auto old = std::get<0>(z);
-                auto replacement = std::get<1>(z);
+                for (auto z : llvm::zip(v->getResults(), pipelineReplaceResults)) {
+                    auto old = std::get<0>(z);
+                    auto replacement = std::get<1>(z);
 
-                // TODO: switch to type based size inference instead
-                // FIXME: if output is dynamic sized, we can't do this
-                // replace `NumRowOp` and `NumColOp`s for output size
-                // inference
-                for (auto &use : old.getUses()) {
-                    auto *op = use.getOwner();
-                    if (auto nrowOp = llvm::dyn_cast<daphne::NumRowsOp>(op)) {
-                    auto test = llvm::dyn_cast<daphne::GeneratorOp>(
-                        nrowOp.getArg().getDefiningOp());
-                    if (!test) {
-                        llvm::outs()
-                            << "Replacing " << pipelineOp.getOutRows().size()
-                            << " " << replacement.getResultNumber() << "\n";
-                        nrowOp.replaceAllUsesWith(
-                            pipelineOp
-                                .getOutRows()[replacement.getResultNumber()]);
-                        llvm::outs() << "Replacing ";
-                        nrowOp->dump();
-                        llvm::outs()
-                            << "Replacement: "
-                            << pipelineOp
-                                .getOutRows()[replacement.getResultNumber()]
-                            << "\n";
-                        nrowOp.erase();
+                    // TODO: switch to type based size inference instead
+                    // FIXME: if output is dynamic sized, we can't do this
+                    // replace `NumRowOp` and `NumColOp`s for output size inference
+                    for(auto& use: old.getUses()) {
+                        auto* op = use.getOwner();
+                        if(auto nrowOp = llvm::dyn_cast<daphne::NumRowsOp>(op)) {
+                            nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
+                            llvm::outs() << "Replacing ";
+                            nrowOp->dump();
+                            llvm::outs() << "Replacement: " << pipelineOp.getOutRows()[replacement.getResultNumber()] << "\n";
+                            nrowOp.erase();
+                        }
+                        if(auto ncolOp = llvm::dyn_cast<daphne::NumColsOp>(op)) {
+                            ncolOp.replaceAllUsesWith(pipelineOp.getOutCols()[replacement.getResultNumber()]);
+                            llvm::outs() << "Replacing ";
+                            ncolOp->dump();
+                            llvm::outs() << "Replacement: " << pipelineOp.getOutCols()[replacement.getResultNumber()] << "\n";
+                            ncolOp.erase();
+                        }
                     }
-                    }
-                    if (auto ncolOp = llvm::dyn_cast<daphne::NumColsOp>(op)) {
-                    auto test = llvm::dyn_cast<daphne::GeneratorOp>(
-                        ncolOp.getArg().getDefiningOp());
-                    if (!test) {
-                        llvm::outs()
-                            << "Replacing " << pipelineOp.getOutRows().size()
-                            << " " << replacement.getResultNumber() << "\n";
-                        ncolOp.replaceAllUsesWith(
-                            pipelineOp
-                                .getOutCols()[replacement.getResultNumber()]);
-                        llvm::outs() << "Replacing ";
-                        ncolOp->dump();
-                        llvm::outs()
-                            << "Replacement: "
-                            << pipelineOp
-                                .getOutCols()[replacement.getResultNumber()]
-                            << "\n";
-                        ncolOp.erase();
-                    }
+                    // Replace only if not used by pipeline op
+                    old.replaceUsesWithIf(
+                        replacement, [&](OpOperand &opOperand) {
+                            return llvm::count(pipeline, opOperand.getOwner()) == 0;
+                        });
                     }
                 }
-                // Replace only if not used by pipeline op
-                old.replaceUsesWithIf(
-                    replacement, [&](OpOperand &opOperand) {
-                        llvm::outs() << "Op: ";
-                        opOperand.getOwner()->dump();
-                        bool test =
-                            llvm::count(pipeline, opOperand.getOwner()) == 0;
-                        llvm::outs() << "Test: " << test << "\n";
-                        return test;
-                    });
-                }
-                llvm::outs() << "###--###" << "\n";
-                func.dump();
-                llvm::outs() << "########" << "\n";
-            }
-            bodyBlock->walk([](Operation* op) {
-                for(auto resVal: op->getResults()) {
-                    if(auto ty = resVal.getType().dyn_cast<daphne::MatrixType>()) {
-                        resVal.setType(ty.withShape(-1, -1));
+                bodyBlock->walk([](Operation* op) {
+                    for(auto resVal: op->getResults()) {
+                        if(auto ty = resVal.getType().dyn_cast<daphne::MatrixType>()) {
+                            resVal.setType(ty.withShape(-1, -1));
+                        }
                     }
-                }
-            });
-            llvm::outs() << "####5####\n";
-            builder.setInsertionPointToEnd(bodyBlock);
-            //remove first two returns as they corresponds to the return of genshape numCol and numRows -> error
-            //results.erase(results.begin(), results.begin() + 2);
-            builder.create<daphne::ReturnOp>(loc, results);
-
-            for ( auto resVal : results) {
-                llvm::outs() << "Result: ";
-                resVal.dump();
-                resVal.getType().dump();
-                //llvm::outs() << resVal.getType().getTypeID() <<  "\n";
-                llvm::outs() << "\n";
-            
-            }
+                });
+                builder.setInsertionPointToEnd(bodyBlock);
+                builder.create<daphne::ReturnOp>(loc, results);
             }
         }
     };
 
-    void mergePipelines(std::vector<std::vector<mlir::Operation*>>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t mergeIntoId, size_t mergeFromId){
+    //Function merges two pipelines into one by appending all operations from one pipeline to another
+    //Order is not really considered, as it is embodied in IR
+    void mergePipelines(std::vector<std::vector<mlir::Operation*>>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t mergeFromIx, size_t mergeIntoIx){
         llvm::outs() << "merge both pipelines\n";
-        std::vector<mlir::Operation*> mergedPipeline(pipelines.at(mergeIntoId));
-        for (auto op : pipelines.at(mergeFromId)) {
+        std::vector<mlir::Operation*> mergedPipeline(pipelines.at(mergeIntoIx));
+        for (auto op : pipelines.at(mergeFromIx)) {
             if  (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
                 mergedPipeline.push_back(op);
-                operationToPipelineIx[op] = mergeIntoId;
+                operationToPipelineIx[op] = mergeIntoIx;
             }
         }
-        pipelines.at(mergeIntoId) = std::move(mergedPipeline);
-        pipelines.erase(pipelines.begin()+mergeFromId);
+        pipelines.at(mergeIntoIx) = std::move(mergedPipeline);
+        pipelines.erase(pipelines.begin() + mergeFromIx);
     }
 
-    struct HCandidate {
+
+    //-----------------------------------------------------------------
+    // Helper Classes
+    //-----------------------------------------------------------------
+
+    class HCandidate {
+    public:
         HCandidate(mlir::Operation *op1, mlir::Operation *op2) : op1(op1), op2(op2) {}
         mlir::Operation *op1;
         mlir::Operation *op2;
        
-    };
-    bool operator==(const HCandidate& c1, const HCandidate& c2) {
-        return (c1.op1 == c2.op1 && c1.op2 == c2.op2) ||
+        [[maybe_unused]] friend bool operator==(const HCandidate& c1, const HCandidate& c2) {
+            return (c1.op1 == c2.op1 && c1.op2 == c2.op2) ||
                 (c1.op1 == c2.op2 && c1.op2 == c2.op1);
-    }
+        }
+    };
 
-    struct PCCandidate {
+    class PCCandidate {
+    public:
         PCCandidate(mlir::Operation *op1, mlir::Operation *op2) : op1(op1), op2(op2) {}
         mlir::Operation *op1;
         mlir::Operation *op2;
-    };
 
-    bool operator==(const PCCandidate& c1, const PCCandidate& c2) {
-        return (c1.op1 == c2.op1 && c1.op2 == c2.op2);
-    }
+        [[maybe_unused]] friend bool operator==(const PCCandidate& c1, const PCCandidate& c2) {
+            return (c1.op1 == c2.op1 && c1.op2 == c2.op2);
+        }
+    };
+    
 }
 
 namespace std {
@@ -375,10 +307,8 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     llvm::outs() << "######## STEP 1 ########" << "\n";
 
     std::vector<mlir::Operation *> vectOps;
-    func->walk([&](mlir::Operation* op) {
-        if(isVectorizable(op)) {
-            vectOps.emplace_back(op);
-        }
+    func->walk([&](daphne::Vectorizable op) {
+        vectOps.emplace_back(op);
     });
     std::reverse(vectOps.begin(), vectOps.end());
 
@@ -394,9 +324,9 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
 
-    std::unordered_set<PCCandidate> candidates_producer_consumer;
+    std::unordered_set<PCCandidate> primaryCandidates;
     //TODO: Should this make a weak connection? So in case of not being greedy; first to broken up, if necessary
-    std::unordered_set<HCandidate> candidates_horizontal_consumers;
+    std::unordered_set<HCandidate> secondaryCandidates;
 
     //reversed vectOps
     for (auto &opv : vectOps) {
@@ -428,7 +358,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             for (auto user : operand.getUsers()) {
                 
                 if (user == opv || //Does not make sense to consider the opv with itself
-                    !isVectorizable(user) )//|| //User must be Vectorizable
+                    llvm::dyn_cast<daphne::Vectorizable>(user))//|| //User must be Vectorizable
                     //user->getBlock() == opv->getBlock()) //TODO: To restrictive?
                     continue;
 
@@ -443,7 +373,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
                 if (is_only_horizontal) {
                     llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
-                    candidates_horizontal_consumers.insert({opv, user});
+                    secondaryCandidates.insert({opv, user});
                 }
             }
 
@@ -454,11 +384,11 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             //Get producer of operand
             auto producer = operand.getDefiningOp();
             //Check if producer & consumer are in the same block
-            if(isVectorizable(producer) && (producer->getBlock() == opv->getBlock())) {
+            if(llvm::dyn_cast<daphne::Vectorizable>(producer) && (producer->getBlock() == opv->getBlock())) {
                 //Currently not needed: checking the split/combine.
                 //cf. Algo
                 llvm::outs() << "PC-Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
-                candidates_producer_consumer.insert({producer, opv});
+                primaryCandidates.insert({producer, opv});
             }
         }
     }
@@ -486,11 +416,11 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             pipelines.push_back(pipeline);
         }
 
-        size_t opv_pipeId = opv_it->second;
-        llvm::outs() << "opv_pipeId: " << opv_pipeId << "\n";
+        size_t opv_pipeIx = opv_it->second;
+        llvm::outs() << "opv_pipeId: " << opv_pipeIx << "\n";
 
-        std::vector<decltype(candidates_producer_consumer)::value_type> rel_candidates;
-        std::copy_if(candidates_producer_consumer.begin(), candidates_producer_consumer.end(), std::back_inserter(rel_candidates), [opv](const auto& c) {
+        std::vector<decltype(primaryCandidates)::value_type> rel_candidates;
+        std::copy_if(primaryCandidates.begin(), primaryCandidates.end(), std::back_inserter(rel_candidates), [opv](const auto& c) {
             return (c.op2 == opv);
         });
 
@@ -502,15 +432,15 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
             if (opi_it == operationToPipelineIx.end()) {
                 //pipelines.at(opv_pipeId).push_back(std::get<0>(candidate));
-                pipelines.at(opv_pipeId).push_back(candidate.op1);
+                pipelines.at(opv_pipeIx).push_back(candidate.op1);
                 //operationToPipelineIx.insert({std::get<0>(candidate), opv_pipeId});
-                operationToPipelineIx.insert({candidate.op1, opv_pipeId});
+                operationToPipelineIx.insert({candidate.op1, opv_pipeIx});
             }
             //merge both pipelines
             else {
                 llvm::outs() << "merge both pipelines\n";
-                size_t opi_pipeId = opi_it->second;
-                mergePipelines(pipelines, operationToPipelineIx, opv_pipeId, opi_pipeId);
+                size_t opi_pipeIx = opi_it->second;
+                mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
             }
         }
         llvm::outs() << "######" << "\n";
@@ -520,7 +450,9 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
     //Step 4: Horizontal Fusion
     //Separate step as it allows for the producer -> consumer relationship to be exploited first
-    for (auto hcand : candidates_horizontal_consumers) {
+    //Where does it make a difference?
+    llvm::outs() << "######## STEP 4 ########" << "\n";
+    for (auto hcand : secondaryCandidates) {
         
         auto op1_it = operationToPipelineIx.find(hcand.op1);
         auto op2_it = operationToPipelineIx.find(hcand.op2);
@@ -529,11 +461,23 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
         if (op1_it->second == op2_it->second)
             continue;
 
-        mergePipelines(pipelines, operationToPipelineIx, op1_it->second, op2_it->second);
+        mergePipelines(pipelines, operationToPipelineIx, op2_it->second, op1_it->second);
     }
+    llvm::outs() << "######## END ########" << "\n";
 
     //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individuals pipelines 
     // and their overhead (e.g. runtime) and merge together if constraints are met (input dimension)
+    //Till now we didn´t need to check if dimension matches as they do by definition of considered operators and checked relationship
+    //Full potential, if we allow for different output types?
+
+    std::vector<std::pair<size_t, int>> sizes(pipelines.size());
+    std::transform(pipelines.begin(), pipelines.end(), sizes.begin(), [](const std::vector<mlir::Operation*>& pipeline) {
+        return std::make_pair(pipeline.size(), 0);
+    });
+    
+    for (auto pair : sizes) {
+        llvm::outs() << pair.first << " " << pair.second << "\n";
+    }
 
     //identify small pipelines
     //e.g. #ops in pipeline <= 4
