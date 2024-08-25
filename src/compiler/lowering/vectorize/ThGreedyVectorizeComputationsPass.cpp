@@ -354,6 +354,9 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
 
     std::unordered_set<PCCandidate> primaryCandidates;
     //TODO: Should this make a weak connection? So in case of not being greedy; first to broken up, if necessary
+    //when combining the individual steps together to make the algorithm more efficient these candidates,
+    //could still be a separate step, as it potentially inhibits the heursitic to find an optimal pipeline 
+    //(think about the split points in case of collision for layout/access propagation)
     std::unordered_set<HCandidate> secondaryCandidates;
 
     //reversed vectOps
@@ -484,6 +487,7 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
     //Separate step as it allows for the producer -> consumer relationship to be exploited first
     //Where does it make a difference?
     // What about size information and broadcast of the sharing operator: does it make sense if matrix too small? all inputs need to be
+#if 1
     llvm::outs() << "######## STEP 4 ########" << "\n";
     for (auto& hcand : secondaryCandidates) {
         
@@ -501,6 +505,7 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
         mergePipelines(pipelines, operationToPipelineIx, op2_it->second, op1_it->second);
     }
     llvm::outs() << "######## END ########" << "\n";
+#endif
 
     //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individuals pipelines 
     // and their overhead (e.g. runtime) and merge together if constraints are met (input dimension)
@@ -553,7 +558,22 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
         llvm::outs() << "\n";
     }
 
-    //what about 
+    //Step X-2: Data access propagation
+    //Start at a dominant operator like matmul (latest in execution first?)
+    //do backwards propagation: from operator to input for determination of vector splits of the inputs
+    //do forwads propagation: from operator to output for determination of vector combine of the output
+    //when there is a collision, we need to backtrack, if backtrack fails we definitly need to split the pipeline
+    //(is there an earlier way to identify necessary splits? / after n backtracks force split?)
+    //where do we need to split? where first collision happens? 
+    //how do we want to propagate?: dfs, bfs -> do we really need the std::vector<Pipelines>? (could combine with earlier steps)
+    //is here the mlir dataflow framework applicable?
+
+
+
+    //Step X-1: Data layout propagation?
+    //it is probably better to switch the order with data access later on as we allow for an optimnization for individual kernels
+    // first before employing the access, which is in most cases a means to an end? atleast for elementwise operators, check for operators working on a specific axis
+    //combine it into one step with data access propagation?
 
     //Step X: create pipeline ops
     ThGreedyVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines);

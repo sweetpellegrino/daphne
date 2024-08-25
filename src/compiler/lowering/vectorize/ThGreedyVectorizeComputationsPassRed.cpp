@@ -537,7 +537,6 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     //throw std::runtime_error("test");
 }
 
-
 std::unique_ptr<Pass> daphne::createThGreedyVectorizeComputationsPassRed() {
     return std::make_unique<ThGreedyVectorizeComputationsPassRed>();
 }
