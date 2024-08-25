@@ -15,8 +15,11 @@
  */
 
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <functional>
+#include <random>
+#include <stdexcept>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
 #include "ir/daphneir/Daphne.h"
@@ -27,10 +30,12 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Operation.h"
+#include "mlir/IR/Types.h"
 #include "mlir/IR/Value.h"
 #include "mlir/Transforms/DialectConversion.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "compiler/lowering/vectorize/VectorizeComputationsUtils.h"
@@ -49,6 +54,7 @@ namespace
         //Currently only gets a pipeline as a list of nodes | cf. Formalisation
         void createVectorizedPipelineOps(func::FuncOp func, std::vector<std::vector<mlir::Operation *>> pipelines) {
             OpBuilder builder(func);
+            func->dump();
 
             // Create the `VectorizedPipelineOp`s
             for(auto pipeline : pipelines) {
@@ -138,6 +144,7 @@ namespace
                 builder.getArrayAttr(vSplitAttrs),
                 builder.getArrayAttr(vCombineAttrs),
                 nullptr);
+            pipelineOp->dump();
             Block *bodyBlock = builder.createBlock(&pipelineOp.getBody());
 
             //remove information from input matrices of pipeline
@@ -271,7 +278,16 @@ namespace
             return (c1.op1 == c2.op1 && c1.op2 == c2.op2);
         }
     };
-    
+
+    struct DimInfo {
+        DimInfo(size_t rows = 0, size_t cols = 0) : rows(rows), cols(cols) {}
+        size_t rows;
+        size_t cols;
+    };
+
+    bool operator==(const DimInfo& d1, const DimInfo& d2) {
+        return (d1.rows == d2.rows && d1.cols == d2.cols);
+    }
 }
 
 namespace std {
@@ -279,7 +295,7 @@ namespace std {
     struct hash<HCandidate> {
         std::size_t operator()(const HCandidate& c) const {
             //https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes
-            //careful if c.op1 == c.op2 defaults to 0, for all c
+            //careful if c.op1 == c.op2 defaults to 0, for all op
             return hash<mlir::Operation *>()(c.op1) ^ hash<mlir::Operation *>()(c.op2);
         }
     };
@@ -329,7 +345,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     std::unordered_set<HCandidate> secondaryCandidates;
 
     //reversed vectOps
-    for (auto &opv : vectOps) {
+    for (auto opv : vectOps) {
 
         //Get incoming edges of operation opv
         //One condition for Fusible: Check of producer <-> consumer relationship (opv->getOperand())
@@ -356,9 +372,11 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             //TODO: Do I need to check whether the operands are even from object type?
             //e.g. what would it mean, if the opv and user shares a constantOp result?
             for (auto user : operand.getUsers()) {
+                llvm::outs() << "user: ";
+                user->dump();
                 
                 if (user == opv || //Does not make sense to consider the opv with itself
-                    llvm::dyn_cast<daphne::Vectorizable>(user))//|| //User must be Vectorizable
+                    !llvm::dyn_cast<daphne::Vectorizable>(user))//|| //User must be Vectorizable
                     //user->getBlock() == opv->getBlock()) //TODO: To restrictive?
                     continue;
 
@@ -370,6 +388,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
                         break;
                     }
                 }
+
 
                 if (is_only_horizontal) {
                     llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
@@ -402,7 +421,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     std::map<mlir::Operation*, size_t> operationToPipelineIx;
     std::vector<std::vector<mlir::Operation*>> pipelines;
     //Iteration over the individual vectOps allows for pipelines with size of one
-    for(auto opv : vectOps) {
+    for(auto& opv : vectOps) {
         //identify if opv is already part of a pipeline
         auto opv_it = operationToPipelineIx.find(opv);
 
@@ -424,21 +443,16 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
             return (c.op2 == opv);
         });
 
-        for (auto candidate : rel_candidates) {
+        for (auto& candidate : rel_candidates) {
 
-            //auto opi_it = operationToPipelineIx.find(std::get<0>(candidate));
             auto opi_it = operationToPipelineIx.find(candidate.op1);
             llvm::outs() << "opi: " << candidate.op1->getName().getStringRef() << "\n";
 
             if (opi_it == operationToPipelineIx.end()) {
-                //pipelines.at(opv_pipeId).push_back(std::get<0>(candidate));
                 pipelines.at(opv_pipeIx).push_back(candidate.op1);
-                //operationToPipelineIx.insert({std::get<0>(candidate), opv_pipeId});
                 operationToPipelineIx.insert({candidate.op1, opv_pipeIx});
             }
-            //merge both pipelines
             else {
-                llvm::outs() << "merge both pipelines\n";
                 size_t opi_pipeIx = opi_it->second;
                 mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
             }
@@ -452,7 +466,7 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     //Separate step as it allows for the producer -> consumer relationship to be exploited first
     //Where does it make a difference?
     llvm::outs() << "######## STEP 4 ########" << "\n";
-    for (auto hcand : secondaryCandidates) {
+    for (auto& hcand : secondaryCandidates) {
         
         auto op1_it = operationToPipelineIx.find(hcand.op1);
         auto op2_it = operationToPipelineIx.find(hcand.op2);
@@ -460,7 +474,9 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
         // Check if id is identical, if yes do nothing
         if (op1_it->second == op2_it->second)
             continue;
-
+        
+        //TODO: by merging what about the ordering of the operatores inside the fused pipeline?
+        //does it matter? same for step 5
         mergePipelines(pipelines, operationToPipelineIx, op2_it->second, op1_it->second);
     }
     llvm::outs() << "######## END ########" << "\n";
@@ -470,20 +486,42 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
     //Till now we didn´t need to check if dimension matches as they do by definition of considered operators and checked relationship
     //Full potential, if we allow for different output types?
 
-    std::vector<std::pair<size_t, int>> sizes(pipelines.size());
-    std::transform(pipelines.begin(), pipelines.end(), sizes.begin(), [](const std::vector<mlir::Operation*>& pipeline) {
-        return std::make_pair(pipeline.size(), 0);
+    //careful as it takes the assumption that the size is equal for every object
+    //in case of "broadcasting" we need to make it different
+    //TODO: check what about SourceOps
+#if 1
+    llvm::outs() << "######## STEP 5 ########" << "\n";
+    auto lambda = [](std::vector<mlir::Operation*> pipeline){
+        for (auto op : pipeline) {
+            for (auto operandType : op->getOperandTypes()) {
+                operandType.dump();
+                if (auto opType = llvm::dyn_cast<daphne::MatrixType>(operandType)) {
+                    return DimInfo(opType.getNumRows(), opType.getNumCols());
+                }
+            }
+        }
+        return DimInfo(0, 0);
+    };
+
+    std::vector<std::pair<size_t, DimInfo>> sizes(pipelines.size());
+    std::transform(pipelines.begin(), pipelines.end(), sizes.begin(), [lambda](const std::vector<mlir::Operation*>& pipeline) {
+        return std::make_pair(pipeline.size(), lambda(pipeline));
     });
     
     for (auto pair : sizes) {
-        llvm::outs() << pair.first << " " << pair.second << "\n";
+        llvm::outs() << pair.first << " " << pair.second.rows << ":" << pair.second.cols << "\n";
     }
 
-    //identify small pipelines
-    //e.g. #ops in pipeline <= 4
-
-    //check if according to the input dimension we can merge them
-    //TODO: check what about SourceOps
+    //dirty
+    for (size_t i = 0; i < pipelines.size(); ++i) {
+        for (size_t j = i + 1; j < pipelines.size(); ++j) {
+            if (lambda(pipelines[i]) == lambda(pipelines[j])) {
+                mergePipelines(pipelines, operationToPipelineIx, j, i);
+            }
+        }
+    }
+    llvm::outs() << "######## END ########" << "\n";
+#endif
 
     //print pipelines
     for (auto pipeline : pipelines) {
@@ -496,8 +534,9 @@ void ThGreedyVectorizeComputationsPassRed::runOnOperation()
 
     //Step X: create pipeline ops
     ThGreedyVectorizeComputationsPassRed::createVectorizedPipelineOps(func, pipelines);
-
+    //throw std::runtime_error("test");
 }
+
 
 std::unique_ptr<Pass> daphne::createThGreedyVectorizeComputationsPassRed() {
     return std::make_unique<ThGreedyVectorizeComputationsPassRed>();

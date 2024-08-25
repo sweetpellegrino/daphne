@@ -1,0 +1,13 @@
+m1 = fill(1.1, $dim, $dim);
+m2 = fill(0.2, $dim, $dim);
+m3 = fill(1.5, $dim, $dim);
+
+x = m1 @ m2;
+z = m3 @ m1;
+
+y = m2 @ m3;
+
+
+print(x);
+print(y);
+print(z);

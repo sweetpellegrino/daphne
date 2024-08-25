@@ -317,6 +317,7 @@ public:
             mlir::daphne::VectorCombine* combines) {
         auto mem_required = 0ul;
         // output allocation for row-wise combine
+        llvm::outs() << "allocateOutput" << "\n";
         for(size_t i = 0; i < numOutputs; ++i) {
             llvm::outs() << "i: " << i << "\n";
             if((*res[i]) == nullptr && outRows[i] != -1 && outCols[i] != -1) {

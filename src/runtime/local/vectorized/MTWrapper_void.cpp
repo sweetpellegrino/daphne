@@ -64,7 +64,7 @@ void MTWrapper<void>::executeCpuQueues(
     // lock for aggregation combine
     // TODO: multiple locks per output
     std::mutex resLock;
-    using VT = double;
+    //using VT = double;
 
     // create tasks and close input
     uint64_t startChunk = 0;
