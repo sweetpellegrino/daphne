@@ -1,0 +1,7 @@
+digraph G {
+"daphne.ewAdd" -> "daphne.matMul" [label="0"];
+"daphne.transpose" -> "daphne.matMul" [label="1"];
+"daphne.ewExp" -> "daphne.transpose" [label="0"];
+"daphne.ewAbs" -> "daphne.ewAdd" [label="0"];
+"daphne.ewSqrt" -> "daphne.ewAdd" [label="1"];
+}

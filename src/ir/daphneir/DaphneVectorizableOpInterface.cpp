@@ -235,8 +235,11 @@ IMPL_SPLIT_COMBINE_EWBINARYOP(EwGeOp)
         return createOpsOutputSizes_EwUnaryOp(this, builder); \
     }
 
-IMPL_SPLIT_COMBINE_EWUNARYOP(EwSqrtOp)
 IMPL_SPLIT_COMBINE_EWUNARYOP(EwAbsOp)
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwSignOp)
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwExpOp)
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwLnOp)
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwSqrtOp)
 
 #undef IMPL_SPLIT_COMBINE_EWUNARYOP
 // ----------------------------------------------------------------------------

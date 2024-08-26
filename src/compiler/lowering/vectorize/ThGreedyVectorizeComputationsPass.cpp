@@ -15,18 +15,19 @@
  */
 
 #include <cstddef>
-#include <cstdint>
 #include <map>
 #include <functional>
-#include <random>
 #include <stdexcept>
+#include <type_traits>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "ir/daphneir/Passes.h"
+#include <stack>
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/LLVMIR/LLVMAttrs.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Operation.h"
@@ -293,7 +294,7 @@ namespace
     }
 
     //void backward_propagation(mlir::Operation* op, std::map<mlir::Operation*, bool> visited) {
-    void backward_propagation(mlir::Operation* op, std::vector<mlir::Operation*> *visited, daphne::VectorSplit* expected_split) {
+    /*void backward_propagation(mlir::Operation* op, std::vector<mlir::Operation*> *visited, daphne::VectorSplit* expected_split) {
         //check if operation already in visited?
         if(std::find(visited->begin(), visited->end(), op) != visited->end()) {
             //already visited
@@ -319,6 +320,74 @@ namespace
             //careful with reduction ops
             if (llvm::isa<daphne::MatrixType>(std::get<0>(e).getType()) && llvm::isa<daphne::Vectorizable>(defOp)) { 
                 backward_propagation(defOp, visited, expected_split);
+            }
+        }
+    }*/
+
+    void printStack(std::stack<mlir::Operation*> stack) {
+        std::stack<mlir::Operation*> temp = stack; 
+
+        llvm::outs() << "### Stack ###" << "\n";
+        while (!temp.empty()) {
+            mlir::Operation* op = temp.top();
+            op->print(llvm::outs());
+            llvm::outs() << "\n";
+            temp.pop();
+        }
+        llvm::outs() << "### stack ###" << "\n";
+    }
+
+    void printGraph(mlir::Operation* op, std::string filename) {
+        std::stack<mlir::Operation*> stack;
+        std::ofstream dot(filename);
+        if (!dot.is_open()) {
+            throw std::runtime_error("test");
+        }
+        dot << "digraph G {\n";
+        stack.push(op);
+
+        std::vector<mlir::Operation*> visited;
+
+        while (!stack.empty()) {
+            op = stack.top(); stack.pop();
+            if(std::find(visited.begin(), visited.end(), op) != visited.end()) {
+                continue;
+            }
+            visited.push_back(op);
+
+            auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
+            for (unsigned i = 0; i < v->getNumOperands(); ++i) {
+                mlir::Value e = v->getOperand(i);
+                auto defOp = e.getDefiningOp();
+                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
+                    stack.push(defOp);
+                    dot << "\"" << defOp->getName().getStringRef().str() << "\" -> \"" << op->getName().getStringRef().str() << "\" [label=\"" << i << "\"];\n";
+                }
+            }
+        }
+        dot << "}";
+        dot.close();
+    }
+    
+    void backward_propagation(mlir::Operation* op, std::vector<mlir::Operation*> *visited, daphne::VectorSplit* expected_split) {
+
+        std::stack<mlir::Operation*> stack;
+        stack.push(op);
+
+        while (!stack.empty()) {
+            
+            printStack(stack);
+            op = stack.top(); stack.pop();
+            if(std::find(visited->begin(), visited->end(), op) != visited->end())
+                continue;
+            visited->push_back(op);
+
+            auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
+            for(auto e : v->getOperands()) {
+                auto defOp = e.getDefiningOp();
+                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
+                    stack.push(defOp);
+                }
             }
         }
     }
@@ -472,9 +541,7 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
     // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
     // This requires multi-returns in way more cases, which is not implemented yet.
     std::map<mlir::Operation*, size_t> operationToPipelineIx;
-    std::map<Candidate, size_t> candidateToPipelineIx;
     std::vector<std::vector<mlir::Operation*>> pipelines;
-    std::vector<std::vector<Candidate>> candidatePipeline;
     //Iteration over the individual vectOps allows for pipelines with size of one
     for(auto& opv : vectOps) {
         auto opv_it = operationToPipelineIx.find(opv);
@@ -510,7 +577,9 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
             }
             else {
                 size_t opi_pipeIx = opi_it->second;
-                mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
+                if (opv_pipeIx != opi_pipeIx) {
+                    mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
+                }
             }
         }
         llvm::outs() << "######" << "\n";
@@ -541,6 +610,8 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
     }
     llvm::outs() << "######## END ########" << "\n";
 #endif
+
+    printGraph(pipelines[0][0], "test.dot");
 
     //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individuals pipelines 
     // and their overhead (e.g. runtime) and merge together if constraints are met (input dimension)
@@ -634,8 +705,6 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
         backward_propagation(op, visited, nullptr);
         forward_propagation();
     }
-
-
 
     //Step X-1: Data layout propagation?
     //it is probably better to switch the order with data access later on as we allow for an optimnization for individual kernels
