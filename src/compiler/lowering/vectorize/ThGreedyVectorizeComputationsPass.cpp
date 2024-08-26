@@ -288,6 +288,41 @@ namespace
         llvm::outs() << "test3" << "\n";
     }
 
+    void forward_propagation() {
+        return;
+    }
+
+    //void backward_propagation(mlir::Operation* op, std::map<mlir::Operation*, bool> visited) {
+    void backward_propagation(mlir::Operation* op, std::vector<mlir::Operation*> *visited, daphne::VectorSplit* expected_split) {
+        //check if operation already in visited?
+        if(std::find(visited->begin(), visited->end(), op) != visited->end()) {
+            //already visited
+            return; 
+        }
+        visited->push_back(op);
+        op->print(llvm::outs());
+        llvm::outs() << "\n";
+        auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
+        //check compability
+        std::vector<daphne::VectorSplit> v_splits = v.getVectorSplits()[0];
+        if (expected_split == nullptr) {
+            expected_split = &v_splits[0]; 
+        }
+        for(auto e : llvm::zip(v->getOperands(),v_splits)) {
+            daphne::VectorSplit split = std::get<1>(e);
+            if (llvm::isa<daphne::EwAddOp>(op)) {
+                if(split != *expected_split) {
+                    throw std::runtime_error("collision");
+                } 
+            }
+            auto defOp = std::get<0>(e).getDefiningOp();
+            //careful with reduction ops
+            if (llvm::isa<daphne::MatrixType>(std::get<0>(e).getType()) && llvm::isa<daphne::Vectorizable>(defOp)) { 
+                backward_propagation(defOp, visited, expected_split);
+            }
+        }
+    }
+
     //For Candidates
     /*void mergePipelines(std::vector<std::vector<Candidate>>& pipelines, std::map<Candidate, size_t>& operationToPipelineIx, size_t mergeFromIx, size_t mergeIntoIx){
         std::vector<Candidate> mergedPipeline(pipelines.at(mergeIntoIx));
@@ -567,6 +602,38 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
     //where do we need to split? where first collision happens? 
     //how do we want to propagate?: dfs, bfs -> do we really need the std::vector<Pipelines>? (could combine with earlier steps)
     //is here the mlir dataflow framework applicable?
+
+    //list of dominant operators?
+    //currently hard-coded
+
+    //find the dominant operator
+    std::vector<mlir::Operation*> dominant_operations_in_pipeline;
+    std::copy_if(pipelines[0].begin(), pipelines[0].end(), std::back_inserter(dominant_operations_in_pipeline), [](const auto& op) {
+        if (llvm::isa<daphne::MatMulOp>(op)) {
+            return true;
+        } else if (llvm::isa<daphne::TransposeOp>(op)) {
+            return true;
+        } else if (llvm::isa<daphne::RowAggSumOp>(op)) {
+            return true;
+        }
+        return false;
+    });
+
+    //What happens if we don't have any dominant operators or
+    //due to horizontal fusion: we could have disconnected graph inside the pipeline
+    //where do we start then? at the end? how to efficiently identify the end?
+    llvm::outs() << "dominant operators: ";
+    for (auto op : dominant_operations_in_pipeline) {
+        llvm::outs() << op->getName().getStringRef() << ",";
+    }
+    llvm::outs() << "\n";
+
+    for(auto op : dominant_operations_in_pipeline) {
+        //std::map<mlir::Operation*, bool>* visited = new std::map<mlir::Operation*, bool>();
+        std::vector<mlir::Operation*> *visited = new std::vector<mlir::Operation*>();
+        backward_propagation(op, visited, nullptr);
+        forward_propagation();
+    }
 
 
 
