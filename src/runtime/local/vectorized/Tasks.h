@@ -109,6 +109,9 @@ protected:
                 //data gets copied? No, sliceRow creates a shallow copy
                 linputs.push_back(_data._inputs[i]->sliceRow(rowStart, rowEnd));
             }
+            else if (VectorSplit::COLS == _data._splits[i]) {
+                linputs.push_back(_data._inputs[i]->sliceCol(rowStart, rowEnd));
+            }
             else if (VectorSplit::GEN == _data._splits[i]) {
                 uint64_t numCols = _data._inputs[i]->getNumCols();
                 std::shared_ptr<int64_t[]> ptr(nullptr);

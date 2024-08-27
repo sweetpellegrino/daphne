@@ -293,6 +293,53 @@ namespace
         return;
     }
 
+
+    void printStack(std::stack<mlir::Operation*> stack) {
+        std::stack<mlir::Operation*> temp = stack; 
+
+        llvm::outs() << "### Stack ###" << "\n";
+        while (!temp.empty()) {
+            mlir::Operation* op = temp.top();
+            op->print(llvm::outs());
+            llvm::outs() << "\n";
+            temp.pop();
+        }
+        llvm::outs() << "### stack ###" << "\n";
+    }
+
+    void printGraph(mlir::Operation* op, std::string filename) {
+        std::stack<mlir::Operation*> stack;
+        std::ofstream dot(filename);
+        if (!dot.is_open()) {
+            throw std::runtime_error("test");
+        }
+
+        dot << "digraph G {\n";
+        stack.push(op);
+
+        std::vector<mlir::Operation*> visited;
+
+        while (!stack.empty()) {
+            op = stack.top(); stack.pop();
+            if(std::find(visited.begin(), visited.end(), op) != visited.end()) {
+                continue;
+            }
+            visited.push_back(op);
+
+            auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
+            for (unsigned i = 0; i < v->getNumOperands(); ++i) {
+                mlir::Value e = v->getOperand(i);
+                auto defOp = e.getDefiningOp();
+                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
+                    dot << "\"" << defOp->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(defOp) << "\" -> \"" << op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(op) << "\" [label=\"" << i << "\"];\n";
+                    stack.push(defOp);
+                }
+            }
+        }
+        dot << "}";
+        dot.close();
+    }
+
     //void backward_propagation(mlir::Operation* op, std::map<mlir::Operation*, bool> visited) {
     /*void backward_propagation(mlir::Operation* op, std::vector<mlir::Operation*> *visited, daphne::VectorSplit* expected_split) {
         //check if operation already in visited?
@@ -324,86 +371,63 @@ namespace
         }
     }*/
 
-    void printStack(std::stack<mlir::Operation*> stack) {
-        std::stack<mlir::Operation*> temp = stack; 
+    std::map<mlir::Operation*, size_t> backward_propagation(mlir::Operation* op) {
+        std::stack<std::pair<mlir::Operation*, size_t>> stack;
+        std::unordered_set<mlir::Operation*> visited;
+        std::map<mlir::Operation*, size_t> decisionIxs;
 
-        llvm::outs() << "### Stack ###" << "\n";
-        while (!temp.empty()) {
-            mlir::Operation* op = temp.top();
-            op->print(llvm::outs());
-            llvm::outs() << "\n";
-            temp.pop();
-        }
-        llvm::outs() << "### stack ###" << "\n";
-    }
-
-    void printGraph(mlir::Operation* op, std::string filename) {
-        std::stack<mlir::Operation*> stack;
-        std::ofstream dot(filename);
-        if (!dot.is_open()) {
-            throw std::runtime_error("test");
-        }
-        dot << "digraph G {\n";
-        stack.push(op);
-
-        std::vector<mlir::Operation*> visited;
+        stack.push({op, 0});
 
         while (!stack.empty()) {
-            op = stack.top(); stack.pop();
-            if(std::find(visited.begin(), visited.end(), op) != visited.end()) {
+            auto t = stack.top(); stack.pop();
+            mlir::Operation* op = t.first;
+            size_t d = t.second;
+
+            if(std::find(visited.begin(), visited.end(), op) != visited.end())
                 continue;
-            }
-            visited.push_back(op);
 
             auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
-            for (unsigned i = 0; i < v->getNumOperands(); ++i) {
-                mlir::Value e = v->getOperand(i);
-                auto defOp = e.getDefiningOp();
-                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
-                    stack.push(defOp);
-                    dot << "\"" << defOp->getName().getStringRef().str() << "\" -> \"" << op->getName().getStringRef().str() << "\" [label=\"" << i << "\"];\n";
-                }
+
+            visited.insert(op);
+            decisionIxs[op] = d;
+
+            for (size_t i = 0; i < v->getNumOperands(); ++i) {
+                auto operand = v->getOperand(i);
+
+                if (!llvm::isa<daphne::MatrixType>(operand.getType())) 
+                    continue;
+
+                if(auto v_defOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
+                    auto v_operandSplit = v.getVectorSplits()[d][i];
+
+                    for (size_t j = 0; j < v_defOp.getVectorCombines().size(); ++j) {
+                        auto v_defOp_operandCombine  = v_defOp.getVectorCombines()[j];
+
+                        daphne::VectorCombine _operandCombine;
+                        switch (v_operandSplit) {
+                            case daphne::VectorSplit::ROWS:
+                                _operandCombine = daphne::VectorCombine::ROWS;
+                                break;
+                            case daphne::VectorSplit::COLS:
+                                _operandCombine = daphne::VectorCombine::COLS;
+                                break;
+                            //would be the reason to split a pipeline!
+                            /*case daphne::VectorSplit::NONE:
+                                 _operandCombine = daphne::VectorCombine::NONE;
+                                break*/
+                            default:
+                                throw std::runtime_error("?????");
+                        }
+                        if (v_defOp_operandCombine[0] == _operandCombine) {
+                            llvm::outs() << "push stack: " << v_defOp->getName() << ", j=" << j << "\n";
+                            stack.push({v_defOp, j});
+                        }
+                    }
+                } 
             }
         }
-        dot << "}";
-        dot.close();
+        return decisionIxs;
     }
-    
-    void backward_propagation(mlir::Operation* op, std::vector<mlir::Operation*> *visited, daphne::VectorSplit* expected_split) {
-
-        std::stack<mlir::Operation*> stack;
-        stack.push(op);
-
-        while (!stack.empty()) {
-            
-            printStack(stack);
-            op = stack.top(); stack.pop();
-            if(std::find(visited->begin(), visited->end(), op) != visited->end())
-                continue;
-            visited->push_back(op);
-
-            auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
-            for(auto e : v->getOperands()) {
-                auto defOp = e.getDefiningOp();
-                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
-                    stack.push(defOp);
-                }
-            }
-        }
-    }
-
-    //For Candidates
-    /*void mergePipelines(std::vector<std::vector<Candidate>>& pipelines, std::map<Candidate, size_t>& operationToPipelineIx, size_t mergeFromIx, size_t mergeIntoIx){
-        std::vector<Candidate> mergedPipeline(pipelines.at(mergeIntoIx));
-        for (auto op : pipelines.at(mergeFromIx)) {
-            if  (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
-                mergedPipeline.push_back(op);
-                operationToPipelineIx[op] = mergeIntoIx;
-            }
-        }
-        pipelines.at(mergeIntoIx) = std::move(mergedPipeline);
-        pipelines.erase(pipelines.begin() + mergeFromIx);
-    }*/
 }
 
 namespace std {
@@ -424,6 +448,7 @@ namespace std {
     };
 }
 
+    
 void ThGreedyVectorizeComputationsPass::runOnOperation()
 {
 
@@ -699,11 +724,19 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
     }
     llvm::outs() << "\n";
 
-    for(auto op : dominant_operations_in_pipeline) {
+    /*for(auto op : dominant_operations_in_pipeline) {
         //std::map<mlir::Operation*, bool>* visited = new std::map<mlir::Operation*, bool>();
-        std::vector<mlir::Operation*> *visited = new std::vector<mlir::Operation*>();
-        backward_propagation(op, visited, nullptr);
+        //std::vector<mlir::Operation*> *visited = new std::vector<mlir::Operation*>();
+        for (auto d_item : backward_propagation(op)) {
+            llvm::outs() << "op: " << d_item.first->getName().getStringRef() << ", decision: " << d_item.second << "\n";
+        }
+        
         forward_propagation();
+    }
+    */
+    auto decisions = backward_propagation(pipelines[0][0]);
+    for (auto d_item : backward_propagation(pipelines[0][0])) {
+        llvm::outs() << "op: " << d_item.first->getName().getStringRef() << ", decision: " << d_item.second << "\n";
     }
 
     //Step X-1: Data layout propagation?

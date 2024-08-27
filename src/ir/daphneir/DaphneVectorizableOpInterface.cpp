@@ -307,6 +307,7 @@ std::vector<std::pair<Value, Value>> daphne::ExtractColOp::createOpsOutputSizes(
 std::vector<std::vector<daphne::VectorSplit>> daphne::TransposeOp::getVectorSplits()
 {
     return {{daphne::VectorSplit::ROWS}, {daphne::VectorSplit::COLS}};
+    //return {{daphne::VectorSplit::COLS}, {daphne::VectorSplit::ROWS}};
 }
 std::vector<std::vector<daphne::VectorCombine>> daphne::TransposeOp::getVectorCombines()
 {
@@ -318,7 +319,7 @@ std::vector<std::pair<Value, Value>> daphne::TransposeOp::createOpsOutputSizes(O
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getArg());
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, getArg());
-    return {{cols, rows}};
+    return {{cols, rows},{rows, cols}};
 }
 
 std::vector<std::vector<daphne::VectorSplit>> daphne::ColBindOp::getVectorSplits()

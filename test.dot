@@ -1,7 +1,6 @@
 digraph G {
-"daphne.ewAdd" -> "daphne.matMul" [label="0"];
-"daphne.transpose" -> "daphne.matMul" [label="1"];
-"daphne.ewExp" -> "daphne.transpose" [label="0"];
-"daphne.ewAbs" -> "daphne.ewAdd" [label="0"];
-"daphne.ewSqrt" -> "daphne.ewAdd" [label="1"];
+"daphne.ewAdd+55ddc24b4960" -> "daphne.ewAdd+55ddc2268a10" [label="0"];
+"daphne.transpose+55ddc2266930" -> "daphne.ewAdd+55ddc2268a10" [label="1"];
+"daphne.ewAbs+55ddc22655b0" -> "daphne.ewAdd+55ddc24b4960" [label="0"];
+"daphne.ewSqrt+55ddc2269530" -> "daphne.ewAdd+55ddc24b4960" [label="1"];
 }
