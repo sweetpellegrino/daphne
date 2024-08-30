@@ -1,0 +1,12 @@
+//m1 = fill(1.1, $dim, $dim*2);
+//m2 = fill(0.2, $dim*2, $dim);
+//m3 = fill(1.5, $dim, $dim);
+m1 = readMatrix("10_X.csv");
+m2 = readMatrix("10_Y.csv");
+m3 = readMatrix("10_Z.csv");
+
+x = m1 @ m2;
+y = t(m3);
+z = x + y;
+
+print(z);

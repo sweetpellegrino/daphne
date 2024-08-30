@@ -1,0 +1,12 @@
+//producer
+n = fill(2.0, $dim, $dim*2);
+
+//consumer1
+z = sqrt(n) + 5.0;
+t = abs(z);
+print(t);
+
+//consumer2
+u = abs(n);
+j = sqrt(u) * 0.3;
+print(j);

@@ -1,0 +1,6 @@
+n = fill(2.0, $dim, $dim*2);
+m = fill(2.0, $dim*2, $dim);
+
+f = n @ m;
+
+print(f);

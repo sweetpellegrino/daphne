@@ -1,0 +1,20 @@
+//10x20
+m1 = readMatrix("10_X.csv");
+//20x10
+m2 = readMatrix("10_Y.csv");
+//10x10
+m3 = readMatrix("10_Z.csv");
+
+a1 = abs(m1);
+a2 = sqrt(m1);
+//a3 = exp(m2);
+
+b1 = a1 + a2;
+b2 = t(m2);
+
+c1 = b1 + b2;
+
+//d1 = c1 + 0.2;
+
+e1 = sum(c1);
+print(e1);

@@ -1,0 +1,10 @@
+n = fill(4.0, $dim, $dim*2);
+//m = rand($dim, $dim*20, 1.0, 2.0, 0.2, -1);
+
+f = n + 50.0;
+//x = abs(f);
+//y = sqrt(m);
+//z = x * y;
+
+t = sum(f);
+print(t);

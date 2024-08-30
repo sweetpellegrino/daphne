@@ -1,0 +1,2 @@
+X_small = rand($dim, $dim, 0.0, 1.0, 1, -1);
+write(X_small, $dim+"_Z.csv");
