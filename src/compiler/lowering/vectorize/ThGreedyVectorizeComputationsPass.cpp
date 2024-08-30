@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <functional>
@@ -95,7 +96,7 @@ namespace
 
         //Function that modifies existing mlir programm structure
         //Currently only gets a pipeline as a list of nodes | cf. Formalisation
-        void createVectorizedPipelineOps(func::FuncOp func, std::vector<std::vector<mlir::Operation *>> pipelines) {
+        void createVectorizedPipelineOps(func::FuncOp func, std::vector<std::vector<mlir::Operation *>> pipelines, std::map<mlir::Operation*, size_t> decisionIxs) {
             OpBuilder builder(func);
 
             // Create the `VectorizedPipelineOp`s
@@ -140,8 +141,10 @@ namespace
 
                     }
                     else if (auto vec = llvm::dyn_cast<daphne::Vectorizable>(v)) {
-                        vSplits = vec.getVectorSplits()[0];
-                        vCombines = vec.getVectorCombines()[0];
+                        
+                        size_t d = decisionIxs[v];
+                        vSplits = vec.getVectorSplits()[d];
+                        vCombines = vec.getVectorCombines()[d];
                         opsOutputSizes = vec.createOpsOutputSizes(builder);
                     } 
 
@@ -418,6 +421,7 @@ namespace
                             default:
                                 throw std::runtime_error("?????");
                         }
+                        //only supporting a single return of an operation, cf. index 0
                         if (v_defOp_operandCombine[0] == _operandCombine) {
                             llvm::outs() << "push stack: " << v_defOp->getName() << ", j=" << j << "\n";
                             stack.push({v_defOp, j});
@@ -745,7 +749,7 @@ void ThGreedyVectorizeComputationsPass::runOnOperation()
     //combine it into one step with data access propagation?
 
     //Step X: create pipeline ops
-    ThGreedyVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines);
+    ThGreedyVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines, decisions);
 }
 
 

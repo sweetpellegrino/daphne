@@ -319,7 +319,7 @@ std::vector<std::pair<Value, Value>> daphne::TransposeOp::createOpsOutputSizes(O
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getArg());
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, getArg());
-    return {{cols, rows},{rows, cols}};
+    return {{rows, cols},{cols, rows}};
 }
 
 std::vector<std::vector<daphne::VectorSplit>> daphne::ColBindOp::getVectorSplits()
