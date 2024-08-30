@@ -26,6 +26,7 @@
 #include <filesystem>
 
 #include "llvm/Support/TargetSelect.h"
+#include "compiler/lowering/vectorize/VectorizeDefs.h"
 #include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
 #include "mlir/Conversion/LinalgToLLVM/LinalgToLLVM.h"
 #include "mlir/Conversion/MathToLLVM/MathToLLVM.h"
@@ -160,8 +161,20 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     if (userConfig_.use_vectorized_exec || userConfig_.use_distributed) {
         // TODO: add inference here if we have rewrites that could apply to
         // vectorized pipelines due to smaller sizes
-        pm.addNestedPass<mlir::func::FuncOp>(
-            mlir::daphne::createVectorizeComputationsPass());
+        switch (userConfig_.vectorizationType) {
+            case DAPHNE:
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createGreedy1VectorizeComputationsPass());
+                break;
+            case GREEDY_1: 
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createDaphneVectorizeComputationsPass());
+                break;
+            default:
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createDaphneVectorizeComputationsPass());
+                break;
+        }
         pm.addPass(mlir::createCanonicalizerPass());
     }
     if (userConfig_.explain_vectorized)

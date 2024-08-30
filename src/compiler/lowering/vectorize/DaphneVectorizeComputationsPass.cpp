@@ -173,12 +173,12 @@ namespace
         }
     }
 
-    struct VectorizeComputationsPass : public PassWrapper<VectorizeComputationsPass, OperationPass<func::FuncOp>> {
+    struct DaphneVectorizeComputationsPass : public PassWrapper<DaphneVectorizeComputationsPass, OperationPass<func::FuncOp>> {
         void runOnOperation() final;
     };
 }
 
-void VectorizeComputationsPass::runOnOperation()
+void DaphneVectorizeComputationsPass::runOnOperation()
 {
     auto func = getOperation();
     // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
@@ -223,10 +223,10 @@ void VectorizeComputationsPass::runOnOperation()
                 }
 
                 if(qualified){
-                    auto split = std::get<1>(e);
+                    auto split = std::get<1>(e)[0];
                     // find the corresponding `OpResult` to figure out combine
                     auto opResult = *llvm::find(defOp->getResults(), operand);
-                    auto combine = defOp.getVectorCombines()[opResult.getResultNumber()];
+                    auto combine = defOp.getVectorCombines()[0][opResult.getResultNumber()];
 
                     if(split == daphne::VectorSplit::ROWS) {
                         if(combine == daphne::VectorCombine::ROWS)
@@ -296,8 +296,8 @@ void VectorizeComputationsPass::runOnOperation()
         movePipelineInterleavedOperations(builder.getInsertionPoint(), pipeline);
         for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
             auto v = *vIt;
-            auto vSplits = v.getVectorSplits();
-            auto vCombines = v.getVectorCombines();
+            auto vSplits = v.getVectorSplits()[0];
+            auto vCombines = v.getVectorCombines()[0];
             // TODO: although we do create enum attributes, it might make sense/make it easier to
             //  just directly use an I64ArrayAttribute
             for(auto i = 0u; i < v->getNumOperands(); ++i) {
@@ -404,6 +404,6 @@ void VectorizeComputationsPass::runOnOperation()
     }
 }
 
-std::unique_ptr<Pass> daphne::createVectorizeComputationsPass() {
-    return std::make_unique<VectorizeComputationsPass>();
+std::unique_ptr<Pass> daphne::createDaphneVectorizeComputationsPass() {
+    return std::make_unique<DaphneVectorizeComputationsPass>();
 }
