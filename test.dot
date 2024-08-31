@@ -1,0 +1,5 @@
+digraph G {
+"daphne.ewAdd+56212c668040" -> "daphne.sumAll+56212c625200" [label="0"];
+"daphne.ewSqrt+56212c4158f0" -> "daphne.ewAdd+56212c668040" [label="0"];
+"daphne.transpose+56212c419780" -> "daphne.ewAdd+56212c668040" [label="1"];
+}

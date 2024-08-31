@@ -32,6 +32,7 @@
 #include "mlir/IR/Location.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/IR/IRMapping.h"
+#include "llvm/Support/Casting.h"
 
 #include <memory>
 #include <utility>
@@ -249,6 +250,9 @@ namespace
             for(size_t i = 0; i < opResTys.size(); i++)
                 lookupResTys.push_back(adaptType(opResTys[i], false));
 
+            for(auto ty : lookupResTys)
+                ty.dump();
+
             // Append converted op argument types to the look-up argument types.
             // Variadic operands, which can have an arbitrary number of occurrences, are
             // treated specially.
@@ -446,6 +450,13 @@ namespace
                 lookupArgTys.push_back(mlir::daphne::StringType::get(&newContext));
                 kernelArgs.push_back(rewriteStr);
             }
+
+            /*if (auto sumAll = llvm::dyn_cast<daphne::AllAggSumOp>(op)) {
+                //check in case is not manipulated, e.g. not vectorized execution
+                if (llvm::isa<daphne::MatrixType>(lookupResTys.at(0))) {
+                    lookupResTys.at(0) = llvm::dyn_cast<daphne::MatrixType>(lookupResTys.at(0)).getElementType();
+                }
+            }*/
 
             // *****************************************************************************
             // Look up a matching kernel from the kernel catalog.

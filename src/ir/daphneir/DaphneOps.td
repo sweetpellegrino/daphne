@@ -462,7 +462,7 @@ class Daphne_AggOp<string name, Type inScalarType, list<Trait> traits = []> : Da
 
 class Daphne_AllAggOp<string name, Type scalarType, list<Trait> traits = []>
 : Daphne_AggOp<name, scalarType, !listconcat(traits, [DataTypeSca, CastArgsToResType, ])> {
-    let results = (outs scalarType:$res);
+    let results = (outs AnyType:$res);
 }
 
 def Daphne_AllAggSumOp    : Daphne_AllAggOp<"sumAll", NumScalar, [ValueTypeFromFirstArg, DeclareOpInterfaceMethods<VectorizableOpInterface>]>;
@@ -1533,7 +1533,7 @@ def Daphne_VectorizedPipelineOp : Daphne_Op<"vectorizedPipeline", [AttrSizedOper
             TypedArrayAttrBase<VectorSplitAttr, "Vector-Splits">:$splits,
             TypedArrayAttrBase<VectorCombineAttr, "Vector-Combines">:$combines,
             Optional<DaphneContext>:$ctx);
-    let results = (outs Variadic<MatrixOrFrame>:$outputs);
+    let results = (outs Variadic<AnyType>:$outputs);
     let regions = (region SizedRegion<1>:$body, AnyRegion:$cuda);
 
     let hasCanonicalizeMethod = 1;

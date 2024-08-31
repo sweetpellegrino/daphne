@@ -106,6 +106,9 @@ protected:
             else if (VectorSplit::ROWS == _data._splits[i]) {
                 linputs.push_back(_data._inputs[i]->sliceRow(rowStart, rowEnd));
             }
+            else if(VectorSplit::COLS == _data._splits[i]) {
+                linputs.push_back(_data._inputs[i]->sliceCol(rowStart, rowEnd));
+            }
             else {
                 llvm_unreachable("Not all vector splits handled");
             }

@@ -1,0 +1,5 @@
+//10x20
+m1 = readMatrix("10_X.csv");
+
+e1 = sum(m1, 1);
+print(e1);

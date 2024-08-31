@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
+#include "compiler/utils/CompilerUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "ir/daphneir/Passes.h"
@@ -215,19 +216,36 @@ namespace
                     auto vCombines = std::vector<daphne::VectorCombine>();
                     auto opsOutputSizes = std::vector<std::pair<Value, Value>>();
                     if (auto vec = llvm::dyn_cast<daphne::Vectorizable>(v)) {
-                        
                         size_t d = decisionIxs[v];
                         vSplits = vec.getVectorSplits()[d];
                         vCombines = vec.getVectorCombines()[d];
-                        opsOutputSizes = vec.createOpsOutputSizes(builder);
-                    } 
+                        opsOutputSizes = vec.createOpsOutputSizes(builder)[d];
+                    } else {
+                        throw std::runtime_error("Vectorizable op not found");
+                    }
+                    //TODO
+                    if (auto allAggSumOp = llvm::dyn_cast<daphne::AllAggSumOp>(v)) { 
+                        auto m1 = daphne::MatrixType::get(allAggSumOp.getContext(), allAggSumOp->getResult(0).getType(), 1, 1, 1, daphne::MatrixRepresentation::Dense);
+                        m1.print(llvm::outs());
+                        llvm::outs() << "\n";
+                        allAggSumOp->getResult(0).setType(m1); 
+
+                        //create castOp for casting the 1x1 matrix to scalar value
+                        auto loc = allAggSumOp->getLoc();
+                        auto castOp = builder.create<daphne::CastOp>(loc, m1.getElementType(), allAggSumOp->getResult(0));
+                        allAggSumOp->getResult(0).replaceAllUsesExcept(castOp.getResult(), castOp);
+
+                        //movePipelineInterleavedOperations is before of exisiting of this op
+                        castOp->moveAfter(allAggSumOp);
+                        castOp.dump();
+                    }
 
                     // TODO: although we do create enum attributes, it might make sense/make it easier to
                     // just directly use an I64ArrayAttribute
                     // Determination of operands of VectorizedPipelineOps!
                     for(auto i = 0u; i < v->getNumOperands(); ++i) {
                         auto operand = v->getOperand(i);
-                        if(!valueIsPartOfPipeline(operand)){ //&& (!llvm::dyn_cast<daphne::NumRowsOp>(v) && !llvm::dyn_cast<daphne::NumColsOp>(v))) {
+                        if(!valueIsPartOfPipeline(operand)){
                             vSplitAttrs.push_back(daphne::VectorSplitAttr::get(&getContext(), vSplits[i]));
                             operands.push_back(operand);
                         }
@@ -365,11 +383,6 @@ namespace
         llvm::outs() << "test3" << "\n";
     }
 
-    void forward_propagation() {
-        return;
-    }
-
-
     void printStack(std::stack<mlir::Operation*> stack) {
         std::stack<mlir::Operation*> temp = stack; 
 
@@ -447,9 +460,8 @@ namespace
         }
     }*/
 
-    
-
     std::map<mlir::Operation*, size_t> backward_propagation(mlir::Operation* op) {
+
         std::stack<std::pair<mlir::Operation*, size_t>> stack;
         std::unordered_set<mlir::Operation*> visited;
         std::map<mlir::Operation*, size_t> decisionIxs;
@@ -533,7 +545,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
     auto func = getOperation();
 
-    llvm::outs() << "TH_GREEDY" << "\n";
+    llvm::outs() << "Greedy1VectorizeComputationsPass" << "\n";
 
     //Step 1: Filter vectorizbale operations
     //Slice Analysis for reverse topological sorting?
@@ -715,7 +727,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     llvm::outs() << "######## END ########" << "\n";
 #endif
 
-    printGraph(pipelines[0][0], "test.dot");
+    //printGraph(pipelines[0][0], "test.dot");
 
     //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individuals pipelines 
     // and their overhead (e.g. runtime) and merge together if constraints are met (input dimension)

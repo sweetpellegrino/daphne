@@ -54,14 +54,14 @@ std::vector<std::vector<daphne::VectorCombine>> getVectorCombines_EwBinaryOp(EwB
             {daphne::VectorCombine::COLS}};
 }
 template<class EwBinaryOp>
-std::vector<std::pair<Value, Value>> createOpsOutputSizes_EwBinaryOp(EwBinaryOp *op, OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_EwBinaryOp(EwBinaryOp *op, OpBuilder &builder)
 {
     auto loc = op->getLoc();
     auto sizeTy = builder.getIndexType();
     auto lhsRows = builder.create<daphne::NumRowsOp>(loc, sizeTy, op->getLhs());
     auto lhsCols = builder.create<daphne::NumColsOp>(loc, sizeTy, op->getLhs());
     // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
-    return {{lhsRows, lhsCols}};
+    return {{{lhsRows, lhsCols}}};
 }
 template<class EwUnaryOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_EwUnaryOp(EwUnaryOp *op)
@@ -76,14 +76,14 @@ std::vector<std::vector<daphne::VectorCombine>> getVectorCombines_EwUnaryOp(EwUn
             {daphne::VectorCombine::COLS}};
 }
 template<class EwUnaryOp>
-std::vector<std::pair<Value, Value>> createOpsOutputSizes_EwUnaryOp(EwUnaryOp *op, OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_EwUnaryOp(EwUnaryOp *op, OpBuilder &builder)
 {
     auto loc = op->getLoc();
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, op->getArg());
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, op->getArg());
     // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
-    return {{rows, cols}};
+    return {{{rows, cols}}};
 }
 
 
@@ -115,7 +115,7 @@ std::vector<std::vector<daphne::VectorCombine>> daphne::MatMulOp::getVectorCombi
 {
     return {{daphne::VectorCombine::ROWS}, {daphne::VectorCombine::COLS}};
 }
-std::vector<std::pair<Value, Value>> daphne::MatMulOp::createOpsOutputSizes(OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> daphne::MatMulOp::createOpsOutputSizes(OpBuilder &builder)
 {
     auto loc = getLoc();
     auto sizeTy = builder.getIndexType();
@@ -140,7 +140,7 @@ std::vector<std::pair<Value, Value>> daphne::MatMulOp::createOpsOutputSizes(OpBu
             ? builder.create<daphne::NumRowsOp>(loc, sizeTy, getRhs()).getResult()
             : builder.create<daphne::NumColsOp>(loc, sizeTy, getRhs()).getResult();
 
-    return {{rows, cols}};
+    return {{{rows, cols}}};
 }
 // ----------------------------------------------------------------------------
 
@@ -153,7 +153,7 @@ std::vector<std::pair<Value, Value>> daphne::MatMulOp::createOpsOutputSizes(OpBu
     std::vector<std::vector<daphne::VectorCombine>> daphne::OP::getVectorCombines() { \
         return getVectorCombines_EwBinaryOp(this); \
     } \
-    std::vector<std::pair<Value, Value>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
+    std::vector<std::vector<std::pair<Value, Value>>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
         return createOpsOutputSizes_EwBinaryOp(this, builder); \
     }
 
@@ -200,7 +200,7 @@ IMPL_SPLIT_COMBINE_EWBINARYOP(EwGeOp)
     std::vector<std::vector<daphne::VectorCombine>> daphne::OP::getVectorCombines() { \
         return getVectorCombines_EwUnaryOp(this); \
     } \
-    std::vector<std::pair<Value, Value>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
+    std::vector<std::vector<std::pair<Value, Value>>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
         return createOpsOutputSizes_EwUnaryOp(this, builder); \
     }
 
@@ -252,15 +252,15 @@ std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_AllAggOp(AllAggOp 
 template<class AllAggOp>
 std::vector<std::vector<daphne::VectorCombine>> getVectorCombines_AllAggOp(AllAggOp *op)
 {
-    return {{daphne::VectorCombine::ROWS}};
+    return {{daphne::VectorCombine::ADD}};
 }
 template<class AllAggOp>
-std::vector<std::pair<Value, Value>> createOpsOutputSizes_AllAggOp(AllAggOp *op, OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_AllAggOp(AllAggOp *op, OpBuilder &builder)
 {
     auto loc = op->getLoc();
     auto sizeTy = builder.getIndexType();
     auto cst1 = builder.create<daphne::ConstantOp>(loc, sizeTy, builder.getIndexAttr(1l));
-    return {{cst1, cst1}};
+    return {{{cst1, cst1}}};
 }
 
 #define IMPL_SPLIT_COMBINE_ALLAGG(OP) \
@@ -270,17 +270,16 @@ std::vector<std::pair<Value, Value>> createOpsOutputSizes_AllAggOp(AllAggOp *op,
     std::vector<std::vector<daphne::VectorCombine>> daphne::OP::getVectorCombines() { \
         return getVectorCombines_AllAggOp(this); \
     } \
-    std::vector<std::pair<Value, Value>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
+    std::vector<std::vector<std::pair<Value, Value>>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
         return createOpsOutputSizes_AllAggOp(this, builder); \
     }
 
 // RowAgg
 IMPL_SPLIT_COMBINE_ALLAGG(AllAggSumOp)
-IMPL_SPLIT_COMBINE_ALLAGG(AllAggMaxOp)
-IMPL_SPLIT_COMBINE_ALLAGG(AllAggMinOp)
+IMPL_SPLIT_COMBINE_ALLAGG(AllAggMaxOp) //kernel does not exist
+IMPL_SPLIT_COMBINE_ALLAGG(AllAggMinOp) //kernel does not exist
 
-#undef IMPL_SPLIT_COMBINE_ROWAGG
-#undef IMPL_SPLIT_COMBINE_COLAGG
+#undef IMPL_SPLIT_COMBINE_ALLAGG
 
 // ----------------------------------------------------------------------------
 // Dimension Aggregations
@@ -297,13 +296,13 @@ std::vector<std::vector<daphne::VectorCombine>> getVectorCombines_RowAggOp(RowAg
     return {{daphne::VectorCombine::ROWS}};
 }
 template<class RowAggOp>
-std::vector<std::pair<Value, Value>> createOpsOutputSizes_RowAggOp(RowAggOp *op, OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_RowAggOp(RowAggOp *op, OpBuilder &builder)
 {
     auto loc = op->getLoc();
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, op->getArg());
     auto cst1 = builder.create<daphne::ConstantOp>(loc, sizeTy, builder.getIndexAttr(1l));
-    return {{rows, cst1}};
+    return {{{rows, cst1}}};
 }
 template<class ColAggOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_ColAggOp(ColAggOp *op)
@@ -311,13 +310,13 @@ std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_ColAggOp(ColAggOp 
     return {{daphne::VectorSplit::ROWS}};
 }
 template<class ColAggOp>
-std::vector<std::pair<Value, Value>> createOpsOutputSizes_ColAggOp(ColAggOp *op, OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_ColAggOp(ColAggOp *op, OpBuilder &builder)
 {
     auto loc = op->getLoc();
     auto sizeTy = builder.getIndexType();
     auto cst1 = builder.create<daphne::ConstantOp>(loc, sizeTy, builder.getIndexAttr(1l));
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, op->getArg());
-    return {{cst1, cols}};
+    return {{{cst1, cols}}};
 }
 
 #define IMPL_SPLIT_COMBINE_ROWAGG(OP) \
@@ -327,14 +326,14 @@ std::vector<std::pair<Value, Value>> createOpsOutputSizes_ColAggOp(ColAggOp *op,
     std::vector<std::vector<daphne::VectorCombine>> daphne::OP::getVectorCombines() { \
         return getVectorCombines_RowAggOp(this); \
     } \
-    std::vector<std::pair<Value, Value>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
+    std::vector<std::vector<std::pair<Value, Value>>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
         return createOpsOutputSizes_RowAggOp(this, builder); \
     }
 #define IMPL_SPLIT_COMBINE_COLAGG(OP) \
     std::vector<std::vector<daphne::VectorSplit>> daphne::OP::getVectorSplits() { \
         return getVectorSplits_ColAggOp(this); \
     } \
-    std::vector<std::pair<Value, Value>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
+    std::vector<std::vector<std::pair<Value, Value>>> daphne::OP::createOpsOutputSizes(OpBuilder &builder) { \
         return createOpsOutputSizes_ColAggOp(this, builder); \
     }
 
@@ -364,14 +363,14 @@ std::vector<std::vector<daphne::VectorCombine>> daphne::ExtractColOp::getVectorC
 {
     return {{daphne::VectorCombine::ROWS}};
 }
-std::vector<std::pair<Value, Value>> daphne::ExtractColOp::createOpsOutputSizes(OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> daphne::ExtractColOp::createOpsOutputSizes(OpBuilder &builder)
 {
     auto loc = getLoc();
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getSource());
     // TODO: support scalar and maybe (based on definition of `ExtractColOp`) apply some kind of `unique()` op
     auto cols = builder.create<daphne::NumRowsOp>(loc, sizeTy, getSelectedCols());
-    return {{rows, cols}};
+    return {{{rows, cols}}};
 }
 // ----------------------------------------------------------------------------
 
@@ -386,13 +385,13 @@ std::vector<std::vector<daphne::VectorCombine>> daphne::TransposeOp::getVectorCo
 {
     return {{daphne::VectorCombine::COLS}, {daphne::VectorCombine::ROWS}};
 }
-std::vector<std::pair<Value, Value>> daphne::TransposeOp::createOpsOutputSizes(OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> daphne::TransposeOp::createOpsOutputSizes(OpBuilder &builder)
 {
     auto loc = getLoc();
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getArg());
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, getArg());
-    return {{rows, cols},{cols, rows}};
+    return {{{rows, cols}},{{cols, rows}}};
 }
 
 std::vector<std::vector<daphne::VectorSplit>> daphne::ColBindOp::getVectorSplits()
@@ -403,7 +402,7 @@ std::vector<std::vector<daphne::VectorCombine>> daphne::ColBindOp::getVectorComb
 {
     return {{daphne::VectorCombine::ROWS}};
 }
-std::vector<std::pair<Value, Value>> daphne::ColBindOp::createOpsOutputSizes(OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> daphne::ColBindOp::createOpsOutputSizes(OpBuilder &builder)
 {
     auto loc = getLoc();
     auto i64Ty = builder.getIntegerType(64, true);
@@ -411,11 +410,11 @@ std::vector<std::pair<Value, Value>> daphne::ColBindOp::createOpsOutputSizes(OpB
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getLhs());
     auto colsLhs = builder.create<daphne::NumColsOp>(loc, sizeTy, getLhs());
     auto colsRhs = builder.create<daphne::NumColsOp>(loc, sizeTy, getRhs());
-    return {{rows, builder.create<daphne::CastOp>(loc,
+    return {{{rows, builder.create<daphne::CastOp>(loc,
         sizeTy,
         builder.create<daphne::EwAddOp>(loc,
             builder.create<daphne::CastOp>(loc, i64Ty, colsLhs),
-            builder.create<daphne::CastOp>(loc, i64Ty, colsRhs)))}};
+            builder.create<daphne::CastOp>(loc, i64Ty, colsRhs)))}}};
 }
 // ----------------------------------------------------------------------------
 
@@ -429,13 +428,13 @@ std::vector<std::vector<daphne::VectorCombine>> daphne::SyrkOp::getVectorCombine
 {
     return {{daphne::VectorCombine::ADD}};
 }
-std::vector<std::pair<Value, Value>> daphne::SyrkOp::createOpsOutputSizes(OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> daphne::SyrkOp::createOpsOutputSizes(OpBuilder &builder)
 {
     auto loc = getLoc();
     auto sizeTy = builder.getIndexType();
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, getArg());
     // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
-    return {{cols, cols}};
+    return {{{cols, cols}}};
 }
 
 std::vector<std::vector<daphne::VectorSplit>> daphne::GemvOp::getVectorSplits()
@@ -446,12 +445,12 @@ std::vector<std::vector<daphne::VectorCombine>> daphne::GemvOp::getVectorCombine
 {
     return {{daphne::VectorCombine::ADD}};
 }
-std::vector<std::pair<Value, Value>> daphne::GemvOp::createOpsOutputSizes(OpBuilder &builder)
+std::vector<std::vector<std::pair<Value, Value>>> daphne::GemvOp::createOpsOutputSizes(OpBuilder &builder)
 {
     auto loc = getLoc();
     auto sizeTy = builder.getIndexType();
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, getMat());
     auto one = builder.create<daphne::ConstantOp>(loc, builder.getIndexType(), builder.getIndexAttr(1));
-    return {{cols, one}};
+    return {{{cols, one}}};
 }
 // ----------------------------------------------------------------------------

@@ -15,7 +15,10 @@
  */
 
 #include "runtime/local/vectorized/Tasks.h"
+#include "ir/daphneir/Daphne.h"
 #include "runtime/local/kernels/EwBinaryMat.h"
+#include <llvm/Support/raw_ostream.h>
+#include <stdexcept>
 
 template<typename VT>
 void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
@@ -62,6 +65,22 @@ void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batch
                 DataObjectFactory::destroy(localAddRes[o]);
             }
         }
+        if (_data._combines[o] == VectorCombine::SUM_ADD_SCALAR) {
+            
+            throw std::runtime_error("not implemented");
+
+            auto &result = (*_res[o]);
+            _resLock.lock();
+            if(result == nullptr) {
+                result = localAddRes[o];
+                _resLock.unlock();
+            }
+            else {
+                //is pointer, however value of the pointer is the reduction value not a real address
+                llvm::outs() << localAddRes[0] << "\n";
+                //reinterpret cast does not work, static_cast
+            }
+        }
     }
 }
 
@@ -84,6 +103,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 // But eventually, we don't want to copy at all.
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
                     for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
+                        llvm::outs() << i << " " << "\n";
                         slice->set(i, j, localResults[o]->get(i, j));
                     }
                 }
@@ -105,6 +125,18 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
             case VectorCombine::ADD: {
                 if(localAddRes[o] == nullptr) {
                     // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                }
+                else {
+                    ewBinaryMat(BinaryOpCode::ADD, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
+                break;
+            }
+            case VectorCombine::SUM_ADD_SCALAR: {
+                if(localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    llvm::outs() << localResults[o] << "\n";
                     localAddRes[o] = localResults[o];
                     localResults[o] = nullptr;
                 }

@@ -164,11 +164,11 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
         switch (userConfig_.vectorizationType) {
             case DAPHNE:
                 pm.addNestedPass<mlir::func::FuncOp>(
-                    mlir::daphne::createGreedy1VectorizeComputationsPass());
+                    mlir::daphne::createDaphneVectorizeComputationsPass());
                 break;
             case GREEDY_1: 
                 pm.addNestedPass<mlir::func::FuncOp>(
-                    mlir::daphne::createDaphneVectorizeComputationsPass());
+                    mlir::daphne::createGreedy1VectorizeComputationsPass());
                 break;
             default:
                 pm.addNestedPass<mlir::func::FuncOp>(
