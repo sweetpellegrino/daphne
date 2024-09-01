@@ -247,12 +247,12 @@ IMPL_SPLIT_COMBINE_EWUNARYOP(EwIsNanOp)
 template<class AllAggOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_AllAggOp(AllAggOp *op)
 {
-    return {{daphne::VectorSplit::ROWS}};
+    return {{daphne::VectorSplit::ROWS}, {daphne::VectorSplit::COLS}};
 }
 template<class AllAggOp>
 std::vector<std::vector<daphne::VectorCombine>> getVectorCombines_AllAggOp(AllAggOp *op)
 {
-    return {{daphne::VectorCombine::ADD}};
+    return {{daphne::VectorCombine::ADD}, {daphne::VectorCombine::ADD}};
 }
 template<class AllAggOp>
 std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_AllAggOp(AllAggOp *op, OpBuilder &builder)

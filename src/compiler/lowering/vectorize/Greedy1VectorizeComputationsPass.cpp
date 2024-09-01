@@ -502,6 +502,20 @@ namespace
             }
         }
     }
+
+    void expandCombinations(std::vector<std::vector<size_t>>& operandsCombineDecisionIxs, std::vector<std::vector<size_t>>& decisionCombinations, std::vector<size_t> &_combination, size_t operandIx) {
+        if (operandIx == operandsCombineDecisionIxs.size()) {
+            decisionCombinations.push_back(_combination);
+            return;
+        }
+
+        auto operandDecisionIxs =  operandsCombineDecisionIxs[operandIx];
+        for (size_t i = 0; i < operandDecisionIxs.size(); i++) {
+            _combination.push_back(operandDecisionIxs[i]);
+            expandCombinations(operandsCombineDecisionIxs, decisionCombinations, _combination, operandIx+1);
+            _combination.pop_back();
+        }
+    }
 }
 
 namespace std {
@@ -559,45 +573,35 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //reversed vectOps
     for (auto opv : vectOps) {
 
-        //Get incoming edges of operation opv
-        //One condition for Fusible: Check of producer -> consumer relationship (opv->getOperand())
-        //Improvement: For every operation of incoming argument of opv, check the additional conditions
-        //True: push into possible merge candidates list
+        //Starting point are the different possibilites to choose from for a Vectorizable 
 
-        llvm::outs() << "\nopv: "; 
-        opv.print(llvm::outs());
-        llvm::outs() << "\n";
         for(size_t decisionIx = 0; decisionIx < opv.getVectorSplits().size(); decisionIx++) {
             auto splits = opv.getVectorSplits()[decisionIx];
-            llvm::outs() << "decisionIx: " << decisionIx << "\n";
 
+            //opv->getOperands() implicitly provides the provider consumer relationship
             auto operandSplitPairs = llvm::zip(opv->getOperands(), splits);
-            auto operandCombineDecisionIx = std::vector<size_t>(opv->getNumOperands());
+            //needs to be vector of vector if we have multiple possiblities for e.g. row combine
+            //e.g. matmul with row combine over lhs row, rhs br OR lhs br, rhs row split
             //change to daphne::Vectorizable?
-            auto operandDefOps = std::vector<mlir::Operation*>(opv->getNumOperands());
-            bool decisionIsCompatible = true;
+            std::vector<std::vector<size_t>> operandsCombineDecisionIxs;
+            std::vector<mlir::Operation*> operandDefOps;
+            //operandCombineDecisionIx.reserve(opv->getNumOperands());
             for (auto element : operandSplitPairs) {
                 auto operand = std::get<0>(element);
                 auto defOp = operand.getDefiningOp();
                 auto v_defOp = llvm::dyn_cast<daphne::Vectorizable>(defOp);
-                if (!v_defOp)
-                    continue; 
                 auto split = std::get<1>(element);
-                
-                //early exist if split is none -> broadcast
-                
-                llvm::outs() << "defOp: ";
-                defOp->print(llvm::outs());
-                llvm::outs() << " split: " << split << "\n";
 
+                //TODO: early exist if split is none -> broadcast: cause scalar value or kernel does not allow for that input, cf. table
+
+                //TODO: check here for horizontal fusion?
+                //check here for block?
+                if (!v_defOp)
+                    continue;
+                
                 for (size_t operandDecisionIx = 0; operandDecisionIx < v_defOp.getVectorCombines().size(); operandDecisionIx++) {
-
-                    llvm::outs() << "operandDecisionIx: " << operandDecisionIx << "\n";
-
                     //currently only considering one return cf. [0]
                     auto operandCombine  = v_defOp.getVectorCombines()[operandDecisionIx][0];
-                    llvm::outs() << "operandCombine: " << operandCombine << "\n";
-
                     daphne::VectorCombine _operandCombine;
                     switch (split) {
                         case daphne::VectorSplit::ROWS:
@@ -612,26 +616,28 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                             break;
                     }
                     if (operandCombine == _operandCombine) {
-                        operandCombineDecisionIx.push_back(operandDecisionIx);
-                        operandDefOps.push_back(defOp);
+                        auto it = std::find(operandDefOps.begin(), operandDefOps.end(), defOp);
+                        if (it == operandDefOps.end()) {
+                            operandDefOps.push_back(defOp);
+                            operandsCombineDecisionIxs.push_back({operandDecisionIx});
+                        } else {
+                            auto ix = std::distance(operandDefOps.begin(), it);
+                            operandsCombineDecisionIxs[ix].push_back(operandDecisionIx);
+                        }
                     }
-                    else
-                        decisionIsCompatible = false;
                 }
             }
 
-            llvm::outs() << "op: " << opv->getName().getStringRef().str() << "\n";
-            llvm::outs() << "operandOps: " << operandDefOps.size();
-            llvm::outs() << "\ndecisionIx_op: " << decisionIx << "\n";
-            llvm::outs() << "decisionIx_operandOps: ";
-            for (auto ix : operandCombineDecisionIx) {
-                llvm::outs() << ix << " ";
-            }
-            llvm::outs() << "\n";
-            llvm::outs() << "\n";
+           std::vector<std::vector<size_t>> decisionCombinations; 
+           std::vector<size_t> _combination;
 
-            if (decisionIsCompatible && operandDefOps.size() > 0) {
-                primaryCandidates.push_back({opv, operandDefOps, decisionIx, operandCombineDecisionIx});
+           expandCombinations(operandsCombineDecisionIxs, decisionCombinations, _combination, 0);
+
+            for (size_t i = 0; i < decisionCombinations.size(); i++) {
+                if (!decisionCombinations[i].empty()) {
+                    PCCandidate cand = {opv, operandDefOps, decisionIx, decisionCombinations[i]};
+                    primaryCandidates.push_back(cand);
+                }
             }
         }
 
@@ -710,6 +716,8 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 #endif
     }
     llvm::outs() << "######## END ########" << "\n";
+
+    printGraph(vectOps[0], "test.dot");
 
     for (auto x : primaryCandidates) {
         x.print();
