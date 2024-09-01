@@ -103,7 +103,6 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 // But eventually, we don't want to copy at all.
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
                     for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
-                        llvm::outs() << i << " " << "\n";
                         slice->set(i, j, localResults[o]->get(i, j));
                     }
                 }
@@ -136,7 +135,6 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
             case VectorCombine::SUM_ADD_SCALAR: {
                 if(localAddRes[o] == nullptr) {
                     // take lres and reset it to nullptr
-                    llvm::outs() << localResults[o] << "\n";
                     localAddRes[o] = localResults[o];
                     localResults[o] = nullptr;
                 }
