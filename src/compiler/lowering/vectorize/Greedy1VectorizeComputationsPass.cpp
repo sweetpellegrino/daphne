@@ -19,7 +19,6 @@
 #include <map>
 #include <functional>
 #include <stdexcept>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
@@ -28,9 +27,9 @@
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "ir/daphneir/Passes.h"
 #include <stack>
+#include <queue>
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
-#include "mlir/Dialect/LLVMIR/LLVMAttrs.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Operation.h"
@@ -61,7 +60,8 @@ namespace
         size_t decisionIx_op1;
         mlir::Operation *op2; 
         size_t decisionIx_op2;
-        HCandidate(mlir::Operation *op1, size_t decisionIx_op1, mlir::Operation *op2, size_t decisionIx_op2) : op1(op1), decisionIx_op1(decisionIx_op1), op2(op2), decisionIx_op2(decisionIx_op2) {}
+        HCandidate(mlir::Operation *op1, size_t decisionIx_op1, mlir::Operation *op2, size_t decisionIx_op2) 
+            : op1(op1), decisionIx_op1(decisionIx_op1), op2(op2), decisionIx_op2(decisionIx_op2) {}
 
         [[maybe_unused]] friend bool operator==(const HCandidate& c1, const HCandidate& c2) {
             return (c1.op1 == c2.op1 && c1.decisionIx_op1 == c2.decisionIx_op1 &&
@@ -111,11 +111,31 @@ namespace
         }
     };
 
+    class OpDec {
+    public:
+        mlir::Operation* op;
+        size_t decisionIx;
+        OpDec(mlir::Operation* op, size_t decisionIx)
+            : op(op), decisionIx(decisionIx) {}
+       
+        bool operator==(const OpDec& other) const {
+            return (this->op == other.op) && (this->decisionIx == other.decisionIx);
+        }
+
+        void print() const {
+            if (op != nullptr)
+                llvm::outs() << "op: " << op->getName().getStringRef().str() << ", decisionIx: " << decisionIx << "\n";
+            else
+                llvm::outs() << "op: " << "OUTSIDE/NULLPTR" << ", decisionIx: " << decisionIx << "\n";
+        } 
+    };
+
     struct DimInfo {
         DimInfo(size_t rows = 0, size_t cols = 0) : rows(rows), cols(cols) {}
         size_t rows;
         size_t cols;
     };
+       
 
     bool operator==(const DimInfo& d1, const DimInfo& d2) {
         return (d1.rows == d2.rows && d1.cols == d2.cols);
@@ -561,8 +581,13 @@ namespace std {
                    (hash<mlir::Operation*>()(c.op2) ^ hash<size_t>()(c.decisionIx_op2));
         }
     };
+    template<> 
+    struct hash<OpDec> {
+        size_t operator()(const OpDec& opDec) const {
+            return ((hash<mlir::Operation*>()(opDec.op) ^ (hash<size_t>()(opDec.decisionIx) << 1)) >> 1);
+        }
+    };
 }
-
     
 void Greedy1VectorizeComputationsPass::runOnOperation()
 {
@@ -597,19 +622,27 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
 
-    //TODO: change back to unordered_set, so if e.g. a binary operators as two operands from the same defOp, should not result in multiple combinations
-    std::vector<PCCandidate> primaryCandidates;
+    //TODO: use llvm::SmallVector? is optimized small arrays
+    std::unordered_map<OpDec, std::vector<OpDec>> primaryCandidates;
+    std::vector<OpDec> insertOrder; //not needed? as we could derive the necessary information from vectOps?
     //TODO: Should this make a weak connection? So in case of not being greedy; first to broken up, if necessary
     //when combining the individual steps together to make the algorithm more efficient these candidates,
     //could still be a separate step, as it potentially inhibits the heursitic to find an optimal pipeline 
     //(think about the split points in case of collision for layout/access propagation)
     std::unordered_set<HCandidate> secondaryCandidates;
 
+    //identify the last op
+    std::unordered_map<mlir::Operation*, bool> isLast;
+    isLast.reserve(vectOps.size());
+
     //reversed vectOps
     for (auto opv : vectOps) {
 
-        //Starting point are the different possibilites to choose from for a Vectorizable op
+        if (isLast.find(opv) == isLast.end()) {
+            isLast[opv] = true;
+        }
 
+        //Starting point are the different possibilites to choose from for a Vectorizable op
         for(size_t decisionIx = 0; decisionIx < opv.getVectorSplits().size(); decisionIx++) {
             auto splits = opv.getVectorSplits()[decisionIx];
 
@@ -643,6 +676,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                         auto operandCombine  = v_defOp.getVectorCombines()[operandDecisionIx][0];
                         if (matchingVectorSplitCombine(split, operandCombine)) {
                             auto it = std::find(operandDefOps.begin(), operandDefOps.end(), defOp);
+                            isLast[defOp] = false;
                             if (it == operandDefOps.end()) {
                                 operandDefOps.push_back(defOp);
                                 operandsCombineDecisionIxs.push_back({operandDecisionIx});
@@ -653,6 +687,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                         }
                         //for completion here also nullptr writeback?
                         //then i also need it for VectorSplit::NONE
+                        //does not work trivially
                         /*else {
                             operandDefOps.push_back(nullptr);
                             operandsCombineDecisionIxs.push_back({0});
@@ -728,8 +763,16 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
             for (size_t i = 0; i < decisionCombinations.size(); i++) {
                 if (!decisionCombinations[i].empty()) {
-                    PCCandidate cand = {opv, operandDefOps, decisionIx, decisionCombinations[i]};
-                    primaryCandidates.push_back(cand);
+                    OpDec od = {opv, decisionIx};
+                    if (primaryCandidates.find(od) != primaryCandidates.end()) {
+                        throw std::runtime_error("error"); 
+                    }
+                    std::vector<OpDec> opDecs;
+                    for (size_t j = 0; j < decisionCombinations[i].size(); j++) {
+                        opDecs.push_back({operandDefOps[j], decisionCombinations[i][j]});
+                    }
+                    primaryCandidates.insert({od, opDecs});
+                    insertOrder.push_back(od);
                 }
             }
         }
@@ -738,9 +781,14 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
     printGraph(vectOps[0], "test.dot");
 
-    for (auto x : primaryCandidates) {
-        x.print();
-        llvm::outs() << "\n";
+    for (auto [_key, _value] : primaryCandidates) {
+        llvm::outs() << "#####OPDEC#####\n";
+        llvm::outs() << "KEY "; 
+        _key.print();
+        for (auto od : _value) {
+            od.print();
+        }
+        llvm::outs() << "##########\n";
     }
 
     for (auto x : secondaryCandidates) {
@@ -748,8 +796,45 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         llvm::outs() << "\n";
     }
 
+    for (auto kv : isLast) {
+        std::cout << "op: " << kv.first->getName().getStringRef().str() << ", is?: " << kv.second << "\n";
+    }
+
     //Step 3: Exploratory merge pipelines
     llvm::outs() << "######## STEP 3 ########" << "\n";
+
+    //get all latest ops
+
+#if 1
+
+    std::queue<OpDec> q;
+    std::unordered_set<OpDec> visited;
+    
+    auto in = insertOrder.at(0);
+    q.push((insertOrder.at(0)));
+
+    while (!q.empty()) {
+        auto od = q.front();
+
+        od.print();
+
+        if(std::find(visited.begin(), visited.end(), od) != visited.end()) {
+            llvm::outs() << "od visted\n";
+            continue;
+        }
+
+        visited.insert(od);
+
+        //get producer
+        auto prod = primaryCandidates.at(od);
+
+        for(auto prod_od : prod) {
+            q.push(prod_od);
+        }
+        q.pop();
+    }
+    
+#endif
 
 #if 0
     // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
