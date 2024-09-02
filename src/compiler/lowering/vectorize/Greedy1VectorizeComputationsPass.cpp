@@ -20,6 +20,7 @@
 #include <functional>
 #include <stdexcept>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
 #include "compiler/utils/CompilerUtils.h"
@@ -63,8 +64,10 @@ namespace
         HCandidate(mlir::Operation *op1, size_t decisionIx_op1, mlir::Operation *op2, size_t decisionIx_op2) : op1(op1), decisionIx_op1(decisionIx_op1), op2(op2), decisionIx_op2(decisionIx_op2) {}
 
         [[maybe_unused]] friend bool operator==(const HCandidate& c1, const HCandidate& c2) {
-            return (c1.op1 == c2.op1 && c1.op2 == c2.op2) ||
-                (c1.op1 == c2.op2 && c1.op2 == c2.op1);
+            return (c1.op1 == c2.op1 && c1.decisionIx_op1 == c2.decisionIx_op1 &&
+                    c1.op2 == c2.op2 && c1.decisionIx_op2 == c2.decisionIx_op2) ||
+                    (c1.op1 == c2.op2 && c1.decisionIx_op1 == c2.decisionIx_op2 &&
+                    c1.op2 == c2.op1 && c1.decisionIx_op2 == c2.decisionIx_op1);
         }
 
         void print() const {
@@ -554,7 +557,8 @@ namespace std {
         std::size_t operator()(const HCandidate& c) const {
             //https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes
             //careful if c.op1 == c.op2 defaults to 0, for all op
-            return hash<mlir::Operation *>()(c.op1) ^ hash<mlir::Operation *>()(c.op2);
+            return (hash<mlir::Operation*>()(c.op1) ^ hash<size_t>()(c.decisionIx_op1)) ^
+                   (hash<mlir::Operation*>()(c.op2) ^ hash<size_t>()(c.decisionIx_op2));
         }
     };
 }
@@ -593,12 +597,13 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
 
+    //TODO: change back to unordered_set, so if e.g. a binary operators as two operands from the same defOp, should not result in multiple combinations
     std::vector<PCCandidate> primaryCandidates;
     //TODO: Should this make a weak connection? So in case of not being greedy; first to broken up, if necessary
     //when combining the individual steps together to make the algorithm more efficient these candidates,
     //could still be a separate step, as it potentially inhibits the heursitic to find an optimal pipeline 
     //(think about the split points in case of collision for layout/access propagation)
-    std::vector<HCandidate> secondaryCandidates;
+    std::unordered_set<HCandidate> secondaryCandidates;
 
     //reversed vectOps
     for (auto opv : vectOps) {
@@ -616,14 +621,12 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             std::vector<std::vector<size_t>> operandsCombineDecisionIxs;
             std::vector<mlir::Operation*> operandDefOps;
             //operandCombineDecisionIx.reserve(opv->getNumOperands());
-            for (auto element : operandSplitPairs) {
+            for (auto [operand, split] : operandSplitPairs) {
                 //Here okay, as we don't "broadcast" smaller vectors by expanding them
                 //Also excludes scalars, careful if considering source ops (like fill), this early exit will probably not work anymore
-                auto split = std::get<1>(element);
                 if (split == daphne::VectorSplit::NONE)
                     continue;
 
-                auto operand = std::get<0>(element);
                 auto defOp = operand.getDefiningOp();
                 auto v_defOp = llvm::dyn_cast<daphne::Vectorizable>(defOp);
 
@@ -711,7 +714,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                         //currently only considering one return cf. [0]
                         auto userSplit = v_user.getVectorSplits()[userDecisionIx][userOperandIx];
                         if (split == userSplit) {
-                            secondaryCandidates.push_back({opv, decisionIx, user, userDecisionIx});
+                            secondaryCandidates.insert({opv, decisionIx, user, userDecisionIx});
                         }
                     } 
                 }
