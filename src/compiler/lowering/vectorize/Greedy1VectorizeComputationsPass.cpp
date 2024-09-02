@@ -54,22 +54,28 @@ namespace
     // Helper Classes
     //-----------------------------------------------------------------
     
-    class Candidate {
+    class HCandidate {
     public:
-        Candidate(mlir::Operation *op1, mlir::Operation *op2) : op1(op1), op2(op2) {}
         mlir::Operation *op1;
+        size_t decisionIx_op1;
         mlir::Operation *op2; 
-    };
+        size_t decisionIx_op2;
+        HCandidate(mlir::Operation *op1, size_t decisionIx_op1, mlir::Operation *op2, size_t decisionIx_op2) : op1(op1), decisionIx_op1(decisionIx_op1), op2(op2), decisionIx_op2(decisionIx_op2) {}
 
-    class HCandidate : public Candidate {
-    public:
-        HCandidate(mlir::Operation *op1, mlir::Operation *op2) : Candidate(op1, op2){}
         [[maybe_unused]] friend bool operator==(const HCandidate& c1, const HCandidate& c2) {
             return (c1.op1 == c2.op1 && c1.op2 == c2.op2) ||
                 (c1.op1 == c2.op2 && c1.op2 == c2.op1);
         }
+
+        void print() const {
+            llvm::outs() << "HCandidate:\n";
+            llvm::outs() << "op1: " << op1->getName().getStringRef().str() << ", decisionIx_op1: " << decisionIx_op1 << "\n";
+            llvm::outs() << "op2: " << op2->getName().getStringRef().str() << ", decisionIx_op2: " << decisionIx_op2 << "\n";
+        }
+
     };
 
+    // {ewMul, <add, sqrt>, 0, <0, 0>}
     class PCCandidate {
     public:
         mlir::Operation *op; //consumer
@@ -81,12 +87,17 @@ namespace
         PCCandidate(mlir::Operation* op, std::vector<mlir::Operation*> operandOps, size_t decisionIx_op, std::vector<size_t> decisionIx_operandOps)
             : op(op), operandOps(operandOps), decisionIx_op(decisionIx_op), decisionIx_operandOps(decisionIx_operandOps) {}
 
-
         void print() const {
+            llvm::outs() << "PCCandidate:" << "\n";
             llvm::outs() << "op: " << op->getName().getStringRef().str() << "\n";
             llvm::outs() << "operandOps: ";
             for (auto* op : operandOps) {
-                llvm::outs() << op->getName().getStringRef().str() << " ";
+                if (op != nullptr) {
+                    llvm::outs() << op->getName().getStringRef().str() << " ";
+                } else {
+                    //nullptr means the operandOp is not a valid vectorizable producer (cf. constrains)
+                    llvm::outs() << "OUTSIDE" << " ";
+                }
             }
             llvm::outs() << "\ndecisionIx_op: " << decisionIx_op << "\n";
             llvm::outs() << "decisionIx_operandOps: ";
@@ -516,6 +527,25 @@ namespace
             _combination.pop_back();
         }
     }
+
+    bool matchingVectorSplitCombine(daphne::VectorSplit split, daphne::VectorCombine combine) {
+        daphne::VectorCombine _operandCombine;
+        switch (split) {
+            case daphne::VectorSplit::ROWS:
+                _operandCombine = daphne::VectorCombine::ROWS;
+                break;
+            case daphne::VectorSplit::COLS:
+                _operandCombine = daphne::VectorCombine::COLS;
+                break;
+            default:
+                //No matching split/combine; basically resulting in separate pipelines
+                return false;
+        }
+        if (combine == _operandCombine)
+            return true;
+        return false;
+    }
+
 }
 
 namespace std {
@@ -573,7 +603,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //reversed vectOps
     for (auto opv : vectOps) {
 
-        //Starting point are the different possibilites to choose from for a Vectorizable 
+        //Starting point are the different possibilites to choose from for a Vectorizable op
 
         for(size_t decisionIx = 0; decisionIx < opv.getVectorSplits().size(); decisionIx++) {
             auto splits = opv.getVectorSplits()[decisionIx];
@@ -587,89 +617,44 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             std::vector<mlir::Operation*> operandDefOps;
             //operandCombineDecisionIx.reserve(opv->getNumOperands());
             for (auto element : operandSplitPairs) {
+                //Here okay, as we don't "broadcast" smaller vectors by expanding them
+                //Also excludes scalars, careful if considering source ops (like fill), this early exit will probably not work anymore
+                auto split = std::get<1>(element);
+                if (split == daphne::VectorSplit::NONE)
+                    continue;
+
                 auto operand = std::get<0>(element);
                 auto defOp = operand.getDefiningOp();
                 auto v_defOp = llvm::dyn_cast<daphne::Vectorizable>(defOp);
-                auto split = std::get<1>(element);
 
-                //TODO: early exist if split is none -> broadcast: cause scalar value or kernel does not allow for that input, cf. table
-
-                //TODO: check here for horizontal fusion?
-                //check here for block?
-                if (!v_defOp)
-                    continue;
-                
-                for (size_t operandDecisionIx = 0; operandDecisionIx < v_defOp.getVectorCombines().size(); operandDecisionIx++) {
-                    //currently only considering one return cf. [0]
-                    auto operandCombine  = v_defOp.getVectorCombines()[operandDecisionIx][0];
-                    daphne::VectorCombine _operandCombine;
-                    switch (split) {
-                        case daphne::VectorSplit::ROWS:
-                            _operandCombine = daphne::VectorCombine::ROWS;
-                            break;
-                        case daphne::VectorSplit::COLS:
-                            _operandCombine = daphne::VectorCombine::COLS;
-                            break;
-                        default:
-                            //exit: basically resulting in separate pipeline
-                            continue;
-                            break;
-                    }
-                    if (operandCombine == _operandCombine) {
-                        auto it = std::find(operandDefOps.begin(), operandDefOps.end(), defOp);
-                        if (it == operandDefOps.end()) {
-                            operandDefOps.push_back(defOp);
-                            operandsCombineDecisionIxs.push_back({operandDecisionIx});
-                        } else {
-                            auto ix = std::distance(operandDefOps.begin(), it);
-                            operandsCombineDecisionIxs[ix].push_back(operandDecisionIx);
-                        }
-                    }
-                }
-            }
-
-           std::vector<std::vector<size_t>> decisionCombinations; 
-           std::vector<size_t> _combination;
-
-           expandCombinations(operandsCombineDecisionIxs, decisionCombinations, _combination, 0);
-
-            for (size_t i = 0; i < decisionCombinations.size(); i++) {
-                if (!decisionCombinations[i].empty()) {
-                    PCCandidate cand = {opv, operandDefOps, decisionIx, decisionCombinations[i]};
-                    primaryCandidates.push_back(cand);
-                }
-            }
-        }
-
-#if 0
-        for (size_t i = 0; i < opv->getNumOperands(); i++) {
-            
-            auto operand = opv->getOperand(i);
-            //check is trivial for producer/consumer? as producer/consumer of vectorizable with scalar does not exist (careful of reduction)
-            if(llvm::isa<daphne::MatrixType>(operand.getType())) {
-                //TODO: Do I need to check whether the operands are even from object type?
-                //e.g. what would it mean, if the opv and user shares a constantOp result?
+                llvm::outs() << "op:" << operand.getDefiningOp()->getName().getStringRef().str() << ", split: " << split << '\n';
 
                 //-----------------------------------------------------------------
                 // Producer -> Consumer
                 //-----------------------------------------------------------------
 
-                //Get producer of operand
-                auto producer = operand.getDefiningOp();
-                //Check if producer & consumer are in the same block
-                if(llvm::isa<daphne::Vectorizable>(producer) && (producer->getBlock() == opv->getBlock())) {
-                    //Currently not needed: checking the split/combine.
-                    //cf. Algo
-                    llvm::outs() << "PC-Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
-                    primaryCandidates.insert({producer, opv});
-
-                    //early exit as we now that these do not have a horizontal relationship
-                    //          is this horizontal fusion?     
-                    //          producer
-                    //         /        \
-                    //        opv <---- user
-                    //  
-                    continue;
+                //only considering producer / consumer relationship if both are vectorizable
+                //if not these are canidates at the top of pipeline and does contain a producer to consider
+                if (v_defOp && v_defOp->getBlock() != opv->getBlock()) {
+                    //follow compability for producer / consumer relationship
+                    for (size_t operandDecisionIx = 0; operandDecisionIx < v_defOp.getVectorCombines().size(); operandDecisionIx++) {
+                        //currently only considering one return cf. [0]
+                        auto operandCombine  = v_defOp.getVectorCombines()[operandDecisionIx][0];
+                        if (matchingVectorSplitCombine(split, operandCombine)) {
+                            auto it = std::find(operandDefOps.begin(), operandDefOps.end(), defOp);
+                            if (it == operandDefOps.end()) {
+                                operandDefOps.push_back(defOp);
+                                operandsCombineDecisionIxs.push_back({operandDecisionIx});
+                            } else {
+                                auto ix = std::distance(operandDefOps.begin(), it);
+                                operandsCombineDecisionIxs[ix].push_back(operandDecisionIx);
+                            }
+                        }
+                    }
+                } else {
+                    //storing nullptr for hinting the pipeline builder
+                    operandDefOps.push_back(nullptr);
+                    operandsCombineDecisionIxs.push_back({0});
                 }
 
                 //-----------------------------------------------------------------
@@ -685,18 +670,23 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                 //        opv       user
                 //
                 // => (opv, user)
-                //TODO: What about the producer itself? if it is vectorizable, both vectorizable consumers will probably also land into same pipeline anyway?
-                //Optimize by flipping order and early exist if producer, consumer relationship was created
                 for (auto user : operand.getUsers()) {
-                    llvm::outs() << "user: ";
-                    user->print(llvm::outs());
                     
-                    if (user == opv || //Does not make sense to consider the opv with itself
-                        !llvm::isa<daphne::Vectorizable>(user))//|| //User must be Vectorizable
-                        //user->getBlock() == opv->getBlock()) //TODO: To restrictive?
+                    llvm::outs() << "User: ";
+                    user->print(llvm::outs());
+                    llvm::outs() << "\n";
+
+                    if (user == opv)
                         continue;
 
+                    auto v_user = llvm::dyn_cast<daphne::Vectorizable>(user);
+                    if (!v_user)
+                        continue; 
+
+                    llvm::outs() << "User: ";
+
                     //We need to check if opv and user are not in a producer / consumer relationship
+                    //Can we use the information from above to skip?
                     bool is_only_horizontal = true;
                     for (auto rel : user->getOperands()) {
                         if (rel.getDefiningOp() == opv) {
@@ -705,15 +695,47 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                         }
                     }
 
+                    llvm::outs() << "User: ";
+                    
+                    if (!is_only_horizontal)
+                        continue;
 
-                    if (is_only_horizontal) {
-                        llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
-                        secondaryCandidates.insert({opv, user});
+                    llvm::outs() << "User: ";
+                    
+                    size_t userOperandIx = 0;
+                    for (auto use : user->getOperands()) {
+                        if (use == operand) {
+                            break;
+                        }
+                        userOperandIx++;
                     }
+
+                    //the (other) user and the current opv should have the same split
+                    //as if not, it basically results in a broadcast (the other needs col the other one needs row) <- is this true?
+                    for (size_t userDecisionIx = 0; userDecisionIx < v_user.getVectorSplits().size(); userDecisionIx++) {
+                        //currently only considering one return cf. [0]
+                        auto userSplit = v_user.getVectorSplits()[userDecisionIx][userOperandIx];
+                        if (split == userSplit) {
+                            llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
+                            secondaryCandidates.insert({opv, decisionIx, user, userDecisionIx});
+                        }
+                    } 
+                }
+                
+            }
+
+            std::vector<std::vector<size_t>> decisionCombinations; 
+            std::vector<size_t> _combination;
+
+            expandCombinations(operandsCombineDecisionIxs, decisionCombinations, _combination, 0);
+
+            for (size_t i = 0; i < decisionCombinations.size(); i++) {
+                if (!decisionCombinations[i].empty()) {
+                    PCCandidate cand = {opv, operandDefOps, decisionIx, decisionCombinations[i]};
+                    primaryCandidates.push_back(cand);
                 }
             }
         }
-#endif
     }
     llvm::outs() << "######## END ########" << "\n";
 
@@ -721,9 +743,15 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
     for (auto x : primaryCandidates) {
         x.print();
+        llvm::outs() << "\n";
     }
 
-    //Step 3: Greedy merge pipelines
+    for (auto x : secondaryCandidates) {
+        x.print();
+        llvm::outs() << "\n";
+    }
+
+    //Step 3: Exploratory merge pipelines
     llvm::outs() << "######## STEP 3 ########" << "\n";
 
 #if 0
