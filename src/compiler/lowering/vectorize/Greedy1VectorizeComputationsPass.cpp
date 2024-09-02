@@ -598,7 +598,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //when combining the individual steps together to make the algorithm more efficient these candidates,
     //could still be a separate step, as it potentially inhibits the heursitic to find an optimal pipeline 
     //(think about the split points in case of collision for layout/access propagation)
-    std::unordered_set<HCandidate> secondaryCandidates;
+    std::vector<HCandidate> secondaryCandidates;
 
     //reversed vectOps
     for (auto opv : vectOps) {
@@ -627,15 +627,13 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                 auto defOp = operand.getDefiningOp();
                 auto v_defOp = llvm::dyn_cast<daphne::Vectorizable>(defOp);
 
-                llvm::outs() << "op:" << operand.getDefiningOp()->getName().getStringRef().str() << ", split: " << split << '\n';
-
                 //-----------------------------------------------------------------
                 // Producer -> Consumer
                 //-----------------------------------------------------------------
 
                 //only considering producer / consumer relationship if both are vectorizable
                 //if not these are canidates at the top of pipeline and does contain a producer to consider
-                if (v_defOp && v_defOp->getBlock() != opv->getBlock()) {
+                if (v_defOp && v_defOp->getBlock() == opv->getBlock()) {
                     //follow compability for producer / consumer relationship
                     for (size_t operandDecisionIx = 0; operandDecisionIx < v_defOp.getVectorCombines().size(); operandDecisionIx++) {
                         //currently only considering one return cf. [0]
@@ -650,9 +648,16 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                                 operandsCombineDecisionIxs[ix].push_back(operandDecisionIx);
                             }
                         }
+                        //for completion here also nullptr writeback?
+                        //then i also need it for VectorSplit::NONE
+                        /*else {
+                            operandDefOps.push_back(nullptr);
+                            operandsCombineDecisionIxs.push_back({0});
+                        }*/
                     }
                 } else {
                     //storing nullptr for hinting the pipeline builder
+                    //currently a nullptr only exist if it completly outside
                     operandDefOps.push_back(nullptr);
                     operandsCombineDecisionIxs.push_back({0});
                 }
@@ -672,18 +677,12 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                 // => (opv, user)
                 for (auto user : operand.getUsers()) {
                     
-                    llvm::outs() << "User: ";
-                    user->print(llvm::outs());
-                    llvm::outs() << "\n";
-
                     if (user == opv)
                         continue;
 
                     auto v_user = llvm::dyn_cast<daphne::Vectorizable>(user);
                     if (!v_user)
                         continue; 
-
-                    llvm::outs() << "User: ";
 
                     //We need to check if opv and user are not in a producer / consumer relationship
                     //Can we use the information from above to skip?
@@ -695,13 +694,9 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                         }
                     }
 
-                    llvm::outs() << "User: ";
-                    
                     if (!is_only_horizontal)
                         continue;
 
-                    llvm::outs() << "User: ";
-                    
                     size_t userOperandIx = 0;
                     for (auto use : user->getOperands()) {
                         if (use == operand) {
@@ -716,8 +711,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                         //currently only considering one return cf. [0]
                         auto userSplit = v_user.getVectorSplits()[userDecisionIx][userOperandIx];
                         if (split == userSplit) {
-                            llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
-                            secondaryCandidates.insert({opv, decisionIx, user, userDecisionIx});
+                            secondaryCandidates.push_back({opv, decisionIx, user, userDecisionIx});
                         }
                     } 
                 }
