@@ -1,2 +1,5 @@
 digraph G {
+"daphne.ewAdd+55753bd47000" -> "daphne.ewSqrt+55753baf5390" [label="0"];
+"daphne.ewSqrt+55753bd04ed0" -> "daphne.ewAdd+55753bd47000" [label="0"];
+"daphne.transpose+55753baf5170" -> "daphne.ewAdd+55753bd47000" [label="1"];
 }

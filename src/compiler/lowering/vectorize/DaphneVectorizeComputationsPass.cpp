@@ -20,14 +20,11 @@
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/Passes.h"
 
-#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <memory>
-#include <set>
-#include <iostream>
 
 using namespace mlir;
 

@@ -20,5 +20,6 @@ enum VectorizationType {
     DAPHNE,
     GREEDY_1,
     GREEDY_2,
-    GREEDY_3
+    GREEDY_3,
+    GREEDY_X
 };
