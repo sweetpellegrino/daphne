@@ -496,6 +496,37 @@ namespace
         dot.close();
     }
 
+    void printGraph(std::unordered_map<OpDec, std::vector<OpDec>> primaryCandidates, std::string filename) {
+        std::ofstream dot(filename);
+        if (!dot.is_open()) {
+            throw std::runtime_error("Unable to open file: " + filename);
+        }
+
+        dot << "digraph G {\n";
+
+        for (auto [_key, _value] : primaryCandidates) {
+            auto op = _key.op;
+            auto d = _key.decisionIx;
+
+            if (op != nullptr) {
+                // Print the node
+                dot << "\"" << op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(op) << ":" << d << "\" [label=\"" << op->getName().getStringRef().str() << "\\n" <<d << "\"];\n";
+
+                for (auto od : _value) {
+                    if(od.op == nullptr)
+                        dot << "\"" << "nullptr" << "+" << std::hex << reinterpret_cast<uintptr_t>(od.op) << ":" << od.decisionIx << "\" -> \"" << op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(op) << ":" << d << "\";\n";
+                    else
+                        dot << "\"" << op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(op) << ":" << d << "\" -> \"" << od.op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(od.op) << ":" << od.decisionIx << "\";\n";
+                }
+            } else {
+                llvm::errs() << "Warning: Null pointer operation encountered.\n";
+            }
+        }
+
+        dot << "}\n";
+        dot.close();
+    }
+
     void backward_propagation(std::vector<std::vector<mlir::Operation*>> *pipelines, std::map<mlir::Operation*, size_t> *decisionIxs) {
 
         std::stack<std::pair<mlir::Operation*, size_t>> stack;
@@ -697,7 +728,6 @@ void GreedyXVectorizeComputationsPass::runOnOperation()
                 //if not these are canidates at the top of pipeline and does contain a producer to consider
                 if (v_defOp && v_defOp->getBlock() == opv->getBlock()) {
                     //follow compability for producer / consumer relationship
-                    bool couldBeLast = true;
                     for (size_t operandDecisionIx = 0; operandDecisionIx < v_defOp.getVectorCombines().size(); operandDecisionIx++) {
                         //currently only considering one return cf. [0]
                         auto operandCombine  = v_defOp.getVectorCombines()[operandDecisionIx][0];
@@ -856,6 +886,7 @@ void GreedyXVectorizeComputationsPass::runOnOperation()
     }
     
     printGraph(leafOps, "graph.dot");
+    printGraph(primaryCandidates, "graph_pc.dot");
 
     std::vector<std::vector<std::vector<mlir::Operation*>>> pipelines_groups;
     std::vector<std::map<mlir::Operation*, size_t>> decisionIxs;
@@ -863,6 +894,7 @@ void GreedyXVectorizeComputationsPass::runOnOperation()
     std::queue<OpDec> q;
 
     //pipeline group == single solution
+    return;
     for (auto od : leafOpDecs) {
         llvm::outs() << "New Pipeline Group\n";
         std::unordered_set<mlir::Operation*> visited;

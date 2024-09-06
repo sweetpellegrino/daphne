@@ -1,8 +1,8 @@
 digraph G {
-"daphne.matMul+56362acf49e0" -> "daphne.sumAll+56362acf2710" [label="0"];
-"daphne.ewAbs+56362af04be0" -> "daphne.matMul+56362acf49e0" [label="0"];
-"daphne.ewSqrt+56362af04eb0" -> "daphne.matMul+56362acf49e0" [label="1"];
-"daphne.ewAbs+56362acf4c20" -> "daphne.ewAdd+56362acf44d0" [label="0"];
-"daphne.matMul+56362acf49e0" -> "daphne.ewAdd+56362acf44d0" [label="1"];
-"daphne.ewSqrt+56362af04eb0" -> "daphne.ewAbs+56362acf4c20" [label="0"];
+"daphne.matMul+564aaa0e3340" -> "daphne.sumAll+564aaa396e10" [label="0"];
+"daphne.ewAbs+564aaa395a80" -> "daphne.matMul+564aaa0e3340" [label="0"];
+"daphne.ewSqrt+564aaa395ba0" -> "daphne.matMul+564aaa0e3340" [label="1"];
+"daphne.ewExp+564aaa395c30" -> "daphne.ewAdd+564aaa1848c0" [label="0"];
+"daphne.matMul+564aaa0e3340" -> "daphne.ewAdd+564aaa1848c0" [label="1"];
+"daphne.ewSqrt+564aaa395ba0" -> "daphne.ewExp+564aaa395c30" [label="0"];
 }

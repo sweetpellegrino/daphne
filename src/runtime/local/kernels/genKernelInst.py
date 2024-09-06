@@ -137,7 +137,6 @@ def generateKernelInstantiation(kernelTemplateInfo, templateValues, opCodes, out
         ["{} {}".format(rtp["type"], rtp["name"]) for rtp in
          extendedRuntimeParams] + ([] if isVectorizedOrDistributed else ["int kId"]) + ([] if isCreateDaphneContext else ["DCTX(ctx)"])
     )
-    print(typesForName)
 
     def generateFunction(opCode):
         # Obtain the name of the function to be generated from the opName by

@@ -1,0 +1,28 @@
+digraph G {
+"daphne.ewSqrt+564aaa395ba0:1" [label="daphne.ewSqrt\n1"];
+"daphne.ewSqrt+564aaa395ba0:1" -> "nullptr+0:0";
+"daphne.matMul+564aaa0e3340:1" [label="daphne.matMul\n1"];
+"daphne.matMul+564aaa0e3340:1" -> "daphne.ewSqrt+564aaa395ba0:1";
+"daphne.ewAbs+564aaa395a80:1" [label="daphne.ewAbs\n1"];
+"daphne.ewAbs+564aaa395a80:1" -> "nullptr+0:0";
+"daphne.ewSqrt+564aaa395ba0:0" [label="daphne.ewSqrt\n0"];
+"daphne.ewSqrt+564aaa395ba0:0" -> "nullptr+0:0";
+"daphne.matMul+564aaa0e3340:0" [label="daphne.matMul\n0"];
+"daphne.matMul+564aaa0e3340:0" -> "daphne.ewAbs+564aaa395a80:0";
+"daphne.ewAbs+564aaa395a80:0" [label="daphne.ewAbs\n0"];
+"daphne.ewAbs+564aaa395a80:0" -> "nullptr+0:0";
+"daphne.ewAdd+564aaa1848c0:1" [label="daphne.ewAdd\n1"];
+"daphne.ewAdd+564aaa1848c0:1" -> "daphne.ewExp+564aaa395c30:1";
+"daphne.ewAdd+564aaa1848c0:1" -> "daphne.matMul+564aaa0e3340:1";
+"daphne.ewAdd+564aaa1848c0:0" [label="daphne.ewAdd\n0"];
+"daphne.ewAdd+564aaa1848c0:0" -> "daphne.ewExp+564aaa395c30:0";
+"daphne.ewAdd+564aaa1848c0:0" -> "daphne.matMul+564aaa0e3340:0";
+"daphne.ewExp+564aaa395c30:1" [label="daphne.ewExp\n1"];
+"daphne.ewExp+564aaa395c30:1" -> "daphne.ewSqrt+564aaa395ba0:1";
+"daphne.sumAll+564aaa396e10:1" [label="daphne.sumAll\n1"];
+"daphne.sumAll+564aaa396e10:1" -> "daphne.matMul+564aaa0e3340:1";
+"daphne.ewExp+564aaa395c30:0" [label="daphne.ewExp\n0"];
+"daphne.ewExp+564aaa395c30:0" -> "daphne.ewSqrt+564aaa395ba0:0";
+"daphne.sumAll+564aaa396e10:0" [label="daphne.sumAll\n0"];
+"daphne.sumAll+564aaa396e10:0" -> "daphne.matMul+564aaa0e3340:0";
+}

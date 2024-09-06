@@ -32,6 +32,7 @@
 #include "mlir/Dialect/LLVMIR/LLVMAttrs.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
+#include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Value.h"
@@ -189,12 +190,12 @@ namespace
             OpBuilder builder(func);
 
             // Create the `VectorizedPipelineOp`s
-            for(auto pipeline : pipelines) {
-                if(pipeline.empty()) {
+            for(auto _pipeline : pipelines) {
+                if(_pipeline.empty()) {
                     continue;
                 }
                 auto valueIsPartOfPipeline = [&](Value operand) {
-                    return llvm::any_of(pipeline, [&](mlir::Operation* lv) { return lv == operand.getDefiningOp(); });
+                    return llvm::any_of(_pipeline, [&](mlir::Operation* lv) { return lv == operand.getDefiningOp(); });
                 };
                 std::vector<Attribute> vSplitAttrs;
                 std::vector<Attribute> vCombineAttrs;
@@ -205,11 +206,14 @@ namespace
                 std::vector<Value> outCols;
 
                 // first op in pipeline is last in IR
-                builder.setInsertionPoint(pipeline.front());
+                builder.setInsertionPoint(_pipeline.front());
                 // move all operations, between the operations that will be part of the pipeline, before or after the
                 // completed pipeline
-                movePipelineInterleavedOperations(builder.getInsertionPoint(), pipeline);
-                for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
+                movePipelineInterleavedOperations(builder.getInsertionPoint(), _pipeline);
+
+                //potential addition for
+                std::vector<mlir::Operation*> pipeline;
+                for(auto vIt = _pipeline.rbegin(); vIt != _pipeline.rend(); ++vIt) {
                     auto v = *vIt;
 
                     auto vSplits = std::vector<daphne::VectorSplit>();
@@ -223,22 +227,8 @@ namespace
                     } else {
                         throw std::runtime_error("Vectorizable op not found");
                     }
-                    //TODO
-                    if (auto allAggSumOp = llvm::dyn_cast<daphne::AllAggSumOp>(v)) { 
-                        auto m1 = daphne::MatrixType::get(allAggSumOp.getContext(), allAggSumOp->getResult(0).getType(), 1, 1, 1, daphne::MatrixRepresentation::Dense);
-                        m1.print(llvm::outs());
-                        llvm::outs() << "\n";
-                        allAggSumOp->getResult(0).setType(m1); 
 
-                        //create castOp for casting the 1x1 matrix to scalar value
-                        auto loc = allAggSumOp->getLoc();
-                        auto castOp = builder.create<daphne::CastOp>(loc, m1.getElementType(), allAggSumOp->getResult(0));
-                        allAggSumOp->getResult(0).replaceAllUsesExcept(castOp.getResult(), castOp);
-
-                        //movePipelineInterleavedOperations is before of exisiting of this op
-                        castOp->moveAfter(allAggSumOp);
-                        castOp.dump();
-                    }
+                    pipeline.push_back(v);
 
                     // TODO: although we do create enum attributes, it might make sense/make it easier to
                     // just directly use an I64ArrayAttribute
@@ -263,10 +253,37 @@ namespace
                         outRows.push_back(outSize.first);
                         outCols.push_back(outSize.second);
                     }
+
+                    //check if any of the outputs type of an operator is a scalar value
+                    //if yes, add additional castOps inside pipeline and outside pipeline
+                    for (size_t i = 0; i < v->getNumResults(); i++) {
+                        auto r = v->getResult(0);
+                        //TODO: check if it includes all types used in daphne
+                        if (r.getType().isIntOrIndexOrFloat()) {
+                            auto m1x1 = daphne::MatrixType::get(&getContext(), r.getType(), 1, 1, 1, daphne::MatrixRepresentation::Dense);
+                            auto loc = v->getLoc();
+
+                            auto toCastOp = builder.create<daphne::CastOp>(loc, m1x1, r);
+                            toCastOp->moveAfter(v);
+                            
+                            //xxxxxx
+                            pipeline.push_back(toCastOp);
+                            vCombineAttrs.push_back(daphne::VectorCombineAttr::get(&getContext(), vCombines[i]));
+                            auto cst1 = builder.create<daphne::ConstantOp>(loc, builder.getIndexType(), builder.getIndexAttr(1l));
+                            outRows.push_back(cst1);
+                            outCols.push_back(cst1);
+                            results.push_back(toCastOp);
+
+                            auto fromCastOp = builder.create<daphne::CastOp>(loc, r.getType(), toCastOp);
+                            fromCastOp->moveAfter(toCastOp);
+                            r.replaceAllUsesExcept(fromCastOp, toCastOp);
+                            
+                        }
+                    }
                 }
 
                 std::vector<Location> locs;
-                locs.reserve(pipeline.size());
+                locs.reserve(_pipeline.size());
                 for(auto op: pipeline) {
                     locs.push_back(op->getLoc());
             }
@@ -309,7 +326,7 @@ namespace
             auto argsIx = 0u;
             auto resultsIx = 0u;
             //for every op in pipeline
-            for(auto vIt = pipeline.rbegin(); vIt != pipeline.rend(); ++vIt) {
+            for(auto vIt = pipeline.begin(); vIt != pipeline.end(); ++vIt) {
                 auto v = *vIt;
                 auto numOperands = v->getNumOperands();
                 auto numResults = v->getNumResults();
