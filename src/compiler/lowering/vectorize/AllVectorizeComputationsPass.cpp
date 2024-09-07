@@ -387,20 +387,25 @@ namespace
 
     //Function merges two pipelines into one by appending all operations from one pipeline to another
     //Order is not really considered, as it is embodied in IR
-    void mergePipelines(std::vector<std::vector<mlir::Operation*>>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t mergeFromIx, size_t mergeIntoIx){
-        llvm::outs() << "test" << "\n";
-        llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
-        std::vector<mlir::Operation*> mergedPipeline(pipelines.at(mergeIntoIx));
-        for (auto op : pipelines.at(mergeFromIx)) {
-            if  (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
-                mergedPipeline.push_back(op);
+    void mergePipelines(std::vector<std::vector<mlir::Operation*>*>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t mergeFromIx, size_t mergeIntoIx){
+        //llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
+        if (mergeFromIx == mergeIntoIx) {
+            return;
+        }
+        if (mergeIntoIx > mergeFromIx) {
+            auto temp = mergeFromIx;
+            mergeFromIx = mergeIntoIx;
+            mergeIntoIx = temp;
+        }
+        std::vector<mlir::Operation*> *mergedPipeline(pipelines.at(mergeIntoIx));
+        for (auto op : *pipelines.at(mergeFromIx)) {
+            if  (std::find(mergedPipeline->begin(), mergedPipeline->end(), op) == mergedPipeline->end()) {
+                mergedPipeline->push_back(op);
                 operationToPipelineIx[op] = mergeIntoIx;
             }
         }
-        llvm::outs() << "test2" << "\n";
         pipelines.at(mergeIntoIx) = std::move(mergedPipeline);
         pipelines.erase(pipelines.begin() + mergeFromIx);
-        llvm::outs() << "test3" << "\n";
     }
 
     void printStack(std::stack<mlir::Operation*> stack) {
@@ -579,8 +584,6 @@ namespace
         return decisionIxs;
     }
 
-
-
     void generate_decisionIxs_combinations(std::vector<std::vector<size_t>> &combinations, const std::vector<mlir::Operation *> &vectOps, std::vector<size_t> _combination, size_t vectIx) {
         if (vectIx == vectOps.size()) {
             combinations.push_back(_combination);
@@ -740,7 +743,7 @@ void AllVectorizeComputationsPass::runOnOperation()
 
     llvm::outs() << "isEdgeActivated_combinations size: " << isEdgeActivated_combinations.size() << "\n";
 
-#if 0
+#if 1
 
     for (auto combination : isEdgeActivated_combinations) {
         for (llvm::SmallVector<int8_t> smallVector : combination) {
@@ -771,11 +774,26 @@ void AllVectorizeComputationsPass::runOnOperation()
     llvm::outs() << "dIxs: " << dIxs.size() << "\n";
 
     std::vector<std::vector<std::vector<mlir::Operation*>*>> pipeline_groups;
+    std::vector<std::map<mlir::Operation*, size_t>> pipeline_groups_map;
 
     for (auto edges : isEdgeActivated_combinations) {
 
         std::vector<std::vector<mlir::Operation*>*> pipelines;
         std::map<mlir::Operation*, size_t> operationToPipelineIx;
+        
+        /*llvm::outs() << "\n";
+        llvm::outs() << "..................................................................";
+        llvm::outs() << "\n";
+        for (llvm::SmallVector<int8_t> smallVector : edges) {
+            llvm::outs() << "(";
+            for (int8_t value : smallVector) {
+                llvm::outs() << static_cast<int>(value) << ", ";
+            }
+            llvm::outs() << "), ";
+        }
+        llvm::outs() << "\n";
+        */
+
         //(0, ), (0, 0, ), (-1, ), (0, 0, ), (-1, ), (-1, ), 
 
         for (size_t i = 0; i < edges.size(); i++) {
@@ -797,31 +815,119 @@ void AllVectorizeComputationsPass::runOnOperation()
                 pipeline = pipelines.at(pipelineIx);
             }
 
+            /*llvm::outs() << "pIx: " << pipelineIx;
+            llvm::outs() << "\n";
+            v->print(llvm::outs());
+            llvm::outs() << "\n";*/
+
             for (size_t j = 0; j < e.size(); j++)
                 if (e[j] == 1) {
                     auto x = v->getOperand(j).getDefiningOp();
-                    operationToPipelineIx.insert({x, pipelineIx});
-                    pipeline->push_back(x);
+                    //x->print(llvm::outs());
+                    //llvm::outs() << "\n";
+                    if (operationToPipelineIx.find(x) == operationToPipelineIx.end()) {
+                        operationToPipelineIx.insert({x, pipelineIx});
+                        pipeline->push_back(x);
+                    }
+                    else {
+                        mergePipelines(pipelines, operationToPipelineIx, pipelineIx, operationToPipelineIx.at(x));
+                        pipelineIx = operationToPipelineIx.at(x);
+                        pipeline = pipelines.at(pipelineIx);
+                    }
                 }
+            
+            //llvm::outs() << "\n";
         }
 
+        /*for (auto pipeline : pipelines) {
+            for (auto operation : *pipeline) {
+                llvm::outs() << operation->getName().getStringRef().str() << ", ";
+            }
+            llvm::outs() << "\n";
+        }*/
+        //llvm::outs() << "\n";
         pipeline_groups.push_back(pipelines);
-
-  
-        
+        pipeline_groups_map.push_back(operationToPipelineIx);
     }
 
     llvm::outs() << "Pipeline groups size: " << pipeline_groups.size() << "\n";
+    
+    //check if possible
+
+    //valid = 1
+    //strucutal = -1
+    //decisionIx = -2
+    std::vector<int8_t> isValid;
+    isValid.reserve(isEdgeActivated_combinations.size());
+    
+    //check structural validity correctly
+    for (size_t i = 0; i < pipeline_groups.size(); i++) {
+        auto pipelines = pipeline_groups.at(i);
+        auto operationToPipelineIx = pipeline_groups_map.at(i);
+        auto edges = isEdgeActivated_combinations.at(i);
+        bool valid = true;
+
+        for (size_t j = 0; j < vectOps.size(); j++) {
+            auto e = edges.at(j);
+            auto v = vectOps.at(j); 
+            
+            for (size_t k = 0; k < v->getNumOperands(); k++) {
+                auto b = e[k];
+                auto defOp = v->getOperand(k).getDefiningOp();
+                if (b == 1) {
+                    if (operationToPipelineIx[v] != operationToPipelineIx[defOp]) {
+                        valid = false;
+                        break;
+                    }
+                }
+                else if (b == 0) {
+                    if (operationToPipelineIx[v] == operationToPipelineIx[defOp]) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            if (valid == false) {
+                break;
+            }
+        }
+        if (valid) {
+            isValid.push_back(1);
+        }
+        else {
+            isValid.push_back(-1);
+        } 
+    }
+    //
+    llvm::outs() << "isValid size: " << isValid.size() << "\n";
     llvm::outs() << "----------------------------------------------------------\n";
 
-    /*for (auto pipeline : pipelines) {
-        for (auto operation : *pipeline) {
-            llvm::outs() << operation->getName().getStringRef().str() << ", ";
+    for (size_t i = 0; i < pipeline_groups.size(); i++) {
+        auto pipelines = pipeline_groups.at(i);
+        auto edges = isEdgeActivated_combinations.at(i);
+        auto valid = isValid.at(i);
+
+        llvm::outs() << "..................................................................";
+        llvm::outs() << "\n";
+        for (llvm::SmallVector<int8_t> smallVector : edges) {
+            llvm::outs() << "(";
+            for (int8_t value : smallVector) {
+                llvm::outs() << static_cast<int>(value) << ", ";
+            }
+            llvm::outs() << "), ";
         }
         llvm::outs() << "\n";
-    } 
-    llvm::outs() << "\n";
-    llvm::outs() << "\n";*/ 
+
+        llvm::outs() << "isValid: " << static_cast<int>(valid) << "\n";
+        for (auto pipeline : pipelines) {
+            for (auto operation : *pipeline) {
+                llvm::outs() << operation->getName().getStringRef().str() << ", ";
+            }
+            llvm::outs() << "\n";
+        } 
+        llvm::outs() << "\n";
+        llvm::outs() << "\n";
+    }
 
 
     return;
@@ -948,7 +1054,7 @@ void AllVectorizeComputationsPass::runOnOperation()
             else {
                 size_t opi_pipeIx = opi_it->second;
                 if (opv_pipeIx != opi_pipeIx) {
-                    mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
+                    //mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
                 }
             }
         }
@@ -976,7 +1082,7 @@ void AllVectorizeComputationsPass::runOnOperation()
         
         //TODO: by merging what about the ordering of the operatores inside the fused pipeline?
         //does it matter? same for step 5
-        mergePipelines(pipelines, operationToPipelineIx, op2_it->second, op1_it->second);
+        //mergePipelines(pipelines, operationToPipelineIx, op2_it->second, op1_it->second);
     }
     llvm::outs() << "######## END ########" << "\n";
 #endif
