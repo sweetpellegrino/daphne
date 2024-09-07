@@ -635,7 +635,7 @@ void GreedyXVectorizeComputationsPass::runOnOperation()
 
     auto func = getOperation();
 
-    llvm::outs() << "Greedy1VectorizeComputationsPass" << "\n";
+    llvm::outs() << "GreedyXVectorizeComputationsPass" << "\n";
 
     //Step 1: Filter vectorizbale operations
     //Slice Analysis for reverse topological sorting?
@@ -1102,7 +1102,7 @@ void GreedyXVectorizeComputationsPass::runOnOperation()
     //combine it into one step with data access propagation?
 
     //Step X: create pipeline ops
-    GreedyAllVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines, decisionIxs);
+    GreedyXVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines, decisionIxs);
 #endif
 }
 

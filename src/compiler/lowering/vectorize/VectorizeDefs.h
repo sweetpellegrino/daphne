@@ -21,5 +21,6 @@ enum VectorizationType {
     GREEDY_1,
     GREEDY_2,
     GREEDY_3,
-    GREEDY_X
+    GREEDY_X,
+    ALL
 };

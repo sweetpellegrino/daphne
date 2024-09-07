@@ -250,9 +250,6 @@ namespace
             for(size_t i = 0; i < opResTys.size(); i++)
                 lookupResTys.push_back(adaptType(opResTys[i], false));
 
-            for(auto ty : lookupResTys)
-                ty.dump();
-
             // Append converted op argument types to the look-up argument types.
             // Variadic operands, which can have an arbitrary number of occurrences, are
             // treated specially.
