@@ -584,6 +584,24 @@ namespace
         return decisionIxs;
     }
 
+    bool matchingVectorSplitCombine(const daphne::VectorSplit split, const daphne::VectorCombine combine) {
+        daphne::VectorCombine _operandCombine;
+        switch (split) {
+            case daphne::VectorSplit::ROWS:
+                _operandCombine = daphne::VectorCombine::ROWS;
+                break;
+            case daphne::VectorSplit::COLS:
+                _operandCombine = daphne::VectorCombine::COLS;
+                break;
+            default:
+                //No matching split/combine; basically resulting in separate pipelines
+                return false;
+        }
+        if (combine == _operandCombine)
+            return true;
+        return false;
+    }
+
     void generate_decisionIxs_combinations(std::vector<std::vector<size_t>> &combinations, const std::vector<mlir::Operation *> &vectOps, std::vector<size_t> _combination, size_t vectIx) {
         if (vectIx == vectOps.size()) {
             combinations.push_back(_combination);
@@ -743,7 +761,7 @@ void AllVectorizeComputationsPass::runOnOperation()
 
     llvm::outs() << "isEdgeActivated_combinations size: " << isEdgeActivated_combinations.size() << "\n";
 
-#if 1
+#if 0
 
     for (auto combination : isEdgeActivated_combinations) {
         for (llvm::SmallVector<int8_t> smallVector : combination) {
@@ -854,11 +872,8 @@ void AllVectorizeComputationsPass::runOnOperation()
     
     //check if possible
 
-    //valid = 1
-    //strucutal = -1
-    //decisionIx = -2
-    std::vector<int8_t> isValid;
-    isValid.reserve(isEdgeActivated_combinations.size());
+    std::vector<bool> isValid_structural;
+    isValid_structural.reserve(isEdgeActivated_combinations.size());
     
     //check structural validity correctly
     for (size_t i = 0; i < pipeline_groups.size(); i++) {
@@ -891,21 +906,17 @@ void AllVectorizeComputationsPass::runOnOperation()
                 break;
             }
         }
-        if (valid) {
-            isValid.push_back(1);
-        }
-        else {
-            isValid.push_back(-1);
-        } 
+        isValid_structural.push_back(valid);
     }
-    //
-    llvm::outs() << "isValid size: " << isValid.size() << "\n";
+    size_t svalid = std::count(isValid_structural.begin(), isValid_structural.end(), true);
+    llvm::outs() << "isValid_structural size: " << isValid_structural.size() << ", valid=true: " << svalid << "\n";
     llvm::outs() << "----------------------------------------------------------\n";
-
+    //
+#if 0
     for (size_t i = 0; i < pipeline_groups.size(); i++) {
         auto pipelines = pipeline_groups.at(i);
         auto edges = isEdgeActivated_combinations.at(i);
-        auto valid = isValid.at(i);
+        auto valid = isValid_structural.at(i);
 
         llvm::outs() << "..................................................................";
         llvm::outs() << "\n";
@@ -918,7 +929,7 @@ void AllVectorizeComputationsPass::runOnOperation()
         }
         llvm::outs() << "\n";
 
-        llvm::outs() << "isValid: " << static_cast<int>(valid) << "\n";
+        llvm::outs() << "isValid: " << valid << "\n";
         for (auto pipeline : pipelines) {
             for (auto operation : *pipeline) {
                 llvm::outs() << operation->getName().getStringRef().str() << ", ";
@@ -928,275 +939,60 @@ void AllVectorizeComputationsPass::runOnOperation()
         llvm::outs() << "\n";
         llvm::outs() << "\n";
     }
+#endif
 
+    std::vector<bool> isValid;
+    for (size_t j_i = 0; j_i < pipeline_groups.size(); j_i++) {
+        
+        if (!isValid_structural.at(j_i)) {
+            isValid.insert(isValid.end(), dIxs.size(), false);
+            continue;
+        }
 
-    return;
+        auto edges = isEdgeActivated_combinations.at(j_i);
 
-    std::unordered_set<PCCandidate> primaryCandidates;
-    //TODO: Should this make a weak connection? So in case of not being greedy; first to broken up, if necessary
-    //when combining the individual steps together to make the algorithm more efficient these candidates,
-    //could still be a separate step, as it potentially inhibits the heursitic to find an optimal pipeline 
-    //(think about the split points in case of collision for layout/access propagation)
-    std::unordered_set<HCandidate> secondaryCandidates;
+        for (size_t d_i = 0; d_i < dIxs.size(); d_i++) {
+            
+            auto d = dIxs.at(d_i);
 
-    //reversed vectOps
-    for (auto opv : vectOps) {
+            bool valid = true;
+            for (size_t v_i = 0; v_i < vectOps.size(); v_i++) {
+                auto v = llvm::dyn_cast<daphne::Vectorizable>(vectOps.at(v_i));
+                auto e = edges.at(v_i);
 
-        //Get incoming edges of operation opv
-        //One condition for Fusible: Check of producer -> consumer relationship (opv->getOperand())
-        //Improvement: For every operation of incoming argument of opv, check the additional conditions
-        //True: push into possible merge candidates list
-        for (size_t i = 0; i < opv->getNumOperands(); i++) {
-
-            //-----------------------------------------------------------------
-            // Consumer <- Producer -> Consumer
-            //-----------------------------------------------------------------
-
-            //Based on the operand, check if the operand is also used from another operation
-            //If yes, these are potentially candidates for horizontal fusion
-            //Horizontal Fusion:
-            //
-            //          producer
-            //         /        \
-            //        opv       user
-            //
-            // => (opv, user)
-            //TODO: What about the producer itself? if it is vectorizable, both vectorizable consumers will probably also land into same pipeline anyway?
-            //Optimize by flipping order and early exist if producer, consumer relationship was created
-            auto operand = opv->getOperand(i);
-            //check is trivial for producer/consumer? as producer/consumer of vectorizable with scalar does not exist (careful of reduction)
-            if(llvm::isa<daphne::MatrixType>(operand.getType())) {
-                //TODO: Do I need to check whether the operands are even from object type?
-                //e.g. what would it mean, if the opv and user shares a constantOp result?
-                for (auto user : operand.getUsers()) {
-                    llvm::outs() << "user: ";
-                    user->print(llvm::outs());
+                for (size_t k = 0; k < v->getNumOperands(); k++) {
+                    size_t d_v = d.at(v);
+                    auto split = v.getVectorSplits()[d_v][k];
+                    auto b = e[k];
                     
-                    if (user == opv || //Does not make sense to consider the opv with itself
-                        !llvm::isa<daphne::Vectorizable>(user))//|| //User must be Vectorizable
-                        //user->getBlock() == opv->getBlock()) //TODO: To restrictive?
-                        continue;
+                    if (b == 1) {
+                        auto defOp = llvm::dyn_cast<daphne::Vectorizable>(v->getOperand(k).getDefiningOp());
+                        size_t d_defOp = d.at(defOp);
+                        auto combine = defOp.getVectorCombines()[d_defOp][0];
 
-                    //We need to check if opv and user are not in a producer / consumer relationship
-                    bool is_only_horizontal = true;
-                    for (auto rel : user->getOperands()) {
-                        if (rel.getDefiningOp() == opv) {
-                            is_only_horizontal = false;
+                        if (!matchingVectorSplitCombine(split, combine)) {
+                            valid = false;
                             break;
                         }
                     }
-
-
-                    if (is_only_horizontal) {
-                        llvm::outs() << "H-Candidate: " << opv->getName() << " <-x-> " << user->getName() << "\n";
-                        secondaryCandidates.insert({opv, user});
-                    }
                 }
-
-                //-----------------------------------------------------------------
-                // Producer -> Consumer
-                //-----------------------------------------------------------------
-
-                //Get producer of operand
-                auto producer = operand.getDefiningOp();
-                //Check if producer & consumer are in the same block
-                if(llvm::isa<daphne::Vectorizable>(producer) && (producer->getBlock() == opv->getBlock())) {
-                    //Currently not needed: checking the split/combine.
-                    //cf. Algo
-                    llvm::outs() << "PC-Candidate: " << producer->getName() << " -> " << opv->getName() << "\n";
-                    primaryCandidates.insert({producer, opv});
+                if (valid == false) {
+                    break;
                 }
             }
+            isValid.push_back(valid);
+
         }
     }
-    llvm::outs() << "######## END ########" << "\n";
 
-    //Step 3: Greedy merge pipelines
-    llvm::outs() << "######## STEP 3 ########" << "\n";
+    size_t dvalid = std::count(isValid.begin(), isValid.end(), true);
+    llvm::outs() << "isValid: " << isValid.size() << ", valid=true: " << dvalid << "\n";
+    llvm::outs() << "----------------------------------------------------------\n";
 
-    // TODO: fuse pipelines that have the matching inputs, even if no output of the one pipeline is used by the other.
-    // This requires multi-returns in way more cases, which is not implemented yet.
-    std::map<mlir::Operation*, size_t> operationToPipelineIx;
-    std::vector<std::vector<mlir::Operation*>> pipelines;
-    //Iteration over the individual vectOps allows for pipelines with size of one
-    for(auto& opv : vectOps) {
-        auto opv_it = operationToPipelineIx.find(opv);
-
-        llvm::outs() << "######" << "\n";
-        llvm::outs() << "opv: " << opv->getName().getStringRef() << "\n";
-        //Add new pipeline, if opv not found in existing one
-        if(opv_it == operationToPipelineIx.end()) {
-            llvm::outs() << "opv_it == end" << "\n";
-            std::vector<mlir::Operation*> pipeline;
-            pipeline.push_back(opv);
-            opv_it = operationToPipelineIx.insert({opv, pipelines.size()}).first;
-            pipelines.push_back(pipeline);
-        }
-
-        size_t opv_pipeIx = opv_it->second;
-        llvm::outs() << "opv_pipeId: " << opv_pipeIx << "\n";
-
-        //Identify all relevant primary candidates, that includes opv
-        std::vector<decltype(primaryCandidates)::value_type> rel_candidates;
-        std::copy_if(primaryCandidates.begin(), primaryCandidates.end(), std::back_inserter(rel_candidates), [opv](const auto& c) {
-            return (c.op2 == opv);
-        });
-
-        for (auto& candidate : rel_candidates) {
-
-            auto opi_it = operationToPipelineIx.find(candidate.op1);
-            llvm::outs() << "opi: " << candidate.op1->getName().getStringRef() << "\n";
-
-            if (opi_it == operationToPipelineIx.end()) {
-                pipelines.at(opv_pipeIx).push_back(candidate.op1);
-                operationToPipelineIx.insert({candidate.op1, opv_pipeIx});
-            }
-            else {
-                size_t opi_pipeIx = opi_it->second;
-                if (opv_pipeIx != opi_pipeIx) {
-                    //mergePipelines(pipelines, operationToPipelineIx, opi_pipeIx, opv_pipeIx);
-                }
-            }
-        }
-        llvm::outs() << "######" << "\n";
+    for (size_t i = 0; i < isValid.size(); i++) { 
     }
-
-    llvm::outs() << "######## END ########" << "\n";
-
-    //Step 4: Horizontal Fusion
-    //Separate step as it allows for the producer -> consumer relationship to be exploited first
-    //Where does it make a difference?
-    // What about size information and broadcast of the sharing operator: does it make sense if matrix too small? all inputs need to be
-#if 1
-    llvm::outs() << "######## STEP 4 ########" << "\n";
-    for (auto& hcand : secondaryCandidates) {
-        
-        llvm::outs() << "step4" << "\n";
-        
-        auto op1_it = operationToPipelineIx.find(hcand.op1);
-        auto op2_it = operationToPipelineIx.find(hcand.op2);
-
-        // Check if id is identical, if yes do nothing
-        if (op1_it->second == op2_it->second)
-            continue;
-        
-        //TODO: by merging what about the ordering of the operatores inside the fused pipeline?
-        //does it matter? same for step 5
-        //mergePipelines(pipelines, operationToPipelineIx, op2_it->second, op1_it->second);
-    }
-    llvm::outs() << "######## END ########" << "\n";
-#endif
-
-    //printGraph(pipelines[0][0], "test.dot");
-
-    //Step 5: Small pipeline merge, if possible? why not further try to reduce the number of individuals pipelines 
-    // and their overhead (e.g. runtime) and merge together if constraints are met (input dimension)
-    //Till now we didn´t need to check if dimension matches as they do by definition of considered operators and checked relationship
-    //Full potential, if we allow for different output types?
-
-    //careful as it takes the assumption that the size is equal for every object
-    //in case of "broadcasting" we need to make it different
-    //TODO: check what about SourceOps
-#if 0
-    llvm::outs() << "######## STEP 5 ########" << "\n";
-    auto lambda = [](std::vector<mlir::Operation*> pipeline){
-        for (auto op : pipeline) {
-            for (auto operandType : op->getOperandTypes()) {
-                operandType.print(llvm::outs());
-                if (auto opType = llvm::dyn_cast<daphne::MatrixType>(operandType)) {
-                    return DimInfo(opType.getNumRows(), opType.getNumCols());
-                }
-            }
-        }
-        return DimInfo(0, 0);
-    };
-
-    std::vector<std::pair<size_t, DimInfo>> sizes(pipelines.size());
-    std::transform(pipelines.begin(), pipelines.end(), sizes.begin(), [lambda](const std::vector<mlir::Operation*>& pipeline) {
-        return std::make_pair(pipeline.size(), lambda(pipeline));
-    });
     
-    for (auto pair : sizes) {
-        llvm::outs() << pair.first << " " << pair.second.rows << ":" << pair.second.cols << "\n";
-    }
-
-    //unfathomable dirty
-    for (size_t i = 0; i < pipelines.size(); ++i) {
-        for (size_t j = i + 1; j < pipelines.size(); ++j) {
-            if (lambda(pipelines[i]) == lambda(pipelines[j])) {
-                mergePipelines(pipelines, operationToPipelineIx, j, i);
-            }
-        }
-    }
-    llvm::outs() << "######## END ########" << "\n";
-#endif
-
-    //print pipelines
-    for (auto pipeline : pipelines) {
-        llvm::outs() << "Pipeline: ";
-        for (auto op : pipeline) {
-            llvm::outs() << op->getName().getStringRef() << ",";
-        }
-        llvm::outs() << "\n";
-    }
-
-    //Step X-2: Data access propagation
-    //Start at a dominant operator like matmul (latest in execution first?)
-    //do backwards propagation: from operator to input for determination of vector splits of the inputs
-    //do forwads propagation: from operator to output for determination of vector combine of the output
-    //when there is a collision, we need to backtrack, if backtrack fails we definitly need to split the pipeline
-    //(is there an earlier way to identify necessary splits? / after n backtracks force split?)
-    //where do we need to split? where first collision happens? 
-    //how do we want to propagate?: dfs, bfs -> do we really need the std::vector<Pipelines>? (could combine with earlier steps)
-    //is here the mlir dataflow framework applicable?
-
-    //list of dominant operators?
-    //currently hard-coded
-
-    //find the dominant operator
-    std::vector<mlir::Operation*> dominant_operations_in_pipeline;
-    std::copy_if(pipelines[0].begin(), pipelines[0].end(), std::back_inserter(dominant_operations_in_pipeline), [](const auto& op) {
-        if (llvm::isa<daphne::MatMulOp>(op)) {
-            return true;
-        } else if (llvm::isa<daphne::TransposeOp>(op)) {
-            return true;
-        } else if (llvm::isa<daphne::RowAggSumOp>(op)) {
-            return true;
-        }
-        return false;
-    });
-
-    //What happens if we don't have any dominant operators or
-    //due to horizontal fusion: we could have disconnected graph inside the pipeline
-    //where do we start then? at the end? how to efficiently identify the end?
-    llvm::outs() << "dominant operators: ";
-    for (auto op : dominant_operations_in_pipeline) {
-        llvm::outs() << op->getName().getStringRef() << ",";
-    }
-    llvm::outs() << "\n";
-
-    /*for(auto op : dominant_operations_in_pipeline) {
-        //std::map<mlir::Operation*, bool>* visited = new std::map<mlir::Operation*, bool>();
-        //std::vector<mlir::Operation*> *visited = new std::vector<mlir::Operation*>();
-        for (auto d_item : backward_propagation(op)) {
-            llvm::outs() << "op: " << d_item.first->getName().getStringRef() << ", decision: " << d_item.second << "\n";
-        }
-        
-        forward_propagation();
-    }
-    */
-    auto decisions = backward_propagation(pipelines[0][0]);
-    for (auto d_item : backward_propagation(pipelines[0][0])) {
-        llvm::outs() << "op: " << d_item.first->getName().getStringRef() << ", decision: " << d_item.second << "\n";
-    }
-
-    //Step X-1: Data layout propagation?
-    //it is probably better to switch the order with data access later on as we allow for an optimnization for individual kernels
-    // first before employing the access, which is in most cases a means to an end? atleast for elementwise operators, check for operators working on a specific axis
-    //combine it into one step with data access propagation?
-
-    //Step X: create pipeline ops
-    AllVectorizeComputationsPass::createVectorizedPipelineOps(func, pipelines, decisions);
+    return;
 }
 
 
