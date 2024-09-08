@@ -362,8 +362,16 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
             clEnumVal(DAPHNE, "Use original DAPHNE Vectorization pass"),
             clEnumVal(GREEDY_1, "Use greedy Vectorization pass"),
             clEnumVal(GREEDY_X, "Use greedy Vectorization pass"),
+            clEnumVal(ONE, "ONE"),
             clEnumVal(ALL, "ALL")),
             init(DAPHNE)
+    );
+
+    static opt<int> runKey(
+            "run-key", cat(daphneOptions),
+            desc(
+                "run-key"
+            )
     );
 
     static llvm::cl::list<string> scriptArgs1(
@@ -445,6 +453,7 @@ int startDAPHNE(int argc, const char** argv, DaphneLibResult* daphneLibRes, int 
 
     user_config.use_vectorized_exec = useVectorizedPipelines;
     user_config.vectorizationType = vectorizeTypeList;
+    user_config.runCombKey = runKey;
     user_config.use_distributed = useDistributedRuntime; 
     user_config.use_obj_ref_mgnt = !noObjRefMgnt;
     user_config.use_ipa_const_propa = !noIPAConstPropa;

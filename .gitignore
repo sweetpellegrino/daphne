@@ -63,3 +63,8 @@ precompiled-dependencies/
 /data
 
 gperftools-2.15/
+
+sketch/graphs
+graph-*
+*.log
+data.json

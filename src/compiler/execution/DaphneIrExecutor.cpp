@@ -178,6 +178,10 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
                 pm.addNestedPass<mlir::func::FuncOp>(
                     mlir::daphne::createAllVectorizeComputationsPass());
                 break;
+            case ONE: 
+                pm.addNestedPass<mlir::func::FuncOp>(
+                    mlir::daphne::createOneVectorizeComputationsPass(userConfig_));
+                break;
             default:
                 pm.addNestedPass<mlir::func::FuncOp>(
                     mlir::daphne::createDaphneVectorizeComputationsPass());

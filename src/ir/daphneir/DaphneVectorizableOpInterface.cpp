@@ -61,7 +61,7 @@ std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_EwBinaryO
     auto lhsRows = builder.create<daphne::NumRowsOp>(loc, sizeTy, op->getLhs());
     auto lhsCols = builder.create<daphne::NumColsOp>(loc, sizeTy, op->getLhs());
     // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
-    return {{{lhsRows, lhsCols}}};
+    return {{{lhsRows, lhsCols}}, {{lhsRows, lhsCols}}};
 }
 template<class EwUnaryOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_EwUnaryOp(EwUnaryOp *op)
@@ -83,7 +83,7 @@ std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_EwUnaryOp
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, op->getArg());
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, op->getArg());
     // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
-    return {{{rows, cols}}};
+    return {{{rows, cols}},{{rows, cols}}};
 }
 
 
@@ -140,7 +140,7 @@ std::vector<std::vector<std::pair<Value, Value>>> daphne::MatMulOp::createOpsOut
             ? builder.create<daphne::NumRowsOp>(loc, sizeTy, getRhs()).getResult()
             : builder.create<daphne::NumColsOp>(loc, sizeTy, getRhs()).getResult();
 
-    return {{{rows, cols}}};
+    return {{{rows, cols}}, {{rows, cols}}};
 }
 // ----------------------------------------------------------------------------
 
@@ -260,7 +260,7 @@ std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_AllAggOp(
     auto loc = op->getLoc();
     auto sizeTy = builder.getIndexType();
     auto cst1 = builder.create<daphne::ConstantOp>(loc, sizeTy, builder.getIndexAttr(1l));
-    return {{{cst1, cst1}}};
+    return {{{cst1, cst1}}, {{cst1, cst1}}};
 }
 
 #define IMPL_SPLIT_COMBINE_ALLAGG(OP) \
@@ -370,7 +370,7 @@ std::vector<std::vector<std::pair<Value, Value>>> daphne::ExtractColOp::createOp
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getSource());
     // TODO: support scalar and maybe (based on definition of `ExtractColOp`) apply some kind of `unique()` op
     auto cols = builder.create<daphne::NumRowsOp>(loc, sizeTy, getSelectedCols());
-    return {{{rows, cols}}};
+    return {{{rows, cols}}, {{rows, cols}}};
 }
 // ----------------------------------------------------------------------------
 
