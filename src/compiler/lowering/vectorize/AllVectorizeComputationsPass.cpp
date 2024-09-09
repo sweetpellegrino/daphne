@@ -38,12 +38,14 @@
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Value.h"
+#include "mlir/Support/LogicalResult.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "nlohmannjson/json.hpp"
 
 #include <memory>
 #include <utility>
 #include <vector>
+#include <queue>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Casting.h"
@@ -238,7 +240,88 @@ namespace
 
         std::ofstream o("data.json");
 
-        o << std::setw(4) << j << std::endl;
+        //o << std::setw(4) << j << std::endl;
+        o << j << std::endl;
+    }
+
+    //kahn: https://dev.to/leopfeiffer/topological-sort-with-kahns-algorithm-3dl1
+    //https://leetcode.com/problems/course-schedule/solutions/483330/c-kahns-algorithm-topological-sort-with-easy-detailed-explanation-16-ms-beats-98/
+    bool tryTopologicalSortPipelines(std::vector<std::vector<mlir::Operation*>*>& pipelines, std::map<mlir::Operation*, size_t> operationToPipelineIx) {
+
+        /*for (size_t i = 0; i < pipelines.size(); ++i) {
+            auto pipeline = pipelines[i];
+
+            llvm::outs() << i <<  ": ";
+            for (auto op : *pipeline) {
+                llvm::outs() << op->getName().getStringRef().str() << " ";
+            }
+            llvm::outs() << "\n";
+        }*/
+
+        std::map<size_t, std::unordered_set<size_t>> pipeline_graph;
+
+        for (size_t i = 0; i < pipelines.size(); i++) {
+            auto pipeline = pipelines.at(i);
+
+            std::unordered_set<size_t> incomingPipelinesIxs;
+            for (auto op : *pipeline) {
+                size_t currIx = operationToPipelineIx[op];
+                if (currIx != i) {
+                    throw std::runtime_error("integrity error");
+                }
+                for (auto operand : op->getOperands()) {
+                    auto defOp = operand.getDefiningOp();
+                    if(operationToPipelineIx.find(defOp) == operationToPipelineIx.end())
+                        continue;
+                    auto opIx = operationToPipelineIx[defOp];
+                    if(opIx != currIx) {
+                        incomingPipelinesIxs.insert(opIx);
+                    }
+                }
+            }
+            pipeline_graph.insert({i, incomingPipelinesIxs});
+        }
+
+        /*for (auto node : pipeline_graph) {
+            llvm::outs() << "Key: " << node.first << ", Values: ";
+            for (auto dependency : node.second) {
+                llvm::outs() << dependency << " ";
+            }
+            llvm::outs() << "\n";
+        }
+        llvm::outs() << "\n";*/
+
+        std::unordered_map<size_t, size_t> inDegrees;
+        for (auto node : pipeline_graph) {
+            for (auto dependency : node.second) {
+                ++inDegrees[dependency];
+            }
+        }
+
+        /*for (auto node_deg : inDegrees) {
+            llvm::outs() <<  "{" << node_deg.first << ": " << node_deg.second << "}" << "\n";
+        }*/
+
+        std::queue<size_t> queue;
+        for (auto node : pipeline_graph) {
+            if (inDegrees[node.first] == 0) {
+                queue.push(node.first);
+            }
+        }
+
+        std::vector<size_t> result;
+        while (!queue.empty()) {
+            size_t node = queue.front(); queue.pop();
+            //llvm::outs() << node << "\n";
+            result.push_back(node);
+            for (auto dependency : pipeline_graph.at(node)) {
+                if (--inDegrees[dependency] == 0) {
+                    queue.push(dependency);
+                }
+            }
+        }
+
+        return result.size() == pipeline_graph.size();
     }
 
 }
@@ -481,6 +564,10 @@ void AllVectorizeComputationsPass::runOnOperation()
                 break;
             }
         }
+
+        if (!tryTopologicalSortPipelines(pipelines, operationToPipelineIx)) { 
+            valid = false;
+        }         
 
         isValid_structural.push_back(valid);
     }

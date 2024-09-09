@@ -50,6 +50,8 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include "simdjson.h"
+
 using namespace mlir;
 
 namespace
@@ -379,9 +381,9 @@ namespace
     }
 
     std::string getColor(size_t pipelineId) {
-        std::vector<std::string> colors = {"lightred", "lightgreen", "lightblue", "teal", "orange", "purple", "pink",
-                                        "cyan", "magenta", "lime", "brown", "navy", "olive", "yellow",
-                                        "maroon", "violet"};
+        std::vector<std::string> colors = {"tomato", "lightgreen", "lightblue", "plum1", "navajowhite1", "seashell", "hotpink",
+                                        "lemonchiffon", "firebrick1", "ivory2", "khaki1", "lightcyan", "olive", "yellow",
+                                        "maroon", "violet", "mistyrose2"};
         return colors[pipelineId % colors.size()];
     }
 
@@ -424,18 +426,24 @@ namespace
     }
 
     void readFromJsonElement(std::string elementKey, std::vector<size_t>& dIx, std::vector<llvm::SmallVector<int8_t>>& isEdgeActive) {
-        nlohmann::json j;
-        std::ifstream i("data.json");
-        i >> j;
+        
+        simdjson::ondemand::parser parser;
+        simdjson::padded_string json = simdjson::padded_string::load("data.json");
+        simdjson::ondemand::document tweets = parser.iterate(json);
 
-        if (j.contains(elementKey)) {
-            dIx = j[elementKey]["dIx"].get<std::vector<size_t>>();
-            isEdgeActive = j[elementKey]["isEdgeActive"].get<std::vector<llvm::SmallVector<int8_t>>>();
-        } else {
-            throw std::runtime_error("key not found"); 
+        auto _value = tweets[elementKey].get_object();
+        for (simdjson::ondemand::value value : _value["dIx"].get_array()) {
+            dIx.push_back(value.get_uint64());
+        }
+
+        for (simdjson::ondemand::array arr : _value["isEdgeActive"].get_array()) {
+            llvm::SmallVector<int8_t> sm;
+            for (simdjson::ondemand::value value : arr) {
+                sm.push_back(static_cast<int8_t>(value.get_int64()));
+            }
+            isEdgeActive.push_back(sm);
         }
     }
-
 }
 
 void OneVectorizeComputationsPass::runOnOperation()
