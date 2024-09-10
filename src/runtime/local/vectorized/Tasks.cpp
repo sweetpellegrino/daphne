@@ -17,8 +17,11 @@
 #include "runtime/local/vectorized/Tasks.h"
 #include "ir/daphneir/Daphne.h"
 #include "runtime/local/kernels/EwBinaryMat.h"
+#include <cstdint>
 #include <llvm/Support/raw_ostream.h>
 #include <stdexcept>
+#include <chrono>
+#include <thread>
 
 template<typename VT>
 void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
@@ -99,6 +102,14 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
         switch (_data._combines[o]) {
             case VectorCombine::ROWS: {
                 auto slice = result->sliceRow(rowStart-_data._offset, rowEnd-_data._offset);
+#if 0
+                llvm::outs() << "ROWS" << "\n";
+                llvm::outs() << _data._offset << "\n";
+                llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
+                llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
+                llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
+                llvm::outs() << "\n";
+#endif
                 // TODO It's probably more efficient to memcpy than to get/set.
                 // But eventually, we don't want to copy at all.
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
@@ -110,7 +121,16 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 break;
             }
             case VectorCombine::COLS: {
+
                 auto slice = result->sliceCol(rowStart-_data._offset, rowEnd-_data._offset);
+#if 0
+                llvm::outs() << "COLS" << "\n";
+                llvm::outs() << _data._offset << "\n";
+                llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
+                llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
+                llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
+                llvm::outs() << "\n";
+#endif
                 // TODO It's probably more efficient to memcpy than to get/set.
                 // But eventually, we don't want to copy at all.
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {

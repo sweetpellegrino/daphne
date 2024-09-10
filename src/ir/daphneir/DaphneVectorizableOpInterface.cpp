@@ -102,6 +102,15 @@ std::vector<std::vector<daphne::VectorSplit>> daphne::MatMulOp::getVectorSplits(
         daphne::VectorSplit::NONE, // rhs
         daphne::VectorSplit::NONE, // transa
         daphne::VectorSplit::NONE  // transb
+        }
+    };
+
+    /*return {
+    {
+        daphne::VectorSplit::ROWS, // lhs
+        daphne::VectorSplit::NONE, // rhs
+        daphne::VectorSplit::NONE, // transa
+        daphne::VectorSplit::NONE  // transb
         },
     {
         daphne::VectorSplit::NONE, // lhs
@@ -109,11 +118,12 @@ std::vector<std::vector<daphne::VectorSplit>> daphne::MatMulOp::getVectorSplits(
         daphne::VectorSplit::NONE, // transa
         daphne::VectorSplit::NONE  // transb
         }
-    };
+    };*/
 }
 std::vector<std::vector<daphne::VectorCombine>> daphne::MatMulOp::getVectorCombines()
 {
-    return {{daphne::VectorCombine::ROWS}, {daphne::VectorCombine::COLS}};
+    return {{daphne::VectorCombine::ROWS}};
+    //return {{daphne::VectorCombine::ROWS}, {daphne::VectorCombine::COLS}};
 }
 std::vector<std::vector<std::pair<Value, Value>>> daphne::MatMulOp::createOpsOutputSizes(OpBuilder &builder)
 {
@@ -140,7 +150,8 @@ std::vector<std::vector<std::pair<Value, Value>>> daphne::MatMulOp::createOpsOut
             ? builder.create<daphne::NumRowsOp>(loc, sizeTy, getRhs()).getResult()
             : builder.create<daphne::NumColsOp>(loc, sizeTy, getRhs()).getResult();
 
-    return {{{rows, cols}}, {{rows, cols}}};
+    return {{{rows, cols}}};
+    //return {{{rows, cols}}, {{rows, cols}}};
 }
 // ----------------------------------------------------------------------------
 
@@ -391,7 +402,7 @@ std::vector<std::vector<std::pair<Value, Value>>> daphne::TransposeOp::createOps
     auto sizeTy = builder.getIndexType();
     auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, getArg());
     auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, getArg());
-    return {{{rows, cols}},{{cols, rows}}};
+    return {{{cols, rows}},{{cols, rows}}};
 }
 
 std::vector<std::vector<daphne::VectorSplit>> daphne::ColBindOp::getVectorSplits()
