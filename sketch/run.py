@@ -16,7 +16,7 @@ check_interval = 5
 
 
 #further improv: https://www.xmodulo.com/run-program-process-specific-cpu-cores-linux.html
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
     futures = []
     for i in exec_range:
         futures.append(executor.submit(run_command, i))

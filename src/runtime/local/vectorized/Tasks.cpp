@@ -110,6 +110,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
                 llvm::outs() << "\n";
 #endif
+#if 0
                 // TODO It's probably more efficient to memcpy than to get/set.
                 // But eventually, we don't want to copy at all.
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
@@ -117,6 +118,14 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                         slice->set(i, j, localResults[o]->get(i, j));
                     }
                 }
+#else
+                //careful about different row skip?
+                for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
+                    memcpy(&slice->getValues()[i * slice->getNumCols()],
+                        &localResults[o]->getValues()[i * localResults[o]->getNumCols()],
+                        slice->getNumCols() * sizeof(VT));
+                }
+#endif
                 DataObjectFactory::destroy(slice);
                 break;
             }
@@ -131,6 +140,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
                 llvm::outs() << "\n";
 #endif
+#if 0
                 // TODO It's probably more efficient to memcpy than to get/set.
                 // But eventually, we don't want to copy at all.
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
@@ -138,6 +148,14 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                         slice->set(i, j, localResults[o]->get(i, j));
                     }
                 }
+#else
+                //careful about different row skip?
+                for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
+                    memcpy(&slice->getValues()[i * slice->getNumCols()],
+                        &localResults[o]->getValues()[i * localResults[o]->getNumCols()],
+                        slice->getNumCols() * sizeof(VT));
+                }
+#endif
                 DataObjectFactory::destroy(slice);
                 break;
             }

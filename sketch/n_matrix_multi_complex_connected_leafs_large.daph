@@ -6,8 +6,9 @@ b = sqrt(m3);
 
 c = a @ b; 
 d = exp(b);
+d = t(d);
 
-f = d @ c;
+f = c @ d;
 
 e = sum(c);
 print(e);

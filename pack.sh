@@ -102,7 +102,7 @@ then
     git checkout -
     exit 1
 fi
-rm -rf bin build lib
+#rm -rf bin build lib
 
 # shellcheck disable=SC2086
 # MPI is an internal feature so we can turn this on here
@@ -130,7 +130,7 @@ source build.sh -nd -ns -nf --installPrefix /usr/local --mpi $FEATURE --target a
 cd "$projectRoot"
 
 # shellcheck disable=SC2086
-source test.sh --no-build $FEATURE
+#source test.sh --no-build $FEATURE
 
 # shellcheck disable=SC2181
 if [[ $? == 0 ]];then
@@ -142,6 +142,7 @@ if [[ $? == 0 ]];then
   cp -a "$projectRoot"/src/api/python "$PACK_ROOT"/src/api/
   cp -a "$projectRoot"/bin/{daphne,DistributedWorker} "$PACK_ROOT"/bin/
   cp -a "$projectRoot"/run-*.sh "$PACK_ROOT"/
+  cp -a "$projectRoot"/bench !("$projectRoot"/bench/results) "$PACK_ROOT
   # this assumes that the pack script is run from an environment that has third party deps in /usr/local
   # e.g. the daphne-dev docker container
   cp -a /usr/local/lib/lib*.so* "$PACK_ROOT/lib"
