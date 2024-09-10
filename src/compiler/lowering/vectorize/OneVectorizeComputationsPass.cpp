@@ -19,28 +19,22 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
-#include <functional>
+#include <spdlog/spdlog.h>
 #include <stdexcept>
-#include <type_traits>
-#include <unordered_set>
 #include <util/ErrorHandler.h>
-#include "compiler/utils/CompilerUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "ir/daphneir/Passes.h"
-#include <stack>
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Transforms/TopologicalSortUtils.h"
-#include "mlir/Dialect/LLVMIR/LLVMAttrs.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
-#include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Value.h"
 #include "mlir/Transforms/DialectConversion.h"
-#include "nlohmannjson/json.hpp"
+#include "compiler/lowering/vectorize/VectorUtils.h"
 
 #include <memory>
 #include <utility>
@@ -451,17 +445,15 @@ void OneVectorizeComputationsPass::runOnOperation()
 
     auto func = getOperation();
 
+    spdlog::debug("OneVectorizeComputationsPass");
+
     std::vector<mlir::Operation *> vectOps;
     func->walk([&](daphne::Vectorizable op) {
         vectOps.emplace_back(op);
     });
     std::reverse(vectOps.begin(), vectOps.end());
 
-    //
-
     std::string key = std::to_string(userConfig.runCombKey);
-    std::string filename = "graphs/graph-" + key + ".dot";
-
 
     std::vector<size_t> dIx;
     std::vector<llvm::SmallVector<int8_t>> isEdgeActive;
@@ -474,7 +466,6 @@ void OneVectorizeComputationsPass::runOnOperation()
     std::map<mlir::Operation*, size_t> operationToPipelineIx;
     
     llvm::outs() << "..................................................................";
-    llvm::outs() << "\n";
     for (llvm::SmallVector<int8_t> smallVector : isEdgeActive) {
         llvm::outs() << "(";
         for (int8_t value : smallVector) {
@@ -523,7 +514,6 @@ void OneVectorizeComputationsPass::runOnOperation()
         
     }
 
-    printGraph(vectOps, dIx, isEdgeActive, operationToPipelineIx, filename);
 
     //-----------------------------------------------------------------
 
@@ -537,7 +527,12 @@ void OneVectorizeComputationsPass::runOnOperation()
         decisionIx.insert({vectOps.at(i), dIx.at(i)});
     }
 
+    std::string filename = "graphs/graph-" + key + ".dot";
+    //printGraph(vectOps, dIx, isEdgeActive, operationToPipelineIx, filename);
+    VectorUtils::printPipelines(vectOps, operationToPipelineIx, dIx, filename);
+
     OneVectorizeComputationsPass::createVectorizedPipelineOps(func, _pipelines, decisionIx);
+
  
     return;
 }

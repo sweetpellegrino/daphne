@@ -28,6 +28,7 @@
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "ir/daphneir/Passes.h"
+#include "compiler/lowering/vectorize/VectorUtils.h"
 #include <stack>
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
@@ -85,96 +86,6 @@ namespace
         }
         pipelines.at(mergeIntoIx) = std::move(mergedPipeline);
         pipelines.erase(pipelines.begin() + mergeFromIx);
-    }
-
-    void printGraph(mlir::Operation* op, std::string filename) {
-        std::stack<mlir::Operation*> stack;
-        std::ofstream dot(filename);
-        if (!dot.is_open()) {
-            throw std::runtime_error("test");
-        }
-
-        dot << "digraph G {\n";
-        stack.push(op);
-
-        std::vector<mlir::Operation*> visited;
-
-        while (!stack.empty()) {
-            op = stack.top(); stack.pop();
-            if(std::find(visited.begin(), visited.end(), op) != visited.end()) {
-                continue;
-            }
-            visited.push_back(op);
-
-            auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
-            for (unsigned i = 0; i < v->getNumOperands(); ++i) {
-                mlir::Value e = v->getOperand(i);
-                auto defOp = e.getDefiningOp();
-                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
-                    dot << "\"" << defOp->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(defOp) << "\" -> \"" << op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(op) << "\" [label=\"" << i << "\"];\n";
-                    stack.push(defOp);
-                }
-            }
-        }
-        dot << "}";
-        dot.close();
-    }
-
-    void printGraph(std::vector<mlir::Operation*> startOps, std::string filename) {
-        std::stack<mlir::Operation*> stack;
-        std::ofstream dot(filename);
-        if (!dot.is_open()) {
-            throw std::runtime_error("test");
-        }
-
-        dot << "digraph G {\n";
-        for (auto s : startOps) {
-            stack.push(s);
-            stack.push(s);
-        }
-
-        std::vector<mlir::Operation*> visited;
-
-        while (!stack.empty()) {
-            auto op = stack.top(); stack.pop();
-            if(std::find(visited.begin(), visited.end(), op) != visited.end()) {
-                continue;
-            }
-            visited.push_back(op);
-
-            auto v = llvm::dyn_cast<daphne::Vectorizable>(op);
-            if (!v) 
-                continue;
-
-            for (unsigned i = 0; i < v->getNumOperands(); ++i) {
-                mlir::Value e = v->getOperand(i);
-                auto defOp = e.getDefiningOp();
-                if (llvm::isa<daphne::MatrixType>(e.getType()) && llvm::isa<daphne::Vectorizable>(defOp)) {
-                    dot << "\"" << defOp->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(defOp) << "\" -> \"" << op->getName().getStringRef().str() << "+" << std::hex << reinterpret_cast<uintptr_t>(op) << "\" [label=\"" << i << "\"];\n";
-                    stack.push(defOp);
-                }
-            }
-        }
-        dot << "}";
-        dot.close();
-    }
-
-    bool matchingVectorSplitCombine(const daphne::VectorSplit split, const daphne::VectorCombine combine) {
-        daphne::VectorCombine _operandCombine;
-        switch (split) {
-            case daphne::VectorSplit::ROWS:
-                _operandCombine = daphne::VectorCombine::ROWS;
-                break;
-            case daphne::VectorSplit::COLS:
-                _operandCombine = daphne::VectorCombine::COLS;
-                break;
-            default:
-                //No matching split/combine; basically resulting in separate pipelines
-                return false;
-        }
-        if (combine == _operandCombine)
-            return true;
-        return false;
     }
 
     void generate_decisionIxs_combinations(std::vector<std::vector<size_t>> &combinations, const std::vector<mlir::Operation *> &vectOps, std::vector<size_t> _combination, size_t vectIx) {
@@ -335,10 +246,6 @@ void AllVectorizeComputationsPass::runOnOperation()
     llvm::outs() << "AllVectorizeComputationsPass" << "\n";
 
     //Step 1: Filter vectorizbale operations
-    //Slice Analysis for reverse topological sorting?
-    //Good illustration here: PostOrder https://mlir.llvm.org/doxygen/SliceAnalysis_8h_source.html
-    //Implementation of walk here: https://mlir.llvm.org/doxygen/Visitors_8h_source.html#l00062
-
     llvm::outs() << "######## STEP 1 ########" << "\n";
 
     std::vector<mlir::Operation *> vectOps;
@@ -357,7 +264,7 @@ void AllVectorizeComputationsPass::runOnOperation()
     llvm::outs() << "######## END ########" << "\n";
 
     //find starting ops
-    std::vector<mlir::Operation*> startOps;
+    std::vector<mlir::Operation*> leafOps;
     for (auto op : vectOps) {
         auto users = op->getUsers();
         bool found = false;
@@ -368,12 +275,11 @@ void AllVectorizeComputationsPass::runOnOperation()
             }
         }
         if(!found)
-            startOps.push_back(op);
+            leafOps.push_back(op);
     }
     
-    printGraph(startOps, "graph.dot"); 
+    VectorUtils::printGraph(leafOps, "graph-max.dot"); 
 
-    //Improvment: can we already know that some operations can not be fused???
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
 
@@ -633,7 +539,7 @@ void AllVectorizeComputationsPass::runOnOperation()
                         size_t d_defOp = d.at(defOp);
                         auto combine = defOp.getVectorCombines()[d_defOp][0];
 
-                        if (!matchingVectorSplitCombine(split, combine)) {
+                        if (!VectorUtils::matchingVectorSplitCombine(split, combine)) {
                             valid = false;
                             break;
                         }
@@ -651,6 +557,9 @@ void AllVectorizeComputationsPass::runOnOperation()
     size_t dvalid = std::count(isValid.begin(), isValid.end(), true);
     llvm::outs() << "isValid: " << isValid.size() << ", valid=true: " << dvalid << "\n";
     llvm::outs() << "----------------------------------------------------------\n";
+
+    //provide basic information
+    llvm::errs() << "{\"valid\":" << dvalid << "}\n";
 
     saveToJson(isValid, dIx_combinations, isEdgeActivated_combinations);
     return;

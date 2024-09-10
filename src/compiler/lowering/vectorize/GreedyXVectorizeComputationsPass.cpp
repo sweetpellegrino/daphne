@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <util/ErrorHandler.h>
-#include "compiler/utils/CompilerUtils.h"
+#include "compiler/lowering/vectorize/VectorUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "ir/daphneir/Passes.h"
@@ -600,24 +600,6 @@ namespace
         }
     }
 
-    bool matchingVectorSplitCombine(const daphne::VectorSplit split, const daphne::VectorCombine combine) {
-        daphne::VectorCombine _operandCombine;
-        switch (split) {
-            case daphne::VectorSplit::ROWS:
-                _operandCombine = daphne::VectorCombine::ROWS;
-                break;
-            case daphne::VectorSplit::COLS:
-                _operandCombine = daphne::VectorCombine::COLS;
-                break;
-            default:
-                //No matching split/combine; basically resulting in separate pipelines
-                return false;
-        }
-        if (combine == _operandCombine)
-            return true;
-        return false;
-    }
-
     bool doesOpSecExistsAsProducer(const OpDec& od, const std::unordered_map<OpDec, std::vector<OpDec>>& primaryCandidates) {
         for (auto [key, value] : primaryCandidates) {
             if (std::any_of(value.begin(), value.end(),
@@ -731,7 +713,7 @@ void GreedyXVectorizeComputationsPass::runOnOperation()
                     for (size_t operandDecisionIx = 0; operandDecisionIx < v_defOp.getVectorCombines().size(); operandDecisionIx++) {
                         //currently only considering one return cf. [0]
                         auto operandCombine  = v_defOp.getVectorCombines()[operandDecisionIx][0];
-                        if (matchingVectorSplitCombine(split, operandCombine)) {
+                        if (VectorUtils::matchingVectorSplitCombine(split, operandCombine)) {
                             auto it = std::find(operandDefOps.begin(), operandDefOps.end(), defOp);
                             isLast[defOp] = false;
                             if (it == operandDefOps.end()) {
