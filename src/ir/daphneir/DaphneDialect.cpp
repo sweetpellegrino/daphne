@@ -569,6 +569,8 @@ mlir::LogicalResult mlir::daphne::VectorizedPipelineOp::canonicalize(mlir::daphn
 // For families of operations.
 
 // Adapted from "mlir/Dialect/CommonFolders.h"
+mlir::Attribute performCast(mlir::Attribute attr, mlir::Type targetType, mlir::Location loc);
+
 template<
     class ArgAttrElementT,
     class ResAttrElementT = ArgAttrElementT,
@@ -595,6 +597,21 @@ mlir::Attribute constFoldBinaryOp(mlir::Location loc, mlir::Type resultType, llv
             std::is_same<ResAttrElementT, mlir::IntegerAttr>::value ||
             std::is_same<ResAttrElementT, mlir::FloatAttr>::value
         ) {
+            mlir::Type l = lhs.getType();
+            mlir::Type r = rhs.getType();
+            if ((l.dyn_cast<mlir::IntegerType>() || l.dyn_cast<mlir::FloatType>()) &&
+            (r.dyn_cast<mlir::IntegerType>() || r.dyn_cast<mlir::FloatType>())) {
+                auto lhsBitWidth = lhs.getType().getIntOrFloatBitWidth();
+                auto rhsBitWidth = rhs.getType().getIntOrFloatBitWidth();
+
+                if (lhsBitWidth < rhsBitWidth) {
+                    mlir::Attribute promotedLhs = performCast(lhs, rhs.getType(), loc);
+                    lhs = promotedLhs.cast<ArgAttrElementT>();
+                } else if (rhsBitWidth < lhsBitWidth) {
+                    mlir::Attribute promotedRhs = performCast(rhs, lhs.getType(), loc);
+                    rhs = promotedRhs.cast<ArgAttrElementT>();
+                }
+        }
             return ResAttrElementT::get(resultType, calculate(lhs.getValue(), rhs.getValue()));
         }
         else if constexpr(std::is_same<ResAttrElementT, mlir::BoolAttr>::value) {
@@ -638,66 +655,83 @@ mlir::Attribute constFoldUnaryOp(mlir::Location loc, mlir::Type resultType, llvm
 // ****************************************************************************
 // Fold implementations
 // ****************************************************************************
+mlir::Attribute performCast(mlir::Attribute attr, mlir::Type targetType, mlir::Location loc) {
+    if (auto intAttr = attr.dyn_cast<mlir::IntegerAttr>()) {
+        auto apInt = intAttr.getValue();
+
+        if (auto outTy = targetType.dyn_cast<mlir::IntegerType>()) {
+            // Extend or truncate the integer value based on the target type
+            if (outTy.isUnsignedInteger()) {
+                apInt = apInt.zextOrTrunc(outTy.getWidth());
+            } else if (outTy.isSignedInteger()) {
+                apInt = (intAttr.getType().isSignedInteger())
+                        ? apInt.sextOrTrunc(outTy.getWidth())
+                        : apInt.zextOrTrunc(outTy.getWidth());
+            }
+            return mlir::IntegerAttr::getChecked(loc, outTy, apInt);
+        }
+
+        if (auto outTy = targetType.dyn_cast<mlir::IndexType>()) {
+            return mlir::IntegerAttr::getChecked(loc, outTy, apInt);
+        }
+
+        if (targetType.isF64()) {
+            if (intAttr.getType().isSignedInteger()) {
+                return mlir::FloatAttr::getChecked(loc, targetType,
+                    llvm::APIntOps::RoundSignedAPIntToDouble(apInt));
+            }
+            if (intAttr.getType().isUnsignedInteger() || intAttr.getType().isIndex()) {
+                return mlir::FloatAttr::getChecked(loc, targetType,
+                    llvm::APIntOps::RoundAPIntToDouble(apInt));
+            }
+        }
+
+        if (targetType.isF32()) {
+            if (intAttr.getType().isSignedInteger()) {
+                return mlir::FloatAttr::getChecked(loc, targetType,
+                    llvm::APIntOps::RoundSignedAPIntToFloat(apInt));
+            }
+            if (intAttr.getType().isUnsignedInteger()) {
+                return mlir::FloatAttr::get(targetType,
+                    llvm::APIntOps::RoundAPIntToFloat(apInt));
+            }
+        }
+    }
+    else if (auto floatAttr = attr.dyn_cast<mlir::FloatAttr>()) {
+        auto val = floatAttr.getValueAsDouble();
+
+        if (targetType.isF64()) {
+            return mlir::FloatAttr::getChecked(loc, targetType, val);
+        }
+        if (targetType.isF32()) {
+            return mlir::FloatAttr::getChecked(loc, targetType, static_cast<float>(val));
+        }
+        if (targetType.isIntOrIndex()) {
+            auto num = static_cast<int64_t>(val);
+            return mlir::IntegerAttr::getChecked(loc, targetType, num);
+        }
+    }
+
+    // If casting is not possible, return the original attribute
+    return {};
+}
 
 mlir::OpFoldResult mlir::daphne::CastOp::fold(FoldAdaptor adaptor) {
     ArrayRef<Attribute> operands = adaptor.getOperands();
+
     if (isTrivialCast()) {
         if (operands[0])
             return {operands[0]};
         else
             return {getArg()};
     }
-    if(auto in = operands[0].dyn_cast_or_null<IntegerAttr>()) {
-        auto apInt = in.getValue();
-        if(auto outTy = getType().dyn_cast<IntegerType>()) {
-            // TODO: throw exception if bits truncated?
-            if(outTy.isUnsignedInteger()) {
-                apInt = apInt.zextOrTrunc(outTy.getWidth());
-            }
-            else if(outTy.isSignedInteger()) {
-                apInt = (in.getType().isSignedInteger())
-                        ? apInt.sextOrTrunc(outTy.getWidth())
-                        : apInt.zextOrTrunc(outTy.getWidth());
-            }
-            return IntegerAttr::getChecked(getLoc(), outTy, apInt);
-        }
-        if(auto outTy = getType().dyn_cast<IndexType>()) {
-            return IntegerAttr::getChecked(getLoc(), outTy, apInt);
-        }
-        if(getType().isF64()) {
-            if(in.getType().isSignedInteger()) {
-                return FloatAttr::getChecked(getLoc(),
-                    getType(),
-                    llvm::APIntOps::RoundSignedAPIntToDouble(in.getValue()));
-            }
-            if(in.getType().isUnsignedInteger() || in.getType().isIndex()) {
-                return FloatAttr::getChecked(getLoc(), getType(), llvm::APIntOps::RoundAPIntToDouble(in.getValue()));
-            }
-        }
-        if(getType().isF32()) {
-            if(in.getType().isSignedInteger()) {
-                return FloatAttr::getChecked(getLoc(),
-                    getType(),
-                    llvm::APIntOps::RoundSignedAPIntToFloat(in.getValue()));
-            }
-            if(in.getType().isUnsignedInteger()) {
-                return FloatAttr::get(getType(), llvm::APIntOps::RoundAPIntToFloat(in.getValue()));
-            }
+
+    if (operands[0]) {
+        if (auto castedAttr = performCast(operands[0], getType(), getLoc())) {
+            return castedAttr;
         }
     }
-    if(auto in = operands[0].dyn_cast_or_null<FloatAttr>()) {
-        auto val = in.getValueAsDouble();
-        if(getType().isF64()) {
-            return FloatAttr::getChecked(getLoc(), getType(), val);
-        }
-        if(getType().isF32()) {
-            return FloatAttr::getChecked(getLoc(), getType(), static_cast<float>(val));
-        }
-        if(getType().isIntOrIndex()) {
-            auto num = static_cast<int64_t>(val);
-            return IntegerAttr::getChecked(getLoc(), getType(), num);
-        }
-    }
+
     return {};
 }
 
@@ -950,56 +984,17 @@ mlir::OpFoldResult mlir::daphne::EwConcatOp::fold(FoldAdaptor adaptor) {
     return {};
 }
 
-// TODO This is duplicated from EwConcatOp. Actually, ConcatOp itself is only
-// a temporary workaround, so it should be removed altogether later.
-mlir::OpFoldResult mlir::daphne::ConcatOp::fold(FoldAdaptor adaptor) {
-    ArrayRef<Attribute> operands = adaptor.getOperands();
-
-    if (operands.size() != 2)
-        throw ErrorHandler::compilerError(
-                this->getLoc(), "CanonicalizerPass (mlir::daphne::ConcatOp::fold)",
-                "binary op takes two operands but " + std::to_string(operands.size()) + " were given");
-
-    if(!operands[0] || !operands[1])
-        return {};
-
-    if(llvm::isa<StringAttr>(operands[0]) && isa<StringAttr>(operands[1])) {
-        auto lhs = operands[0].cast<StringAttr>();
-        auto rhs = operands[1].cast<StringAttr>();
-
-        auto concated = lhs.getValue().str() + rhs.getValue().str();
-        return StringAttr::get(concated, getType());
-    }
-    return {};
-}
-
-mlir::OpFoldResult mlir::daphne::StringEqOp::fold(FoldAdaptor adaptor) {
-    ArrayRef<Attribute> operands = adaptor.getOperands();
-
-    if (operands.size() != 2)
-        throw ErrorHandler::compilerError(
-                this->getLoc(), "CanonicalizerPass (mlir::daphne::StringEqOp::fold)",
-                "binary op takes two operands but " + std::to_string(operands.size()) + " were given");
-
-    if (!operands[0] || !operands[1] || !llvm::isa<StringAttr>(operands[0]) ||
-        !isa<StringAttr>(operands[1])) {
-        return {};
-    }
-
-    auto lhs = operands[0].cast<StringAttr>();
-    auto rhs = operands[1].cast<StringAttr>();
-
-    return mlir::BoolAttr::get(getContext(), lhs.getValue() == rhs.getValue());
-}
-
 mlir::OpFoldResult mlir::daphne::EwEqOp::fold(FoldAdaptor adaptor) {
     ArrayRef<Attribute> operands = adaptor.getOperands();
     auto floatOp = [](const llvm::APFloat &a, const llvm::APFloat &b) { return a == b; };
     auto intOp = [](const llvm::APInt &a, const llvm::APInt &b) { return a == b; };
+    auto strOp = [](const llvm::StringRef &a, const llvm::StringRef &b) { return a == b; };
     // TODO: fix bool return
     if(auto res = constFoldBinaryOp<FloatAttr>(getLoc(), getType(), operands, floatOp))
         return res;
     if(auto res = constFoldBinaryOp<IntegerAttr>(getLoc(), getType(), operands, intOp))
+        return res;
+    if(auto res = constFoldBinaryOp<StringAttr, IntegerAttr>(getLoc(), IntegerType::get(getContext(), 64, IntegerType::SignednessSemantics::Signed), operands, strOp))
         return res;
     return {};
 }
@@ -1278,30 +1273,6 @@ struct SimplifyDistributeRead : public mlir::OpRewritePattern<mlir::daphne::Dist
     }
 };
 
-// The EwBinarySca kernel does not handle string types in any way. In order to
-// support simple string equivalence checks this canonicalizer rewrites the
-// EwEqOp to the StringEqOp if one of the operands is of daphne::StringType.
-mlir::LogicalResult mlir::daphne::EwEqOp::canonicalize(
-    mlir::daphne::EwEqOp op, PatternRewriter &rewriter) {
-    mlir::Value lhs = op.getLhs();
-    mlir::Value rhs = op.getRhs();
-
-    const bool lhsIsStr = llvm::isa<mlir::daphne::StringType>(lhs.getType());
-    const bool rhsIsStr = llvm::isa<mlir::daphne::StringType>(rhs.getType());
-
-    if (!lhsIsStr && !rhsIsStr) return mlir::failure();
-
-    mlir::Type strTy = mlir::daphne::StringType::get(rewriter.getContext());
-    if (!lhsIsStr)
-        lhs = rewriter.create<mlir::daphne::CastOp>(op.getLoc(), strTy, lhs);
-    if (!rhsIsStr)
-        rhs = rewriter.create<mlir::daphne::CastOp>(op.getLoc(), strTy, rhs);
-
-    rewriter.replaceOpWithNewOp<mlir::daphne::StringEqOp>(
-        op, rewriter.getI1Type(), lhs, rhs);
-    return mlir::success();
-}
-
 /**
  * @brief Replaces (1) `a + b` by `a concat b`, if `a` or `b` is a string,
  * and (2) `a + X` by `X + a` (`a` scalar, `X` matrix/frame).
@@ -1331,7 +1302,7 @@ mlir::LogicalResult mlir::daphne::EwAddOp::canonicalize(
             lhs = rewriter.create<mlir::daphne::CastOp>(op.getLoc(), strTy, lhs);
         if(!rhsIsStr)
             rhs = rewriter.create<mlir::daphne::CastOp>(op.getLoc(), strTy, rhs);
-        rewriter.replaceOpWithNewOp<mlir::daphne::ConcatOp>(op, strTy, lhs, rhs);
+        rewriter.replaceOpWithNewOp<mlir::daphne::EwConcatOp>(op, strTy, lhs, rhs);
         return mlir::success();
     }
     else {
