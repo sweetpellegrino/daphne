@@ -1,0 +1,15 @@
+//20000x1000
+m3 = readMatrix("10_Z.csv");
+
+a = t(m3);
+b = sqrt(m3);
+
+c = a @ b; 
+d = exp(b);
+d = t(d);
+
+f = c @ d;
+
+e = sum(c);
+print(e);
+print(f[0,0]);

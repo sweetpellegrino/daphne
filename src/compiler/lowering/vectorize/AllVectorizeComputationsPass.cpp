@@ -88,53 +88,53 @@ namespace
         pipelines.erase(pipelines.begin() + mergeFromIx);
     }
 
-    void generate_decisionIxs_combinations(std::vector<std::vector<size_t>> &combinations, const std::vector<mlir::Operation *> &vectOps, std::vector<size_t> _combination, size_t vectIx) {
-        if (vectIx == vectOps.size()) {
+    void generate_decisionIxs_combinations(std::vector<std::vector<size_t>> &combinations, const std::vector<mlir::Operation *> &ops, std::vector<size_t> _combination, VectorIndex vectIx) {
+        if (vectIx == ops.size()) {
             combinations.push_back(_combination);
             return; 
         }
 
-        auto op = llvm::dyn_cast<daphne::Vectorizable>(vectOps.at(vectIx));
+        auto op = llvm::dyn_cast<daphne::Vectorizable>(ops.at(vectIx));
         for (size_t i = 0; i < op.getVectorSplits().size(); i++) {
             _combination.push_back(i);
-            generate_decisionIxs_combinations(combinations, vectOps, _combination, vectIx + 1);
+            generate_decisionIxs_combinations(combinations, ops, _combination, vectIx + 1);
             _combination.pop_back();
         }
 
     }
 
-    void generate_isEdgeActivated_combinations(std::vector<std::vector<llvm::SmallVector<int8_t>>> &combinations, const std::vector<mlir::Operation *> &vectOps, std::vector<llvm::SmallVector<int8_t>> _combination, llvm::SmallVector<int8_t> _operands, size_t vectIx, size_t operandIx) {
+    void generate_isEdgeActivated_combinations(std::vector<std::vector<llvm::SmallVector<EdgeStatus>>> &combinations, const std::vector<mlir::Operation *> &ops, std::vector<llvm::SmallVector<EdgeStatus>> _combination, llvm::SmallVector<EdgeStatus> _operands, size_t vectIx, size_t operandIx) {
       
-        if (vectOps.at(vectIx)->getNumOperands() == operandIx) {
+        if (ops.at(vectIx)->getNumOperands() == operandIx) {
             _combination.push_back(_operands);
-            _operands = llvm::SmallVector<int8_t>();
+            _operands = llvm::SmallVector<EdgeStatus>();
             vectIx++;
             operandIx = 0;
         }  
 
-        if (vectIx == vectOps.size()) {
+        if (vectIx == ops.size()) {
             combinations.push_back(_combination);
             return; 
         }
 
-        auto defOp = vectOps.at(vectIx)->getOperand(operandIx).getDefiningOp();
+        auto defOp = ops.at(vectIx)->getOperand(operandIx).getDefiningOp();
         
-        if (std::find(vectOps.begin(), vectOps.end(), defOp) == vectOps.end()) { //block?) {
-            _operands.push_back(-1);
-            generate_isEdgeActivated_combinations(combinations, vectOps, _combination, _operands, vectIx, operandIx + 1);
+        if (std::find(ops.begin(), ops.end(), defOp) == ops.end()) { //block?) {
+            _operands.push_back(EdgeStatus::INVALID);
+            generate_isEdgeActivated_combinations(combinations, ops, _combination, _operands, vectIx, operandIx + 1);
             _operands.pop_back();
         } else {
-            _operands.push_back(0);
-            generate_isEdgeActivated_combinations(combinations, vectOps, _combination, _operands, vectIx, operandIx + 1);
+            _operands.push_back(EdgeStatus::INACTIVE);
+            generate_isEdgeActivated_combinations(combinations, ops, _combination, _operands, vectIx, operandIx + 1);
             _operands.pop_back();
 
-            _operands.push_back(1);
-            generate_isEdgeActivated_combinations(combinations, vectOps, _combination, _operands, vectIx, operandIx + 1);
+            _operands.push_back(EdgeStatus::ACTIVE);
+            generate_isEdgeActivated_combinations(combinations, ops, _combination, _operands, vectIx, operandIx + 1);
             _operands.pop_back();
         }
     }
 
-    void saveToJson(std::vector<bool>& isValid, std::vector<std::vector<size_t>>& dIx_combinations, std::vector<std::vector<llvm::SmallVector<int8_t>>>& isEdgeActivated_combinations) {
+    void saveToJson(std::vector<bool>& isValid, std::vector<std::vector<size_t>>& dIx_combinations, std::vector<std::vector<llvm::SmallVector<EdgeStatus>>>& isEdgeActivated_combinations) {
         nlohmann::json j;
 
         int count = 0;
@@ -248,14 +248,14 @@ void AllVectorizeComputationsPass::runOnOperation()
     //Step 1: Filter vectorizbale operations
     llvm::outs() << "######## STEP 1 ########" << "\n";
 
-    std::vector<mlir::Operation *> vectOps;
+    std::vector<mlir::Operation *> ops;
     func->walk([&](daphne::Vectorizable op) {
-        vectOps.emplace_back(op);
+        ops.emplace_back(op);
     });
-    std::reverse(vectOps.begin(), vectOps.end());
+    std::reverse(ops.begin(), ops.end());
 
     //print vectOps
-    for (auto &op : vectOps) {
+    for (auto &op : ops) {
         llvm::outs() << "Op: ";
         op->print(llvm::outs());
         llvm::outs() << "\n";
@@ -265,11 +265,11 @@ void AllVectorizeComputationsPass::runOnOperation()
 
     //find starting ops
     std::vector<mlir::Operation*> leafOps;
-    for (auto op : vectOps) {
+    for (auto op : ops) {
         auto users = op->getUsers();
         bool found = false;
         for (auto u :users) {
-            if (std::find(vectOps.begin(), vectOps.end(), u) != vectOps.end()) { 
+            if (std::find(ops.begin(), ops.end(), u) != ops.end()) { 
                 found = true;
                 break;
             }
@@ -278,34 +278,39 @@ void AllVectorizeComputationsPass::runOnOperation()
             leafOps.push_back(op);
     }
     
-    VectorUtils::printGraph(leafOps, "graph-max.dot"); 
+    VectorUtils::DEBUG::printGraph(leafOps, "graph-max.dot"); 
 
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";
 
     //estimated combinations
-    size_t v = vectOps.size();
+    size_t v = ops.size();
 
+    //error in calculation
+    //i consider all edges, however the generation of different possiblites is based on the "vectorizable" edges
     size_t e = 0;
-    for (auto &op : vectOps) {
+    for (auto &op : ops) {
         for (auto t : op->getOperands()) {
+
+            if (llvm::isa<BlockArgument>(t)) 
+                continue;            
 
             if(op->getBlock() != t.getDefiningOp()->getBlock()) {
                 continue;
             }
 
-            if (std::find(vectOps.begin(), vectOps.end(), t.getDefiningOp()) != vectOps.end()) {
+            if (std::find(ops.begin(), ops.end(), t.getDefiningOp()) != ops.end()) {
                 e++;
             }
         }
     }
 
-    int64_t f = (v * std::pow(2, e));
+    int64_t f = (v * std::pow(2, e+1));
     llvm::outs() << "v: " << v << ", " << "e:" << e << "\n";
     llvm::outs() << "Estimated: " << f << "\n";
 
     std::vector<std::vector<size_t>> dIx_combinations;
-    generate_decisionIxs_combinations(dIx_combinations, vectOps, {}, 0);
+    generate_decisionIxs_combinations(dIx_combinations, ops, {}, 0);
 
     llvm::outs() << "dIx_combinations size: " << dIx_combinations.size() << "\n";
 
@@ -318,10 +323,12 @@ void AllVectorizeComputationsPass::runOnOperation()
     }
 #endif
 
-    std::vector<std::vector<llvm::SmallVector<int8_t>>> isEdgeActivated_combinations;
-    std::vector<llvm::SmallVector<int8_t>> _isEdgeActivated;
+    //enum
+    //VectorIndex
+    std::vector<std::vector<llvm::SmallVector<EdgeStatus>>> isEdgeActivated_combinations;
+    std::vector<llvm::SmallVector<EdgeStatus>> _isEdgeActivated;
 
-    generate_isEdgeActivated_combinations(isEdgeActivated_combinations, vectOps, _isEdgeActivated, {}, 0, 0);
+    generate_isEdgeActivated_combinations(isEdgeActivated_combinations, ops, _isEdgeActivated, {}, 0, 0);
 
     llvm::outs() << "isEdgeActivated_combinations size: " << isEdgeActivated_combinations.size() << "\n";
 
@@ -346,9 +353,9 @@ void AllVectorizeComputationsPass::runOnOperation()
 
     for (auto d : dIx_combinations) {
 
-        std::map<mlir::Operation*, size_t> decisionIx;
+        std::map<mlir::Operation*, VectorIndex> decisionIx;
         for(size_t i = 0; i < d.size(); i++) {
-            decisionIx.insert({vectOps.at(i), d.at(i)});
+            decisionIx.insert({ops.at(i), d.at(i)});
         }
         dIxs.push_back(decisionIx);
     }
@@ -380,7 +387,7 @@ void AllVectorizeComputationsPass::runOnOperation()
 
         for (size_t i = 0; i < edges.size(); i++) {
             auto e = edges.at(i);
-            auto v = vectOps.at(i);
+            auto v = ops.at(i);
 
             //check if already in pipeline
             size_t pipelineIx = 0;
@@ -403,7 +410,7 @@ void AllVectorizeComputationsPass::runOnOperation()
             llvm::outs() << "\n";*/
 
             for (size_t j = 0; j < e.size(); j++)
-                if (e[j] == 1) {
+                if (e[j] == EdgeStatus::ACTIVE) {
                     auto x = v->getOperand(j).getDefiningOp();
                     //x->print(llvm::outs());
                     //llvm::outs() << "\n";
@@ -446,20 +453,20 @@ void AllVectorizeComputationsPass::runOnOperation()
         auto edges = isEdgeActivated_combinations.at(i);
         bool valid = true;
 
-        for (size_t j = 0; j < vectOps.size(); j++) {
+        for (size_t j = 0; j < ops.size(); j++) {
             auto e = edges.at(j);
-            auto v = vectOps.at(j); 
+            auto v = ops.at(j); 
             
             for (size_t k = 0; k < v->getNumOperands(); k++) {
                 auto b = e[k];
                 auto defOp = v->getOperand(k).getDefiningOp();
-                if (b == 1) {
+                if (b == EdgeStatus::ACTIVE) {
                     if (operationToPipelineIx[v] != operationToPipelineIx[defOp]) {
                         valid = false;
                         break;
                     }
                 }
-                else if (b == 0) {
+                else if (b == EdgeStatus::INACTIVE) {
                     if (operationToPipelineIx[v] == operationToPipelineIx[defOp]) {
                         valid = false;
                         break;
@@ -525,8 +532,8 @@ void AllVectorizeComputationsPass::runOnOperation()
             auto d = dIxs.at(d_i);
 
             bool valid = true;
-            for (size_t v_i = 0; v_i < vectOps.size(); v_i++) {
-                auto v = llvm::dyn_cast<daphne::Vectorizable>(vectOps.at(v_i));
+            for (size_t v_i = 0; v_i < ops.size(); v_i++) {
+                auto v = llvm::dyn_cast<daphne::Vectorizable>(ops.at(v_i));
                 auto e = edges.at(v_i);
 
                 for (size_t k = 0; k < v->getNumOperands(); k++) {
@@ -534,7 +541,7 @@ void AllVectorizeComputationsPass::runOnOperation()
                     auto split = v.getVectorSplits()[d_v][k];
                     auto b = e[k];
                     
-                    if (b == 1) {
+                    if (b == EdgeStatus::ACTIVE) {
                         auto defOp = llvm::dyn_cast<daphne::Vectorizable>(v->getOperand(k).getDefiningOp());
                         size_t d_defOp = d.at(defOp);
                         auto combine = defOp.getVectorCombines()[d_defOp][0];
@@ -549,6 +556,7 @@ void AllVectorizeComputationsPass::runOnOperation()
                     break;
                 }
             }
+            
             isValid.push_back(valid);
 
         }

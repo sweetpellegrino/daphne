@@ -119,12 +119,15 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                     }
                 }
 #else
-                //careful about different row skip?
+
+                VT* sliceValues = slice->getValues();
+                VT* localResultsValues = localResults[o]->getValues();
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
-                    memcpy(&slice->getValues()[i * slice->getNumCols()],
-                        &localResults[o]->getValues()[i * localResults[o]->getNumCols()],
-                        slice->getNumCols() * sizeof(VT));
+                    for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
+                        sliceValues[i*slice->getRowSkip()+j] = localResultsValues[i*localResults[o]->getRowSkip()+j];
+                    }
                 }
+
 #endif
                 DataObjectFactory::destroy(slice);
                 break;
@@ -149,11 +152,12 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                     }
                 }
 #else
-                //careful about different row skip?
+                VT* sliceValues = slice->getValues();
+                VT* localResultsValues = localResults[o]->getValues();
                 for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
-                    memcpy(&slice->getValues()[i * slice->getNumCols()],
-                        &localResults[o]->getValues()[i * localResults[o]->getNumCols()],
-                        slice->getNumCols() * sizeof(VT));
+                    for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
+                        sliceValues[i*slice->getRowSkip()+j] = localResultsValues[i*localResults[o]->getRowSkip()+j];
+                    }
                 }
 #endif
                 DataObjectFactory::destroy(slice);
