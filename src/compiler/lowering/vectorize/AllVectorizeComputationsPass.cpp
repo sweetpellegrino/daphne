@@ -65,29 +65,6 @@ namespace
         void runOnOperation() final;
     };
 
-    //Function merges two pipelines into one by appending all operations from one pipeline to another
-    //Order is not really considered, as it is embodied in IR
-    void mergePipelines(std::vector<std::vector<mlir::Operation*>*>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t mergeFromIx, size_t mergeIntoIx){
-        //llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
-        if (mergeFromIx == mergeIntoIx) {
-            return;
-        }
-        if (mergeIntoIx > mergeFromIx) {
-            auto temp = mergeFromIx;
-            mergeFromIx = mergeIntoIx;
-            mergeIntoIx = temp;
-        }
-        std::vector<mlir::Operation*> *mergedPipeline(pipelines.at(mergeIntoIx));
-        for (auto op : *pipelines.at(mergeFromIx)) {
-            if  (std::find(mergedPipeline->begin(), mergedPipeline->end(), op) == mergedPipeline->end()) {
-                mergedPipeline->push_back(op);
-                operationToPipelineIx[op] = mergeIntoIx;
-            }
-        }
-        pipelines.at(mergeIntoIx) = std::move(mergedPipeline);
-        pipelines.erase(pipelines.begin() + mergeFromIx);
-    }
-
     void generate_decisionIxs_combinations(std::vector<std::vector<size_t>> &combinations, const std::vector<mlir::Operation *> &ops, std::vector<size_t> _combination, VectorIndex vectIx) {
         if (vectIx == ops.size()) {
             combinations.push_back(_combination);
@@ -154,90 +131,8 @@ namespace
         //o << std::setw(4) << j << std::endl;
         o << j << std::endl;
     }
+}    
 
-    //kahn: https://dev.to/leopfeiffer/topological-sort-with-kahns-algorithm-3dl1
-    //https://leetcode.com/problems/course-schedule/solutions/483330/c-kahns-algorithm-topological-sort-with-easy-detailed-explanation-16-ms-beats-98/
-    bool tryTopologicalSortPipelines(std::vector<std::vector<mlir::Operation*>*>& pipelines, std::map<mlir::Operation*, size_t> operationToPipelineIx) {
-
-        /*for (size_t i = 0; i < pipelines.size(); ++i) {
-            auto pipeline = pipelines[i];
-
-            llvm::outs() << i <<  ": ";
-            for (auto op : *pipeline) {
-                llvm::outs() << op->getName().getStringRef().str() << " ";
-            }
-            llvm::outs() << "\n";
-        }*/
-
-        std::map<size_t, std::unordered_set<size_t>> pipeline_graph;
-
-        for (size_t i = 0; i < pipelines.size(); i++) {
-            auto pipeline = pipelines.at(i);
-
-            std::unordered_set<size_t> incomingPipelinesIxs;
-            for (auto op : *pipeline) {
-                size_t currIx = operationToPipelineIx[op];
-                if (currIx != i) {
-                    throw std::runtime_error("integrity error");
-                }
-                for (auto operand : op->getOperands()) {
-                    auto defOp = operand.getDefiningOp();
-                    if(operationToPipelineIx.find(defOp) == operationToPipelineIx.end())
-                        continue;
-                    auto opIx = operationToPipelineIx[defOp];
-                    if(opIx != currIx) {
-                        incomingPipelinesIxs.insert(opIx);
-                    }
-                }
-            }
-            pipeline_graph.insert({i, incomingPipelinesIxs});
-        }
-
-        /*for (auto node : pipeline_graph) {
-            llvm::outs() << "Key: " << node.first << ", Values: ";
-            for (auto dependency : node.second) {
-                llvm::outs() << dependency << " ";
-            }
-            llvm::outs() << "\n";
-        }
-        llvm::outs() << "\n";*/
-
-        std::unordered_map<size_t, size_t> inDegrees;
-        for (auto node : pipeline_graph) {
-            for (auto dependency : node.second) {
-                ++inDegrees[dependency];
-            }
-        }
-
-        /*for (auto node_deg : inDegrees) {
-            llvm::outs() <<  "{" << node_deg.first << ": " << node_deg.second << "}" << "\n";
-        }*/
-
-        std::queue<size_t> queue;
-        for (auto node : pipeline_graph) {
-            if (inDegrees[node.first] == 0) {
-                queue.push(node.first);
-            }
-        }
-
-        std::vector<size_t> result;
-        while (!queue.empty()) {
-            size_t node = queue.front(); queue.pop();
-            //llvm::outs() << node << "\n";
-            result.push_back(node);
-            for (auto dependency : pipeline_graph.at(node)) {
-                if (--inDegrees[dependency] == 0) {
-                    queue.push(dependency);
-                }
-            }
-        }
-
-        return result.size() == pipeline_graph.size();
-    }
-
-}
-
-    
 void AllVectorizeComputationsPass::runOnOperation()
 {
 
@@ -295,9 +190,8 @@ void AllVectorizeComputationsPass::runOnOperation()
             if (llvm::isa<BlockArgument>(t)) 
                 continue;            
 
-            if(op->getBlock() != t.getDefiningOp()->getBlock()) {
+            if(op->getBlock() != t.getDefiningOp()->getBlock())
                 continue;
-            }
 
             if (std::find(ops.begin(), ops.end(), t.getDefiningOp()) != ops.end()) {
                 e++;
@@ -419,7 +313,7 @@ void AllVectorizeComputationsPass::runOnOperation()
                         pipeline->push_back(x);
                     }
                     else {
-                        mergePipelines(pipelines, operationToPipelineIx, pipelineIx, operationToPipelineIx.at(x));
+                        VectorUtils::mergePipelines(pipelines, operationToPipelineIx, pipelineIx, operationToPipelineIx.at(x));
                         pipelineIx = operationToPipelineIx.at(x);
                         pipeline = pipelines.at(pipelineIx);
                     }
@@ -478,7 +372,7 @@ void AllVectorizeComputationsPass::runOnOperation()
             }
         }
 
-        if (!tryTopologicalSortPipelines(pipelines, operationToPipelineIx)) { 
+        if (!VectorUtils::tryTopologicalSortPipelines(pipelines, operationToPipelineIx)) { 
             valid = false;
         }         
 

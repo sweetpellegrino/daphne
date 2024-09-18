@@ -8,7 +8,7 @@ m3 = readMatrix("10_Z.csv");
 a = abs(m3);
 b = sqrt(m3);
 
-c = a @ b; 
+c = b @ a; 
 d = exp(b);
 
 f = d + c;

@@ -24,22 +24,71 @@
 #include <iostream>
 #include <fstream>
 #include <llvm/ADT/SmallVector.h>
+#include <map>
 #include <stack>
 #include <stdexcept>
 #include <unordered_set>
+#include <utility>
 #include <vector>
+#include <queue>
 #include <algorithm>
 
 #include "mlir/IR/Operation.h"
 #include "mlir/Support/LLVM.h"
+#include "llvm/IR/PassManagerInternal.h"
 #include "llvm/Support/Casting.h"
 
 using VectorIndex = std::size_t;
+using Pipeline = std::vector<mlir::Operation*>; 
+using PipelinePair = std::pair<Pipeline*, Pipeline*>;
+
+namespace std {
+    template <>
+    struct hash<PipelinePair> {
+        size_t operator()(const PipelinePair& p) const {
+            return std::hash<Pipeline*>{}(p.first) ^ std::hash<Pipeline*>{}(p.second);
+        }
+    };
+}
+
+enum class DisconnectReason {
+    NONE,
+    MULTIPLE_CONSUMERS,
+    INVALID
+};
 
 enum class EdgeStatus {
     INVALID,
     ACTIVE,
     INACTIVE
+};
+
+/*
+class VectorIndex {
+private:
+    size_t vectorIndex = 0;
+    bool isUnknown = true;
+public:
+    VectorIndex() : vectorIndex(0), isUnknown(true) {}
+    VectorIndex(size_t Ix) : vectorIndex(Ix), isUnknown(false) {}
+
+    size_t get() {
+        return vectorIndex;
+    }
+
+};*/
+
+#if 0
+struct VectorizedOperation {
+    VectorizedOperation(mlir::Operation* op, VectorIndex vectIx) : op(op), vectIx(vectIx) {}
+
+    mlir::Operation* op;
+    VectorIndex vectIx;
+
+    bool operator==(const VectorizedOperation& other) const {
+        return (this->op == other.op) && (this->vectIx == other.vectIx);
+    }
+
 };
 
 struct FusionCandidate {
@@ -48,12 +97,15 @@ struct FusionCandidate {
         PRODUCER_CONSUMER
     };
 
-    FusionCandidate(mlir::Operation *op1, mlir::Operation *op2, Type type) : op1(op1), op2(op2), type(type) {}
+    FusionCandidate(VectorizedOperation op1, VectorizedOperation op2, Type type) : 
+        op1(op1), op2(op2), type(type) {}
 
-    mlir::Operation *op1;
-    mlir::Operation *op2;
+    VectorizedOperation op1;
+    VectorizedOperation op2;
+
     Type type;
 
+    //change to method
     [[maybe_unused]] friend bool operator==(const FusionCandidate& c1, const FusionCandidate& c2) {
         if (c1.type != c2.type)
             throw std::runtime_error("Comparison of fusion candidates with different types is not allowed.");
@@ -69,9 +121,77 @@ struct FusionCandidate {
 
 namespace std {
     template <>
+    struct hash<VectorizedOperation> {
+        size_t operator()(const VectorizedOperation& v) const noexcept {
+            return (hash<mlir::Operation *>()(v.op) << 1) + hash<VectorIndex>()(v.vectIx);
+        }
+    };
+
+    template <>
     struct hash<FusionCandidate> {
         size_t operator()(const FusionCandidate& c) const noexcept {
             if (c.type == FusionCandidate::Type::HORIZONTAL) {
+                return hash<VectorizedOperation>()(c.op1) ^ hash<VectorizedOperation>()(c.op2);
+            } else {
+                return (hash<VectorizedOperation>()(c.op1) << 1) + hash<VectorizedOperation>()(c.op1) + hash<VectorizedOperation>()(c.op2);
+            }
+        }
+    };
+}
+#endif
+
+
+struct FusionPair {
+    enum class Type {
+        HORIZONTAL,
+        PRODUCER_CONSUMER
+    };
+
+    FusionPair(mlir::Operation *op1, mlir::Operation *op2, Type type) : op1(op1), op2(op2), type(type) {}
+
+    mlir::Operation *op1;
+    mlir::Operation *op2;
+    Type type;
+
+    [[maybe_unused]] friend bool operator==(const FusionPair& c1, const FusionPair& c2) {
+        if (c1.type != c2.type)
+            throw std::runtime_error("Comparison of fusion candidates with different types is not allowed.");
+
+        if (c1.type == FusionPair::Type::HORIZONTAL) {
+            return (c1.op1 == c2.op1 && c1.op2 == c2.op2) ||
+                    (c1.op1 == c2.op2 && c1.op2 == c2.op1);
+        } else {
+            return (c1.op1 == c2.op1 && c1.op2 == c2.op2);
+        }
+    }
+
+    void print() const {
+        std::string type_str;
+        if (type == FusionPair::Type::HORIZONTAL) {
+            type_str = "Horizontal";
+        } else {
+            type_str = "Producer-Consumer";
+        }
+
+        std::string op1_str = "nullptr";
+        if (op1 != nullptr)
+            op1_str = op1->getName().getStringRef().str();
+
+        std::string op2_str = "nullptr";
+        if (op2 != nullptr)
+            op2_str = op2->getName().getStringRef().str();
+
+        llvm::outs() << "FusionPair: Type=" << type_str;
+        llvm::outs() << ", Op1=" << op1_str;
+        llvm::outs() << ", Op2=" << op2_str << "\n";
+    }
+};
+
+namespace std {
+    template <>
+    struct hash<FusionPair> {
+        size_t operator()(const FusionPair& c) const noexcept {
+            if (c.type == FusionPair::Type::HORIZONTAL) {
                 return hash<mlir::Operation *>()(c.op1) ^ hash<mlir::Operation *>()(c.op2);
             } else {
                 return (hash<mlir::Operation *>()(c.op1) << 1) + hash<mlir::Operation *>()(c.op1) + hash<mlir::Operation *>()(c.op2);
@@ -105,16 +225,13 @@ struct VectorUtils {
 
     //Function merges two pipelines into one by appending all operations from one pipeline to another
     //Order is not really considered, as it is embodied in IR
-    static void mergePipelines(std::vector<std::vector<mlir::Operation*>*>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t pipeIx1, size_t pipeIx2){
+    static void mergePipelines(std::vector<Pipeline*>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t pipeIx1, size_t pipeIx2){
         //llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
-        if (pipeIx1 == pipeIx2) {
+        if (pipeIx1 == pipeIx2)
             return;
-        }
-        if (pipeIx2 > pipeIx1) {
-            auto temp = pipeIx1;
-            pipeIx1 = pipeIx2;
-            pipeIx2 = temp;
-        }
+        if (pipeIx2 > pipeIx1)
+            std::swap(pipeIx1, pipeIx2);
+
         std::vector<mlir::Operation*> *mergedPipeline(pipelines.at(pipeIx2));
         for (auto op : *pipelines.at(pipeIx1)) {
             if  (std::find(mergedPipeline->begin(), mergedPipeline->end(), op) == mergedPipeline->end()) {
@@ -126,18 +243,36 @@ struct VectorUtils {
         pipelines.erase(pipelines.begin() + pipeIx1);
     }
 
+    static Pipeline* mergePipelines(std::vector<Pipeline*>& pipelines, std::map<mlir::Operation*, Pipeline*>& operationToPipeline, Pipeline* pipe1, Pipeline* pipe2){
+        //llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
+        if (pipe1 == pipe2)
+            return nullptr;
+
+        if (pipe2 > pipe1)
+            std::swap(pipe1, pipe2);
+
+        for (auto op : *pipe1) {
+            if  (std::find(pipe2->begin(), pipe2->end(), op) == pipe2->end()) {
+                pipe2->push_back(op);
+                operationToPipeline[op] = pipe2;
+            }
+        }
+        auto pipeIx1 = std::find(pipelines.begin(), pipelines.end(), pipe1);
+        pipelines.erase(pipeIx1);
+        return pipe2;
+    }
+
+
     //Function merges two pipelines into one by appending all operations from one pipeline to another
     //Order is not really considered, as it is embodied in IR
-    static void mergePipelines(std::vector<std::vector<mlir::Operation*>>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t pipeIx1, size_t pipeIx2){
+    static size_t mergePipelines(std::vector<std::vector<mlir::Operation*>>& pipelines, std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t pipeIx1, size_t pipeIx2){
         //llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
-        if (pipeIx1 == pipeIx2) {
-            return;
-        }
-        if (pipeIx2 > pipeIx1) {
-            auto temp = pipeIx1;
-            pipeIx1 = pipeIx2;
-            pipeIx2 = temp;
-        }
+        if (pipeIx1 == pipeIx2)
+            return pipeIx1;
+
+        if (pipeIx2 > pipeIx1)
+            std::swap(pipeIx1, pipeIx2);
+
         std::vector<mlir::Operation*> mergedPipeline(pipelines.at(pipeIx2));
         for (auto op : pipelines.at(pipeIx1)) {
             if  (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
@@ -147,11 +282,16 @@ struct VectorUtils {
         }
         pipelines.at(pipeIx2) = std::move(mergedPipeline);
         pipelines.erase(pipelines.begin() + pipeIx1);
+
+        //returns the Ix the pipeline that does not longer exist was merged into
+        return pipeIx2;
     }
 
     //------------------------------------------------------------------------------
 
     static bool arePipelinesConnected(const std::vector<std::vector<mlir::Operation*>>& pipelines, const std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t pipeIx1, size_t pipeIx2){
+
+        //false better?
         if (pipeIx1 == pipeIx2)
             return true;
         
@@ -186,6 +326,212 @@ struct VectorUtils {
         return false;
     }       
 
+
+    static bool tryTopologicalSortMerged(std::vector<Pipeline*> &pipelines, std::map<PipelinePair, DisconnectReason> &rel, Pipeline* pipe1, Pipeline* pipe2) {
+
+         if (pipe2 > pipe1)
+            std::swap(pipe1, pipe2);
+
+        //prealloc
+        std::map<Pipeline*, std::unordered_set<Pipeline*>> pipeline_graph;
+        for (auto pipe : pipelines) {
+            if (pipe == pipe1)
+                pipe = pipe2; 
+            pipeline_graph.insert({pipe ,{}});
+        }
+
+        for (auto& [key, _] : rel) {
+            auto consumer = key.second;    
+            auto producer = key.first;    
+
+            if (consumer == pipe1) {
+                consumer = pipe2;
+            }
+            else if (producer == pipe1) {
+                producer = pipe2;
+            }
+
+            if (producer == consumer)
+                continue;
+
+            if (pipeline_graph.find(consumer) == pipeline_graph.end()) {
+                pipeline_graph.insert({consumer, {producer}});
+            } else {
+                pipeline_graph.at(consumer).insert(producer);
+            }
+        }
+
+        /*for (auto node : pipeline_graph) {
+            llvm::outs() << "Key: " << node.first << ", Values: ";
+            for (auto dependency : node.second) {
+                llvm::outs() << dependency << " ";
+            }
+            llvm::outs() << "\n";
+        }
+        llvm::outs() << "\n";*/
+
+        return tryTopologicalSort(pipeline_graph);
+
+    }
+
+    static bool tryTopologicalSortPreMergedPipelines(const std::vector<std::vector<mlir::Operation*>>& pipelines, const std::map<mlir::Operation*, size_t>& operationToPipelineIx, size_t pipeIx1, size_t pipeIx2) {
+
+        if (pipeIx2 > pipeIx1)
+            std::swap(pipeIx1, pipeIx2);
+
+        std::map<size_t, std::unordered_set<size_t>> pipeline_graph;
+
+        for (size_t i = 0; i < pipelines.size(); i++) {
+
+            llvm::outs() << i << "\n";
+
+            auto pipeline = pipelines.at(i);
+
+            std::unordered_set<size_t> incomingPipelinesIxs;
+            for (auto op : pipeline) {
+                size_t currIx = operationToPipelineIx.at(op);
+
+                if (currIx != i)
+                    throw std::runtime_error("integrity error");
+
+                if (currIx == pipeIx2)
+                    currIx = pipeIx1;
+
+                llvm::outs() << currIx << "\n";
+
+                for (auto operand : op->getOperands()) {
+                    auto defOp = operand.getDefiningOp();
+                    if(operationToPipelineIx.find(defOp) == operationToPipelineIx.end())
+                        continue;
+
+                    auto defOpIx = operationToPipelineIx.at(defOp);
+
+                    llvm::outs() << defOpIx << "\n";
+
+                    if (defOpIx == pipeIx1)
+                        defOpIx = pipeIx2;
+                    
+                    llvm::outs() << defOpIx << "\n";
+
+                    if(defOpIx != currIx) {
+                        op->print(llvm::outs());
+                        llvm::outs() << "\n";
+                        defOp->print(llvm::outs());
+                        llvm::outs() << "\n";
+                        incomingPipelinesIxs.insert(defOpIx);
+                    }
+                }
+            }
+            pipeline_graph.insert({i, incomingPipelinesIxs});
+        }
+
+        for (auto node : pipeline_graph) {
+            llvm::outs() << "Key: " << node.first << ", Values: ";
+            for (auto dependency : node.second) {
+                llvm::outs() << dependency << " ";
+            }
+            llvm::outs() << "\n";
+        }
+        llvm::outs() << "\n";
+
+        return tryTopologicalSort(pipeline_graph);
+
+    }
+
+    static bool tryTopologicalSortPipelines(const std::vector<std::vector<mlir::Operation*>*>& pipelines, const std::map<mlir::Operation*, size_t> operationToPipelineIx) {
+
+        std::map<size_t, std::unordered_set<size_t>> pipeline_graph;
+
+        for (size_t i = 0; i < pipelines.size(); i++) {
+            auto pipeline = pipelines.at(i);
+
+            std::unordered_set<size_t> incomingPipelinesIxs;
+            for (auto op : *pipeline) {
+                size_t currIx = operationToPipelineIx.at(op);
+                if (currIx != i) {
+                    throw std::runtime_error("integrity error");
+                }
+                for (auto operand : op->getOperands()) {
+                    auto defOp = operand.getDefiningOp();
+                    if(operationToPipelineIx.find(defOp) == operationToPipelineIx.end())
+                        continue;
+                    auto defOpIx = operationToPipelineIx.at(defOp);
+                    if(defOpIx != currIx) {
+                        incomingPipelinesIxs.insert(defOpIx);
+                    }
+                }
+            }
+            pipeline_graph.insert({i, incomingPipelinesIxs});
+        }
+
+        return tryTopologicalSort(pipeline_graph);
+         
+    }
+
+    private:
+    //kahn: https://dev.to/leopfeiffer/topological-sort-with-kahns-algorithm-3dl1
+    //https://leetcode.com/problems/course-schedule/solutions/483330/c-kahns-algorithm-topological-sort-with-easy-detailed-explanation-16-ms-beats-98/
+    static bool tryTopologicalSort(std::map<size_t, std::unordered_set<size_t>> pipeline_graph) {
+
+        std::unordered_map<size_t, size_t> inDegrees;
+        for (auto node : pipeline_graph) {
+            for (auto dependency : node.second) {
+                ++inDegrees[dependency];
+            }
+        }
+
+        std::queue<size_t> queue;
+        for (auto node : pipeline_graph) {
+            if (inDegrees[node.first] == 0) {
+                queue.push(node.first);
+            }
+        }
+
+        std::vector<size_t> result;
+        while (!queue.empty()) {
+            size_t node = queue.front(); queue.pop();
+            result.push_back(node);
+            for (auto dependency : pipeline_graph.at(node)) {
+                if (--inDegrees[dependency] == 0) {
+                    queue.push(dependency);
+                }
+            }
+        }
+
+        return result.size() == pipeline_graph.size();
+    }
+
+    static bool tryTopologicalSort(std::map<Pipeline*, std::unordered_set<Pipeline*>> pipeline_graph) {
+
+        std::unordered_map<Pipeline*, Pipeline*> inDegrees;
+        for (auto node : pipeline_graph) {
+            for (auto dependency : node.second) {
+                ++inDegrees[dependency];
+            }
+        }
+
+        std::queue<Pipeline*> queue;
+        for (auto node : pipeline_graph) {
+            if (inDegrees[node.first] == 0) {
+                queue.push(node.first);
+            }
+        }
+
+        std::vector<Pipeline*> result;
+        while (!queue.empty()) {
+            Pipeline* node = queue.front(); queue.pop();
+            result.push_back(node);
+            for (auto dependency : pipeline_graph.at(node)) {
+                if (--inDegrees[dependency] == 0) {
+                    queue.push(dependency);
+                }
+            }
+        }
+
+        return result.size() == pipeline_graph.size();
+    }
+
+    public:
     /**
      * @brief Recursive function checking if the given value is transitively dependant on the operation `op`.
      * @param value The value to check
@@ -221,18 +567,30 @@ struct VectorUtils {
      * @param pipelinePosition The position where the pipeline will be
      * @param pipeline The pipeline for which this function should be executed
      */
-    static void movePipelineInterleavedOperations(mlir::Block::iterator pipelinePosition, const std::vector<mlir::Operation*> &pipeline) {
+    static void movePipelineInterleavedOperations(mlir::Block::iterator pipelinePosition, const std::vector<mlir::Operation*> pipeline) {
         // first operation in pipeline vector is last in IR, and the last is the first
         auto startPos = pipeline.back()->getIterator();
         auto endPos = pipeline.front()->getIterator();
         auto currSkip = pipeline.rbegin();
         std::vector<mlir::Operation*> moveBeforeOps;
         std::vector<mlir::Operation*> moveAfterOps;
+        llvm::outs() << "test4" << "\n";
+
+        llvm::outs() << pipeline.size() << "\n";
+        for (auto it = pipeline.front()->getIterator(); it != pipeline.back()->getIterator(); ++it) {
+            it->print(llvm::outs());
+            llvm::outs() << "\n";        
+        }
+
         for(auto it = startPos; it != endPos; ++it) {
             if (it == (*currSkip)->getIterator()) {
                 ++currSkip;
                 continue;
             }
+
+            it->print(llvm::outs());
+            llvm::outs() << "\n";
+            llvm::outs() << "test41" << "\n";
 
             bool dependsOnPipeline = false;
             auto pipelineOpsBeforeIt = currSkip;
@@ -247,13 +605,17 @@ struct VectorUtils {
                     break;
                 }
             }
+        llvm::outs() << "test42" << "\n";
             // check first pipeline op
             for (auto operand : it->getOperands()) {
+                it->print(llvm::outs());
+                llvm::outs() << "\n";
                 if(valueDependsOnResultOf(operand, *pipelineOpsBeforeIt)) {
                     dependsOnPipeline = true;
                     break;
                 }
             }
+        llvm::outs() << "test43" << "\n";
             if (dependsOnPipeline) {
                 moveAfterOps.push_back(&(*it));
             }
@@ -262,6 +624,7 @@ struct VectorUtils {
             }
         }
 
+        llvm::outs() << "test5" << "\n";
         for(auto moveBeforeOp: moveBeforeOps) {
             moveBeforeOp->moveBefore(pipelinePosition->getBlock(), pipelinePosition);
         }
@@ -269,19 +632,24 @@ struct VectorUtils {
             moveAfterOp->moveAfter(pipelinePosition->getBlock(), pipelinePosition);
             pipelinePosition = moveAfterOp->getIterator();
         }
+        llvm::outs() << "test6" << "\n";
     }
 
-    static void createVectorizedPipelineOps(mlir::func::FuncOp func, std::vector<std::vector<mlir::Operation *>> pipelines, std::map<mlir::Operation*, VectorIndex> decisionIxs) {
+    static void createVectorizedPipelineOps(mlir::func::FuncOp func, std::vector<Pipeline> pipelines, std::map<mlir::Operation*, VectorIndex> decisionIxs) {
         mlir::OpBuilder builder(func);
+
+        llvm::outs() << "test2" << "\n";
 
         // Create the `VectorizedPipelineOp`s
         for(auto _pipeline : pipelines) {
-            if(_pipeline.empty()) {
+            llvm::outs() << "test2: " << _pipeline.size() << "\n";
+            if(_pipeline.empty())
                 continue;
-            }
+            
             auto valueIsPartOfPipeline = [&](mlir::Value operand) {
                 return llvm::any_of(_pipeline, [&](mlir::Operation* lv) { return lv == operand.getDefiningOp(); });
             };
+            llvm::outs() << "test3: " << _pipeline.size() << "\n";
             std::vector<mlir::Attribute> vSplitAttrs;
             std::vector<mlir::Attribute> vCombineAttrs;
             std::vector<mlir::Location> locations;
@@ -298,8 +666,12 @@ struct VectorUtils {
 
             //potential addition for
             std::vector<mlir::Operation*> pipeline;
+            llvm::outs() << _pipeline.size() << "\n";
             for(auto vIt = _pipeline.rbegin(); vIt != _pipeline.rend(); ++vIt) {
                 auto v = *vIt;
+
+                v->print(llvm::outs());
+                llvm::outs() << "\n";
 
                 auto vSplits = std::vector<mlir::daphne::VectorSplit>();
                 auto vCombines = std::vector<mlir::daphne::VectorCombine>();
@@ -362,8 +734,15 @@ struct VectorUtils {
                         results.push_back(toCastOp);
 
                         auto fromCastOp = builder.create<mlir::daphne::CastOp>(loc, r.getType(), toCastOp);
-                        fromCastOp->moveAfter(toCastOp);
                         r.replaceAllUsesExcept(fromCastOp, toCastOp);
+
+                        //
+                        mlir::Operation* firstUseOp;
+                        for (const auto &use : fromCastOp->getUses()) {
+                            firstUseOp = use.getOwner(); 
+                            break;
+                        }
+                        fromCastOp->moveBefore(firstUseOp);
                         
                     }
                 }
@@ -373,86 +752,86 @@ struct VectorUtils {
             locs.reserve(_pipeline.size());
             for(auto op: pipeline) {
                 locs.push_back(op->getLoc());
-        }
-
-        auto loc = builder.getFusedLoc(locs);
-        auto pipelineOp = builder.create<mlir::daphne::VectorizedPipelineOp>(loc,
-            mlir::ValueRange(results).getTypes(),
-            operands,
-            outRows,
-            outCols,
-            builder.getArrayAttr(vSplitAttrs),
-            builder.getArrayAttr(vCombineAttrs),
-            nullptr);
-        mlir::Block *bodyBlock = builder.createBlock(&pipelineOp.getBody());
-
-        //remove information from input matrices of pipeline
-        for(size_t i = 0u; i < operands.size(); ++i) {
-            auto argTy = operands[i].getType();
-            switch (vSplitAttrs[i].cast<mlir::daphne::VectorSplitAttr>().getValue()) {
-                case mlir::daphne::VectorSplit::ROWS: {
-                    auto matTy = argTy.cast<mlir::daphne::MatrixType>();
-                    // only remove row information
-                    argTy = matTy.withShape(-1, matTy.getNumCols());
-                    break;
-                }
-                case mlir::daphne::VectorSplit::COLS: {
-                    auto matTy = argTy.cast<mlir::daphne::MatrixType>();
-                    // only remove col information
-                    argTy = matTy.withShape(matTy.getNumRows(), -1);
-                    break;
-                }
-                case mlir::daphne::VectorSplit::NONE:
-                    // keep any size information
-                    break;
-            }
-            bodyBlock->addArgument(argTy, builder.getUnknownLoc());
-        }
-
-        auto argsIx = 0u;
-        auto resultsIx = 0u;
-        //for every op in pipeline
-        for(auto vIt = pipeline.begin(); vIt != pipeline.end(); ++vIt) {
-            auto v = *vIt;
-            auto numOperands = v->getNumOperands();
-            auto numResults = v->getNumResults();
-
-            //move v before end of block
-            v->moveBefore(bodyBlock, bodyBlock->end());
-
-            //set operands to arguments of body block, if defOp is not part of the pipeline
-            for(auto i = 0u; i < numOperands; ++i) {
-                if(!valueIsPartOfPipeline(v->getOperand(i))) {
-                    v->setOperand(i, bodyBlock->getArgument(argsIx++));
-                }
             }
 
-            auto pipelineReplaceResults = pipelineOp->getResults().drop_front(resultsIx).take_front(numResults);
-            resultsIx += numResults;
-            for (auto z : llvm::zip(v->getResults(), pipelineReplaceResults)) {
-                auto old = std::get<0>(z);
-                auto replacement = std::get<1>(z);
+            auto loc = builder.getFusedLoc(locs);
+            auto pipelineOp = builder.create<mlir::daphne::VectorizedPipelineOp>(loc,
+                mlir::ValueRange(results).getTypes(),
+                operands,
+                outRows,
+                outCols,
+                builder.getArrayAttr(vSplitAttrs),
+                builder.getArrayAttr(vCombineAttrs),
+                nullptr);
+            mlir::Block *bodyBlock = builder.createBlock(&pipelineOp.getBody());
 
-                // TODO: switch to type based size inference instead
-                // FIXME: if output is dynamic sized, we can't do this
-                // replace `NumRowOp` and `NumColOp`s for output size inference
-                for(auto& use: old.getUses()) {
-                    auto* op = use.getOwner();
-                    if(auto nrowOp = llvm::dyn_cast<mlir::daphne::NumRowsOp>(op)) {
-                        nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
-                        nrowOp.erase();
+            //remove information from input matrices of pipeline
+            for(size_t i = 0u; i < operands.size(); ++i) {
+                auto argTy = operands[i].getType();
+                switch (vSplitAttrs[i].cast<mlir::daphne::VectorSplitAttr>().getValue()) {
+                    case mlir::daphne::VectorSplit::ROWS: {
+                        auto matTy = argTy.cast<mlir::daphne::MatrixType>();
+                        // only remove row information
+                        argTy = matTy.withShape(-1, matTy.getNumCols());
+                        break;
                     }
-                    if(auto ncolOp = llvm::dyn_cast<mlir::daphne::NumColsOp>(op)) {
-                        ncolOp.replaceAllUsesWith(pipelineOp.getOutCols()[replacement.getResultNumber()]);
-                        ncolOp.erase();
+                    case mlir::daphne::VectorSplit::COLS: {
+                        auto matTy = argTy.cast<mlir::daphne::MatrixType>();
+                        // only remove col information
+                        argTy = matTy.withShape(matTy.getNumRows(), -1);
+                        break;
+                    }
+                    case mlir::daphne::VectorSplit::NONE:
+                        // keep any size information
+                        break;
+                }
+                bodyBlock->addArgument(argTy, builder.getUnknownLoc());
+            }
+
+            auto argsIx = 0u;
+            auto resultsIx = 0u;
+            //for every op in pipeline
+            for(auto vIt = pipeline.begin(); vIt != pipeline.end(); ++vIt) {
+                auto v = *vIt;
+                auto numOperands = v->getNumOperands();
+                auto numResults = v->getNumResults();
+
+                //move v before end of block
+                v->moveBefore(bodyBlock, bodyBlock->end());
+
+                //set operands to arguments of body block, if defOp is not part of the pipeline
+                for(auto i = 0u; i < numOperands; ++i) {
+                    if(!valueIsPartOfPipeline(v->getOperand(i))) {
+                        v->setOperand(i, bodyBlock->getArgument(argsIx++));
                     }
                 }
-                // Replace only if not used by pipeline op
-                old.replaceUsesWithIf(
-                    replacement, [&](mlir::OpOperand &opOperand) {
-                        return llvm::count(pipeline, opOperand.getOwner()) == 0;
-                    });
-                }
+
+                auto pipelineReplaceResults = pipelineOp->getResults().drop_front(resultsIx).take_front(numResults);
+                resultsIx += numResults;
+                for (auto z : llvm::zip(v->getResults(), pipelineReplaceResults)) {
+                    auto old = std::get<0>(z);
+                    auto replacement = std::get<1>(z);
+
+                    // TODO: switch to type based size inference instead
+                    // FIXME: if output is dynamic sized, we can't do this
+                    // replace `NumRowOp` and `NumColOp`s for output size inference
+                    for(auto& use: old.getUses()) {
+                        auto* op = use.getOwner();
+                        if(auto nrowOp = llvm::dyn_cast<mlir::daphne::NumRowsOp>(op)) {
+                            nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
+                            nrowOp.erase();
+                        }
+                        if(auto ncolOp = llvm::dyn_cast<mlir::daphne::NumColsOp>(op)) {
+                            ncolOp.replaceAllUsesWith(pipelineOp.getOutCols()[replacement.getResultNumber()]);
+                            ncolOp.erase();
+                        }
+                    }
+                    // Replace only if not used by pipeline op
+                    old.replaceUsesWithIf(
+                        replacement, [&](mlir::OpOperand &opOperand) {
+                            return llvm::count(pipeline, opOperand.getOwner()) == 0;
+                        });
+                    }
             }
             bodyBlock->walk([](mlir::Operation* op) {
                 for(auto resVal: op->getResults()) {
@@ -572,7 +951,75 @@ struct VectorUtils {
             }
             outfile << "}" << std::endl;
         }
+
+        static std::string printPtr(void *ptr) {
+
+            std::ostringstream oss;
+            oss << std::hex << reinterpret_cast<uintptr_t>(ptr);
+            
+            std::string str = oss.str();
+            
+            return str.substr(str.size() - 3);
+        }
+
+
+        static void printPipelines(const std::vector<mlir::Operation*> &ops, const std::map<mlir::Operation*, Pipeline*> &operationToPipeline, const std::map<mlir::Operation*, VectorIndex> &decisionIxs, std::string filename) {
+            std::ofstream outfile(filename);
+
+            outfile << "digraph G {" << std::endl;
+
+            std::map<mlir::Operation*, std::string> opToNodeName;
+            std::map<Pipeline*, size_t> pipelineToIx;
+
+            for (size_t i = 0; i < ops.size(); ++i) {
+                std::string nodeName = "node" + std::to_string(i);
+                opToNodeName[ops.at(i)] = nodeName;
+
+                auto pipeline = operationToPipeline.at(ops.at(i));
+                size_t pipelineIx;
+                if (pipelineToIx.find(pipeline) == pipelineToIx.end()) {
+                    pipelineIx = pipelineToIx.size();
+                    pipelineToIx.insert({pipeline, pipelineIx});
+                }
+                else {
+                    pipelineIx = pipelineToIx.at(pipeline);
+                }
+                std::string color = VectorUtils::DEBUG::getColor(pipelineIx);
+                VectorIndex vectIx = decisionIxs.at(ops.at(i));
+
+                std::string pipeName = printPtr(pipeline);
+
+                outfile << nodeName << " [label=\"" << ops.at(i)->getName().getStringRef().str() << "\\npIx: " << pipeName << ", vectIx: " << vectIx << "\", fillcolor=" << color << ", style=filled];" << std::endl;
+            }
+
+            std::unordered_set<mlir::Operation*> outsideOps; 
+
+            for (size_t i = 0; i < ops.size(); ++i) {
+                mlir::Operation* op = ops.at(i);
+                auto consumerPipelineIx = operationToPipeline.at(op);
+
+                for (const auto& operandValue : op->getOperands()) {
+                    mlir::Operation* operandOp = operandValue.getDefiningOp();
+                    auto it = operationToPipeline.find(operandOp);
+
+                    if (it != operationToPipeline.end()) {
+                        auto producerPipeplineIx = it->second;
+                        outfile << opToNodeName.at(operandOp) << " -> " << opToNodeName.at(op);
+
+                        if (producerPipeplineIx != consumerPipelineIx) {
+                            outfile << " [style=dotted]";
+                        }
+                        outfile << ";" << std::endl;
+                    }
+                    else {
+                        //also show the surrounding ops, e.g. to make horizontal fusion visible
+                    } 
+                }
+            }
+            outfile << "}" << std::endl;
+        }
     };
+
 
     struct BENCH {
 
