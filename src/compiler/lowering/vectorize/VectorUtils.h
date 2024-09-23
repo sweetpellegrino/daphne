@@ -565,8 +565,6 @@ struct VectorUtils {
 
         for (size_t i = 0; i < pipelines.size(); i++) {
 
-            llvm::outs() << i << "\n";
-
             auto pipeline = pipelines.at(i);
 
             std::unordered_set<size_t> incomingPipelinesIxs;
@@ -579,8 +577,6 @@ struct VectorUtils {
                 if (currIx == pipeIx2)
                     currIx = pipeIx1;
 
-                llvm::outs() << currIx << "\n";
-
                 for (auto operand : op->getOperands()) {
                     auto defOp = operand.getDefiningOp();
                     if(operationToPipelineIx.find(defOp) == operationToPipelineIx.end())
@@ -588,13 +584,9 @@ struct VectorUtils {
 
                     auto defOpIx = operationToPipelineIx.at(defOp);
 
-                    llvm::outs() << defOpIx << "\n";
-
                     if (defOpIx == pipeIx1)
                         defOpIx = pipeIx2;
                     
-                    llvm::outs() << defOpIx << "\n";
-
                     if(defOpIx != currIx) {
                         op->print(llvm::outs());
                         llvm::outs() << "\n";
@@ -665,7 +657,6 @@ struct VectorUtils {
         std::queue<size_t> queue;
         for (auto node : pipeline_graph) {
             if (inDegrees[node.first] == 0) {
-                llvm::outs() << node.first << "\n";
                 queue.push(node.first);
             }
         }
@@ -696,7 +687,6 @@ struct VectorUtils {
         std::queue<Pipeline*> queue;
         for (auto node : pipeline_graph) {
             if (inDegrees[node.first] == 0) {
-                llvm::outs() << node.first << "\n";
                 queue.push(node.first);
             }
         }

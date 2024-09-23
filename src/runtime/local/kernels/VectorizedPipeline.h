@@ -112,6 +112,7 @@ void printArgs(DTRes **outputs, size_t numOutputs, int64_t *outputTypes, bool* i
     llvm::outs() << "\n";
 
     llvm::outs() << "numFuncs: " << numFuncs << "\n";
+    llvm::outs() << "\n";
 }
 
 // ****************************************************************************

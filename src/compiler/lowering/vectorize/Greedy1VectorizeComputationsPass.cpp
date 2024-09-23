@@ -121,8 +121,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
     auto func = getOperation();
 
-    llvm::outs() << "Greedy1VectorizeComputationsPass" << "\n";
-
     std::vector<mlir::Operation*> ops;
     func->walk([&](daphne::Vectorizable op) {
         ops.emplace_back(op);
@@ -190,14 +188,14 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             if (!llvm::isa<daphne::MatrixType>(operand.getType()))
                 continue;
 
-            llvm::outs() << vectOp->getName().getStringRef().str() << " ";
+            //llvm::outs() << vectOp->getName().getStringRef().str() << " ";
 
             if (llvm::isa<mlir::BlockArgument>(operand)) {
                 continue;
             }
 
             if (auto vectDefOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
-                llvm::outs() << vectDefOp->getName().getStringRef().str() << "\n";
+                //llvm::outs() << vectDefOp->getName().getStringRef().str() << "\n";
 
                 auto split = vectOp.getVectorSplits()[ZeroDecision][i];
                 auto combine  = vectDefOp.getVectorCombines()[ZeroDecision][0];
@@ -217,7 +215,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             } else {
                 //defOp is outside of consideration, top horz. fusion possible
                 //boundingOperations.push_back(op);
-                llvm::outs() << " test123\n";
+                //llvm::outs() << " test123\n";
             }
         }
     }
@@ -232,10 +230,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
     //mmPCR to PCR
     std::map<PipelinePair, DisconnectReason> producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmProducerConsumerRelationships); 
-
-    //
-    VectorUtils::DEBUG::printPipelines(pipelines);
-    VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
 
     //Topologoically greedy merge along the (valid) MULTIPLE_CONSUMER relationships
     bool change = true;
@@ -282,10 +276,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     }
 
     VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-pre-horz.dot");
-
-    llvm::outs() << "----------------------PCR---------------------------------" << "\n";
-    VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
-    llvm::outs() << "----------------------------------------------------------" << "\n";
 
     //-----------------------------------------------------------------
     // Consumer <- Producer -> Consumer
@@ -360,7 +350,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //derive from top pipelines
 
     for(auto pipePair : horizontalRelationships) {
-        llvm::outs() << VectorUtils::DEBUG::printPtr(pipePair.first) << " " << VectorUtils::DEBUG::printPtr(pipePair.second) << "\n"; 
 
         auto pipe1 = pipePair.first;
         auto pipe2 = pipePair.second;
@@ -376,10 +365,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
     }
 
-    //
-    VectorUtils::DEBUG::printPipelines(pipelines);
-
-    llvm::outs() << "------------------------DRAW-FINAL-----------------------" << "\n";
     VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1.dot");
 
     //Post Processing

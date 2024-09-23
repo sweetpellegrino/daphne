@@ -85,7 +85,7 @@ public:
 
 protected:
     bool isBroadcast(mlir::daphne::VectorSplit splitMethod, Structure *input) {
-        return splitMethod == VectorSplit::NONE || (splitMethod == VectorSplit::ROWS && input->getNumRows() == 1);
+        return splitMethod == VectorSplit::NONE || (splitMethod == VectorSplit::ROWS && input->getNumRows() == 1) || (splitMethod == VectorSplit::COLS && input->getNumCols() == 1);
     }
 
     std::vector<Structure *> createFuncInputs(uint64_t rowStart, uint64_t rowEnd) {
