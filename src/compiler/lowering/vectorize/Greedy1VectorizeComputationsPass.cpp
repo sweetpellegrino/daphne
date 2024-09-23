@@ -27,6 +27,7 @@
 #include "mlir/IR/Value.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
+#include "mlir/Transforms/TopologicalSortUtils.h"
 #include "spdlog/fmt/bundled/core.h"
 
 #include <algorithm>
@@ -64,317 +65,7 @@ namespace
 
     struct Greedy1VectorizeComputationsPass : public PassWrapper<Greedy1VectorizeComputationsPass, OperationPass<func::FuncOp>> {
         void runOnOperation() final;
-
-        void createVectorizedPipelineOps(mlir::func::FuncOp func, std::vector<Pipeline> pipelines, std::map<mlir::Operation*, VectorIndex> decisionIxs) {
-            mlir::OpBuilder builder(func);
-
-            llvm::outs() << "test2" << pipelines.size() << "\n";
-
-            for (auto pipe : pipelines) {
-                for (auto op : pipe) {
-                    op->print(llvm::outs());
-                    llvm::outs() << "\n";
-                }
-            }
-
-            // Create the `VectorizedPipelineOp`s
-            for(auto _pipeline : pipelines) {
-                llvm::outs() << "testp: " << _pipeline.size() << "\n";
-                if(_pipeline.empty())
-                    continue;
-                
-                auto valueIsPartOfPipeline = [&](mlir::Value operand) {
-                    return llvm::any_of(_pipeline, [&](mlir::Operation* lv) { return lv == operand.getDefiningOp(); });
-                };
-                llvm::outs() << "test3: " << _pipeline.size() << "\n";
-                std::vector<mlir::Attribute> vSplitAttrs;
-                std::vector<mlir::Attribute> vCombineAttrs;
-                std::vector<mlir::Location> locations;
-                std::vector<mlir::Value> results;
-                std::vector<mlir::Value> operands;
-                std::vector<mlir::Value> outRows;
-                std::vector<mlir::Value> outCols;
-
-                // first op in pipeline is last in IR
-                builder.setInsertionPoint(_pipeline.front());
-                // move all operations, between the operations that will be part of the pipeline, before or after the
-                // completed pipeline
-                for (auto op : _pipeline) {
-                    op->print(llvm::outs());
-                    llvm::outs() << "\n";
-                }
-                VectorUtils::movePipelineInterleavedOperations(builder.getInsertionPoint(), _pipeline);
-
-                
-
-                //potential addition for
-                std::vector<mlir::Operation*> pipeline;
-                llvm::outs() << _pipeline.size() << "\n";
-                for(auto vIt = _pipeline.rbegin(); vIt != _pipeline.rend(); ++vIt) {
-                    auto v = *vIt;
-
-                    v->print(llvm::outs());
-                    llvm::outs() << "\n";
-
-                    auto vSplits = std::vector<mlir::daphne::VectorSplit>();
-                    auto vCombines = std::vector<mlir::daphne::VectorCombine>();
-                    auto opsOutputSizes = std::vector<std::pair<mlir::Value, mlir::Value>>();
-                    if (auto vec = llvm::dyn_cast<mlir::daphne::Vectorizable>(v)) {
-                        //vec->print(llvm::outs());
-                        //llvm::outs() << "\n";
-                        size_t d = decisionIxs[v];
-                        vSplits = vec.getVectorSplits()[d];
-                        vCombines = vec.getVectorCombines()[d];
-                        opsOutputSizes = vec.createOpsOutputSizes(builder)[d];
-                    } else {
-                        throw std::runtime_error("Vectorizable op not found");
-                    }
-
-                    pipeline.push_back(v);
-
-                    // TODO: although we do create enum attributes, it might make sense/make it easier to
-                    // just directly use an I64ArrayAttribute
-                    // Determination of operands of VectorizedPipelineOps!
-                    for(auto i = 0u; i < v->getNumOperands(); ++i) {
-                        auto operand = v->getOperand(i);
-                        if(!valueIsPartOfPipeline(operand)){
-                            vSplitAttrs.push_back(mlir::daphne::VectorSplitAttr::get(&getContext(), vSplits[i]));
-                            operands.push_back(operand);
-                        }
-                    }
-
-                    // Determination of results of VectorizedPipelineOps!
-                    for(auto vCombine : vCombines) {
-                        vCombineAttrs.push_back(mlir::daphne::VectorCombineAttr::get(&getContext(), vCombine));
-                    }
-                    locations.push_back(v->getLoc());
-                    for(auto result: v->getResults()) {
-                        results.push_back(result);
-                    }
-                    for(auto outSize: opsOutputSizes) {
-                        outRows.push_back(outSize.first);
-                        outCols.push_back(outSize.second);
-                    }
-
-                    //check if any of the outputs type of an operator is a scalar value
-                    //if yes, add additional castOps inside pipeline and outside pipeline
-                    for (size_t i = 0; i < v->getNumResults(); i++) {
-                        auto r = v->getResult(0);
-                        //TODO: check if it includes all types used in daphne
-                        if (r.getType().isIntOrIndexOrFloat()) {
-                            auto m1x1 = mlir::daphne::MatrixType::get(&getContext(), r.getType(), 1, 1, 1, mlir::daphne::MatrixRepresentation::Dense);
-                            auto loc = v->getLoc();
-
-                            auto toCastOp = builder.create<mlir::daphne::CastOp>(loc, m1x1, r);
-                            toCastOp->moveAfter(v);
-                            
-                            //xxxxxx
-                            pipeline.push_back(toCastOp);
-                            vCombineAttrs.push_back(mlir::daphne::VectorCombineAttr::get(&getContext(), vCombines[i]));
-                            auto cst1 = builder.create<mlir::daphne::ConstantOp>(loc, builder.getIndexType(), builder.getIndexAttr(1l));
-                            outRows.push_back(cst1);
-                            outCols.push_back(cst1);
-                            results.push_back(toCastOp);
-
-                            auto fromCastOp = builder.create<mlir::daphne::CastOp>(loc, r.getType(), toCastOp);
-                            r.replaceAllUsesExcept(fromCastOp, toCastOp);
-
-                            //
-                            mlir::Operation* firstUseOp;
-                            for (const auto &use : fromCastOp->getUses()) {
-                                firstUseOp = use.getOwner(); 
-                                break;
-                            }
-                            fromCastOp->moveBefore(firstUseOp);
-                            
-                        }
-                    }
-                }
-
-                std::vector<mlir::Location> locs;
-                locs.reserve(_pipeline.size());
-                for(auto op: pipeline) {
-                    locs.push_back(op->getLoc());
-                }
-
-                auto loc = builder.getFusedLoc(locs);
-                auto pipelineOp = builder.create<mlir::daphne::VectorizedPipelineOp>(loc,
-                    mlir::ValueRange(results).getTypes(),
-                    operands,
-                    outRows,
-                    outCols,
-                    builder.getArrayAttr(vSplitAttrs),
-                    builder.getArrayAttr(vCombineAttrs),
-                    nullptr);
-                mlir::Block *bodyBlock = builder.createBlock(&pipelineOp.getBody());
-
-                //remove information from input matrices of pipeline
-                for(size_t i = 0u; i < operands.size(); ++i) {
-                    auto argTy = operands[i].getType();
-                    switch (vSplitAttrs[i].cast<mlir::daphne::VectorSplitAttr>().getValue()) {
-                        case mlir::daphne::VectorSplit::ROWS: {
-                            auto matTy = argTy.cast<mlir::daphne::MatrixType>();
-                            // only remove row information
-                            argTy = matTy.withShape(-1, matTy.getNumCols());
-                            break;
-                        }
-                        case mlir::daphne::VectorSplit::COLS: {
-                            auto matTy = argTy.cast<mlir::daphne::MatrixType>();
-                            // only remove col information
-                            argTy = matTy.withShape(matTy.getNumRows(), -1);
-                            break;
-                        }
-                        case mlir::daphne::VectorSplit::NONE:
-                            // keep any size information
-                            break;
-                    }
-                    bodyBlock->addArgument(argTy, builder.getUnknownLoc());
-                }
-
-                auto argsIx = 0u;
-                auto resultsIx = 0u;
-                //for every op in pipeline
-                for(auto vIt = pipeline.begin(); vIt != pipeline.end(); ++vIt) {
-                    auto v = *vIt;
-                    auto numOperands = v->getNumOperands();
-                    auto numResults = v->getNumResults();
-
-                    //move v before end of block
-                    v->moveBefore(bodyBlock, bodyBlock->end());
-
-                    //set operands to arguments of body block, if defOp is not part of the pipeline
-                    for(auto i = 0u; i < numOperands; ++i) {
-                        if(!valueIsPartOfPipeline(v->getOperand(i))) {
-                            v->setOperand(i, bodyBlock->getArgument(argsIx++));
-                        }
-                    }
-
-                    auto pipelineReplaceResults = pipelineOp->getResults().drop_front(resultsIx).take_front(numResults);
-                    resultsIx += numResults;
-                    for (auto z : llvm::zip(v->getResults(), pipelineReplaceResults)) {
-                        auto old = std::get<0>(z);
-                        auto replacement = std::get<1>(z);
-
-                        // TODO: switch to type based size inference instead
-                        // FIXME: if output is dynamic sized, we can't do this
-                        // replace `NumRowOp` and `NumColOp`s for output size inference
-                        for(auto& use: old.getUses()) {
-                            auto* op = use.getOwner();
-                            if(auto nrowOp = llvm::dyn_cast<mlir::daphne::NumRowsOp>(op)) {
-                                nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
-                                nrowOp.erase();
-                            }
-                            if(auto ncolOp = llvm::dyn_cast<mlir::daphne::NumColsOp>(op)) {
-                                ncolOp.replaceAllUsesWith(pipelineOp.getOutCols()[replacement.getResultNumber()]);
-                                ncolOp.erase();
-                            }
-                        }
-                        // Replace only if not used by pipeline op
-                        old.replaceUsesWithIf(
-                            replacement, [&](mlir::OpOperand &opOperand) {
-                                return llvm::count(pipeline, opOperand.getOwner()) == 0;
-                            });
-                        }
-                }
-                bodyBlock->walk([](mlir::Operation* op) {
-                    for(auto resVal: op->getResults()) {
-                        if(auto ty = resVal.getType().dyn_cast<mlir::daphne::MatrixType>()) {
-                            resVal.setType(ty.withShape(-1, -1));
-                        }
-                    }
-                });
-                builder.setInsertionPointToEnd(bodyBlock);
-                builder.create<mlir::daphne::ReturnOp>(loc, results);
-                if (!mlir::sortTopologically(bodyBlock)) {
-                    throw std::runtime_error("topoSort");
-                }   
-            }
-        }
     }; 
-
-    /*
-    class Pipeline {
-    private: 
-        std::vector<mlir::Operation*> operations;
-        std::vector<mlir::Operation*> inputOperations;
-        std::vector<mlir::Operation*> outputOperations;
-
-        std::map<mlir::Operation*, VectorIndex> decisions;
-
-    public:
-        void addOperation(mlir::Operation* op, VectorIndex vectIx) {
-            operations.push_back(op);
-            decisions.insert({op, vectIx});
-        }
-
-        void updateInputOutputOperations(std::vector<mlir::Operation*> ops) {
-
-            std::vector<mlir::Operation*> _io;
-            std::vector<mlir::Operation*> _oo;
-
-            for (auto op : operations) {
-                bool isInput = true;
-                bool isOutput = true;
-
-                for (const auto operand : op->getOperands()) {
-                    mlir::Operation* defOp = operand.getDefiningOp(); 
-
-                    //check if feasible for blockargs
-                    if (!defOp)
-                        continue;
-                    else {
-                        if (std::find(ops.begin(), ops.end(), defOp) == ops.end()) {
-                            isInput = false;
-                            break;
-                        }
-                    }
-                }
-
-                for (const auto user : op->getUsers()) {
-                    if (std::find(ops.begin(), ops.end(), user) == ops.end()) {
-                        isOutput = false;
-                        break;
-                    }
-                }
-
-                if (isInput)
-                    _io.push_back(op);
-                if (isOutput)
-                    _oo.push_back(op);
-            }
-
-            inputOperations = _io;
-            outputOperations = _oo;
-        }
-
-        VectorIndex getVectorIndexOfOperation(mlir::Operation* op) {
-            return decisions.at(op);
-        }
-
-        void print() {
-            llvm::outs() << "Pipeline:\n";
-            llvm::outs() << "Ops: ";
-            for (const auto op : operations) {
-                llvm::outs() << "(" << op->getName().getStringRef().str() << ", vIx: " << decisions.at(op) << "), ";
-            }
-            llvm::outs() << "\n";
-
-            llvm::outs() << "Inputs: ";
-            for (const auto op : inputOperations) {
-                llvm::outs() << op->getName().getStringRef().str() << ", ";
-            }
-            llvm::outs() << "\n";
-            llvm::outs() << "Outputs: ";
-            for (const auto op : outputOperations) {
-                llvm::outs() << op->getName().getStringRef().str() << ", ";
-            }
-            llvm::outs() << "\n";
-        }
-
-    };
-    */
-
- 
 
     void printStack(std::stack<std::tuple<mlir::Operation*, Pipeline*, Pipeline*>> s) {
         llvm::outs() << "[";
@@ -421,6 +112,8 @@ namespace
         dot.close();
     }
 
+ 
+
 }
 
 void Greedy1VectorizeComputationsPass::runOnOperation()
@@ -436,11 +129,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     });
     std::reverse(ops.begin(), ops.end()); 
 
-    for (auto op : ops) {
-        op->print(llvm::outs());
-        llvm::outs() << "\n";
-    }
-    
     //result
     std::vector<Pipeline*> pipelines;
     std::vector<mlir::Operation*> leafOps;
@@ -461,21 +149,12 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         }
     }
 
-    llvm::outs() << "-------------------------LEAFOPS----------------------------" << "\n";
+    VectorUtils::DEBUG::drawGraph(leafOps, "graph-gr1-pre.dot");
 
-    for (auto op : leafOps) {
-        op->print(llvm::outs());
-        llvm::outs() << "\n";
-    }
-
-    VectorUtils::DEBUG::printGraph(leafOps, "graph-gr1-pre.dot");
-
-    llvm::outs() << "----------------------------------------------------------" << "\n";
-
-    std::multimap<PipelinePair, DisconnectReason> producerConsumerRelationship;
+    std::multimap<PipelinePair, DisconnectReason> mmProducerConsumerRelationships;
     std::map<mlir::Operation*, Pipeline*> operationToPipeline;
 
-    //int nextPipelineId;
+    //std::vector<mlir::Operation*> boundingOperations;
 
     while (!stack.empty()) {
         auto t = stack.top(); stack.pop();
@@ -485,7 +164,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
         if(operationToPipeline.find(op) != operationToPipeline.end()) {
             auto producerPipeline = operationToPipeline.at(op);
-            producerConsumerRelationship.insert({{producerPipeline, currPipeline}, disReason});
+            mmProducerConsumerRelationships.insert({{currPipeline, producerPipeline}, disReason});
             continue;
         }
 
@@ -495,7 +174,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             
             //check needed for empty init
             if (currPipeline != nullptr)
-                producerConsumerRelationship.insert({{_pipeline, currPipeline}, disReason});
+                mmProducerConsumerRelationships.insert({{currPipeline, _pipeline}, disReason});
 
             currPipeline = _pipeline;
         }
@@ -514,7 +193,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             llvm::outs() << vectOp->getName().getStringRef().str() << " ";
 
             if (llvm::isa<mlir::BlockArgument>(operand)) {
-                llvm::outs() << "Block" << "\n";
                 continue;
             }
 
@@ -536,176 +214,183 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                 else {
                     stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
                 }
-            }else {
-                llvm::outs() << "\n";
+            } else {
+                //defOp is outside of consideration, top horz. fusion possible
+                //boundingOperations.push_back(op);
+                llvm::outs() << " test123\n";
             }
         }
-        //printStack(stack);
-
     }
 
+    //Needed as Greedy1 is only considering the first possiblity
     std::map<mlir::Operation*, size_t> decisionIxs;
     for (const auto& op : ops) {
         decisionIxs.insert({op, 0});
     }
     
-    VectorUtils::DEBUG::printPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-post.dot");
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-post.dot");
 
-    //post processing
-    std::map<PipelinePair, DisconnectReason> _producerConsumerRelationship;
-    for (const auto& [key, value] : producerConsumerRelationship) {
-        if (_producerConsumerRelationship.find(key) == _producerConsumerRelationship.end()) {
-            _producerConsumerRelationship.insert({key, value});
-        }
-        else {
-            //only overwrite if invalid as it domiantes the multi-consumer
-            if(value == DisconnectReason::INVALID) {
-                _producerConsumerRelationship.insert_or_assign(key, value);
-            }
-        }
-    }
+    //mmPCR to PCR
+    std::map<PipelinePair, DisconnectReason> producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmProducerConsumerRelationships); 
 
-    for (auto p : pipelines) {
-        llvm::outs() << p << " ";
-        for (auto op : *p) {
-            llvm::outs() << op->getName().getStringRef().str() << ", ";
-        }
-        llvm::outs() << "\n";
-    }
+    //
+    VectorUtils::DEBUG::printPipelines(pipelines);
+    VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
 
-    for (const auto& [key, value]  : _producerConsumerRelationship) {
-        llvm::outs() << "(" << key.first << ", " << key.second << "|" << int(value) << ")\n";
-    }
-
-    llvm::outs() << "----------------------------------------------------------" << "\n";
-    
+    //Topologoically greedy merge along the (valid) MULTIPLE_CONSUMER relationships
     bool change = true;
     while (change) {
         change = false;
         
-        llvm::outs() << _producerConsumerRelationship.size() << "\n";
-
-        std::multimap<PipelinePair, DisconnectReason> pcr;
-        for (const auto& [rel, disReason] : _producerConsumerRelationship) {
-
-            llvm::outs() << VectorUtils::DEBUG::printPtr(rel.first) << " " << VectorUtils::DEBUG::printPtr(rel.second) << " " << int(disReason) << "\n";
+        std::multimap<PipelinePair, DisconnectReason> mmPCR;
+        for (const auto& [pipePair, disReason] : producerConsumerRelationships) {
 
             if (disReason == DisconnectReason::INVALID)
                 continue;
 
-            if (VectorUtils::tryTopologicalSortMerged(pipelines, _producerConsumerRelationship, rel.first, rel.second)) {
-                llvm::outs() << "true" << "\n";
-                //merge
-                auto mergedPipeline = VectorUtils::mergePipelines(pipelines, operationToPipeline, rel.first, rel.second);
+            if (VectorUtils::tryTopologicalSortMerged(pipelines, producerConsumerRelationships, pipePair.first, pipePair.second)) {
+                auto mergedPipeline = VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
                 
-                llvm::outs() << VectorUtils::DEBUG::printPtr(mergedPipeline) << "\n";
+                for (const auto& [_pipePair, _disReason] : producerConsumerRelationships) {
 
-                //_producerConsumerRelationship.erase(rel);
-
-                for (const auto& [_rel, _disReason] : _producerConsumerRelationship) {
-                    //error::::::::::::
-                    //error::::::::::::
-                    //error::::::::::::
-                    llvm::outs() << "\n";
-                    llvm::outs() << VectorUtils::DEBUG::printPtr(_rel.first) << " " << VectorUtils::DEBUG::printPtr(_rel.second) << " " << VectorUtils::DEBUG::printPtr(rel.first) << " " << VectorUtils::DEBUG::printPtr(rel.second) << "\n";
-
-                    if(_rel.first == rel.first && _rel.second == rel.second)
+                    //Ignore in case that is current pair is pipePair 
+                    if(_pipePair.first == pipePair.first && _pipePair.second == pipePair.second)
                         continue;
 
-                    if (_rel.first == rel.first || _rel.first == rel.second) {
-                        auto newRel = std::make_pair(mergedPipeline, _rel.second);
-                        llvm::outs() << "1: " << VectorUtils::DEBUG::printPtr(newRel.first) << " " << VectorUtils::DEBUG::printPtr(newRel.second) << " " << int(_disReason) << "\n";
-                        pcr.insert({newRel, _disReason});
+                    //Rewrite Relationships
+                    if (_pipePair.first == pipePair.first || _pipePair.first == pipePair.second) {
+                        auto newPipePair = std::make_pair(mergedPipeline, _pipePair.second);
+                        mmPCR.insert({newPipePair, _disReason});
                     }
-                    else if (_rel.second == rel.first || _rel.second == rel.second) {
-                        auto newRel = std::make_pair(_rel.first, mergedPipeline);
-                        llvm::outs() << "2: " << VectorUtils::DEBUG::printPtr(newRel.first) << " " << VectorUtils::DEBUG::printPtr(newRel.second) << " " << int(_disReason) << "\n";
-                        pcr.insert({newRel, _disReason});
+                    else if (_pipePair.second == pipePair.first || _pipePair.second == pipePair.second) {
+                        auto newPipePair = std::make_pair(_pipePair.first, mergedPipeline);
+                        mmPCR.insert({newPipePair, _disReason});
                     }
                     else { 
-                        llvm::outs() << "3: " << VectorUtils::DEBUG::printPtr(_rel.first) << " " << VectorUtils::DEBUG::printPtr(_rel.second) << " " << int(_disReason) << "\n";
-                        pcr.insert({_rel, _disReason});
+                        mmPCR.insert({_pipePair, _disReason});
                     }
-                
                 }
 
-                llvm::outs() << "\n";
-                for (const auto& [key, value]  : _producerConsumerRelationship) {
-                    llvm::outs() << "(" << VectorUtils::DEBUG::printPtr(key.first) << ", " << VectorUtils::DEBUG::printPtr(key.second) << "|" << int(value) << ")\n";
-                } 
                 change = true;
                 break;
             }
         }
 
-        std::map<PipelinePair, DisconnectReason> _pcr;
-        for (const auto& [key, value] : pcr) {
-            if (_pcr.find(key) == _pcr.end()) {
-                _pcr.insert({key, value});
-            }
-            else {
-                //only overwrite if invalid as it domiantes the multi-consumer
-                if(value == DisconnectReason::INVALID) {
-                    _pcr.insert_or_assign(key, value);
+        //In case of no change the mmPCR is not filled, ignore
+        if(change)
+            producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmPCR);
+    }
+
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-pre-horz.dot");
+
+    llvm::outs() << "----------------------PCR---------------------------------" << "\n";
+    VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
+    llvm::outs() << "----------------------------------------------------------" << "\n";
+
+    //-----------------------------------------------------------------
+    // Consumer <- Producer -> Consumer
+    //-----------------------------------------------------------------
+
+    //TODO: change me
+    //Based on the operand, check if the operand is also used from another operation
+    //If yes, these are potentially candidates for horizontal fusion
+    //Horizontal Fusion / Sibling Fusion:
+    //
+    //          producer
+    //         /        \
+    //        opv       user
+    //
+    // => (opv, user)
+
+    //identify horizintal fusions / scan sharing candidates
+
+    //we need to know the operations of a pipeline that have somekind of input from outside (or another pipeline)
+    std::map<Pipeline*, std::vector<mlir::Operation*>> boundingOpsOfPipelines;
+    //TODO: this step could be combined with the intital dfs for identifiying pipelines
+    //TODO: block arguments, what to do in this case, how do we know there are the same block arguments?
+    for (auto pipe : pipelines) {
+        std::vector<mlir::Operation*> boundingOpsOfPipe;
+        for (auto op : *pipe) {
+            for (auto operand : op->getOperands()) {
+                if (auto defOp = operand.getDefiningOp()) {
+                    if (operationToPipeline.find(defOp) != operationToPipeline.end()) {
+                        if (operationToPipeline.at(defOp) != pipe) {
+                            boundingOpsOfPipe.push_back(defOp); 
+                        }
+                    } 
+                    else {
+                        boundingOpsOfPipe.push_back(defOp); 
+                    }
                 }
             }
         }
+        boundingOpsOfPipelines.insert({pipe, boundingOpsOfPipe});
+    }
 
-        _producerConsumerRelationship = _pcr;
+    //check for overlapping/intersection between the bounding ops
+    std::vector<PipelinePair> horizontalRelationships;
+    for (auto it1 = boundingOpsOfPipelines.begin(); it1 != boundingOpsOfPipelines.end(); ++it1) {
+        auto& opsSet1 = it1->second;
+        std::unordered_set<mlir::Operation*> opsUnique(opsSet1.begin(), opsSet1.end());
 
-        llvm::outs() << "\n";
-        for (const auto& [key, value]  : _producerConsumerRelationship) {
-            llvm::outs() << "(" << VectorUtils::DEBUG::printPtr(key.first) << ", " << VectorUtils::DEBUG::printPtr(key.second) << "|" << int(value) << ")\n";
-        } 
+        for (auto it2 = next(it1); it2 != boundingOpsOfPipelines.end(); ++it2) {
+            auto& opsSet2 = it2->second;
 
-        for (auto p : pipelines) {
-            llvm::outs() << VectorUtils::DEBUG::printPtr(p) << " ";
-            for (auto op : *p) {
-                llvm::outs() << op->getName().getStringRef().str() << ", ";
+            // Check if there is any overlapping operation in the two sets.
+            for (const auto& op : opsSet2) {
+                if (opsUnique.find(op) != opsUnique.end()) {
+                    horizontalRelationships.push_back({it1->first, it2->first});
+                    break; // Break once found an overlapping operation in the current pair.
+                }
             }
-            llvm::outs() << "\n";
         }
-        llvm::outs() << "----------------------------------------------------------" << "\n";
     }
 
-    llvm::outs() << "----------------------------------------------------------" << "\n";
-
-    for (const auto& [key, value]  : _producerConsumerRelationship) {
-        llvm::outs() << "(" << key.first << ", " << key.second << "|" << int(value) << ")\n";
-    } 
-
-    llvm::outs() << "----------------------------------------------------------" << "\n";
-
-    for (auto p : pipelines) {
-        llvm::outs() << VectorUtils::DEBUG::printPtr(p) << " ";
-        for (auto op : *p) {
-            llvm::outs() << op->getName().getStringRef().str() << ", ";
+    /*//derive from existing producer consumer relationships
+    std::vector<PipelinePair> horizontalRelationships;
+    for(auto pipePairIt1 = producerConsumerRelationships.begin(); pipePairIt1 != producerConsumerRelationships.end(); ++pipePairIt1) {
+        for(auto pipePairIt2 = std::next(pipePairIt1); pipePairIt2 != producerConsumerRelationships.end(); ++pipePairIt2) {
+            //Must share the same pipeline as a producer (sufficient condition)
+            //However this does not mean, that the individual ops also share inputs, where horz. Fusion makes sense (necessary condition)
+            if(pipePairIt1->first.second == pipePairIt2->first.second) {
+                horizontalRelationships.push_back({pipePairIt1->first.first, pipePairIt2->first.first});
+            }
         }
-        llvm::outs() << "\n";
+    }*/
+    //derive from top pipelines
+
+    for(auto pipePair : horizontalRelationships) {
+        llvm::outs() << VectorUtils::DEBUG::printPtr(pipePair.first) << " " << VectorUtils::DEBUG::printPtr(pipePair.second) << "\n"; 
+
+        auto pipe1 = pipePair.first;
+        auto pipe2 = pipePair.second;
+
+        //check if pipelines are connected somehow transitively
+        //cannot merge a operation into another pipeline if it is connected somehow, as we basically decided against it earlier
+        //TODO: combine
+        if (VectorUtils::arePipelinesConnected(producerConsumerRelationships, pipe1, pipe2))
+            continue;
+        if (VectorUtils::arePipelinesConnected(producerConsumerRelationships, pipe2, pipe1))
+            continue;
+
+        VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
     }
 
-    VectorUtils::DEBUG::printPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1.dot");
+    //
+    VectorUtils::DEBUG::printPipelines(pipelines);
+
+    llvm::outs() << "------------------------DRAW-FINAL-----------------------" << "\n";
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1.dot");
+
+    //Post Processing
 
     std::vector<Pipeline> _pipelines;
     _pipelines.resize(pipelines.size());
 
-    //std::transform(pipelines.begin(), pipelines.end(), _pipelines.begin(), [](const auto& ptr) { return *ptr; }); 
+    std::transform(pipelines.begin(), pipelines.end(), _pipelines.begin(), [](const auto& ptr) { return *ptr; }); 
 
-    for (auto pipe : pipelines) {
-        Pipeline _p;
-        for (auto op : *pipe) {
-            op->print(llvm::outs());
-            llvm::outs() << "\n";
-            _p.push_back(op);
-        }
-        _pipelines.push_back(_p);
-    }
-
-    llvm::outs() << "test1" << "\n";
-
-    Greedy1VectorizeComputationsPass::createVectorizedPipelineOps(func, _pipelines, decisionIxs);
-
-    llvm::outs() << "test" << "\n";
+    //will crash if for some reason the pipelines itself are not topologically sorted 
+    VectorUtils::createVectorizedPipelineOps(func, _pipelines, decisionIxs);
 
     return;
 #if 0
@@ -919,7 +604,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         VectorUtils::mergePipelines(pipelines, operationToPipelineIx, op1Ix, op2Ix);
     }*/
 #endif
-
 
 }
 

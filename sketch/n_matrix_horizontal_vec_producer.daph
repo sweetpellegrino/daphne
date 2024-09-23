@@ -4,9 +4,15 @@ m = fill(3.0, $dim, $dim*2);
 
 //consumer1
 z = m + n;
-t = abs(z);
-y = sqrt(z);
+t1 = abs(z);
+y1 = sqrt(z);
 
-print(t);
-print(y);
+//consumer1
+x = m - n;
+t2 = exp(x);
+y2 = sqrt(x);
 
+print(t1);
+print(y1);
+print(t2);
+print(y2);

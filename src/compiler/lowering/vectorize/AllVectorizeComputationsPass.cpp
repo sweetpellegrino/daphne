@@ -173,7 +173,7 @@ void AllVectorizeComputationsPass::runOnOperation()
             leafOps.push_back(op);
     }
     
-    VectorUtils::DEBUG::printGraph(leafOps, "graph-max.dot"); 
+    VectorUtils::DEBUG::drawGraph(leafOps, "graph-max.dot"); 
 
     //Step 2: Identify merging candidates
     llvm::outs() << "######## STEP 2 ########" << "\n";

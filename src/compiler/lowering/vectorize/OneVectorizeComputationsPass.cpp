@@ -170,7 +170,7 @@ void OneVectorizeComputationsPass::runOnOperation()
 
     std::string filename = "graphs/graph-" + key + ".dot";
     //printGraph(vectOps, dIx, isEdgeActive, operationToPipelineIx, filename);
-    VectorUtils::DEBUG::printPipelines(vectOps, operationToPipelineIx, decisionIx, filename);
+    VectorUtils::DEBUG::drawPipelines(vectOps, operationToPipelineIx, decisionIx, filename);
 
     VectorUtils::createVectorizedPipelineOps(func, _pipelines, decisionIx);
  

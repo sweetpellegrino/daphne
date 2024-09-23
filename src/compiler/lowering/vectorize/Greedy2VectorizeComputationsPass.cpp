@@ -250,7 +250,7 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
 
     //debugging
     std::map<mlir::Operation*, VectorIndex> decisionIx;
-    VectorUtils::DEBUG::printPipelines(ops, operationToPipelineIx, decisionIxs, "graph-gr2.dot");
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipelineIx, decisionIxs, "graph-gr2.dot");
 
     VectorUtils::createVectorizedPipelineOps(func, pipelines, decisionIxs);
 }
