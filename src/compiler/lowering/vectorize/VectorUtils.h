@@ -307,7 +307,7 @@ namespace std {
 struct VectorUtils {
     
     static bool matchingVectorSplitCombine(mlir::daphne::VectorSplit split, mlir::daphne::VectorCombine combine) {
-        //lvm::outs() << split << " " << combine << "\n";
+        //llvm::outs() << split << " " << combine << " ";
         mlir::daphne::VectorCombine _operandCombine;
         switch (split) {
             case mlir::daphne::VectorSplit::ROWS:
@@ -320,8 +320,9 @@ struct VectorUtils {
                 // No matching split/combine; basically resulting in separate pipelines
                 return false;
         }
-        if (combine == _operandCombine)
+        if (combine == _operandCombine) {
             return true;
+        }
         return false;
     }
 
@@ -796,7 +797,6 @@ struct VectorUtils {
     static void createVectorizedPipelineOps(mlir::func::FuncOp func, std::vector<Pipeline> pipelines, std::map<mlir::Operation*, VectorIndex> decisionIxs) {
         mlir::OpBuilder builder(func);
 
-
         // Create the `VectorizedPipelineOp`s
         for(auto _pipeline : pipelines) {
             if(_pipeline.empty())
@@ -828,8 +828,6 @@ struct VectorUtils {
                 auto vCombines = std::vector<mlir::daphne::VectorCombine>();
                 auto opsOutputSizes = std::vector<std::pair<mlir::Value, mlir::Value>>();
                 if (auto vec = llvm::dyn_cast<mlir::daphne::Vectorizable>(v)) {
-                    //vec->print(llvm::outs());
-                    //llvm::outs() << "\n";
                     size_t d = decisionIxs[v];
                     vSplits = vec.getVectorSplits()[d];
                     vCombines = vec.getVectorCombines()[d];
@@ -1170,7 +1168,14 @@ struct VectorUtils {
             outfile << "}" << std::endl;
         }
 
-        static void printPCR(std::map<PipelinePair,  DisconnectReason> pcr) {
+        static void printPCR(std::map<PipelinePair, DisconnectReason> pcr) {
+            for (const auto& [key, value]  : pcr) {
+                llvm::outs() << "(" << VectorUtils::DEBUG::printPtr(key.first) << ", " << VectorUtils::DEBUG::printPtr(key.second) << "|" << int(value) << ")\n";
+            } 
+            llvm::outs() << "\n";
+        }
+
+         static void printMMPCR(std::multimap<PipelinePair, DisconnectReason> pcr) {
             for (const auto& [key, value]  : pcr) {
                 llvm::outs() << "(" << VectorUtils::DEBUG::printPtr(key.first) << ", " << VectorUtils::DEBUG::printPtr(key.second) << "|" << int(value) << ")\n";
             } 
@@ -1185,6 +1190,32 @@ struct VectorUtils {
                 }
                 llvm::outs() << "\n";
             }
+        }
+
+        static void printPipelines (std::vector<Pipeline> pipelines) {
+            for (size_t i = 0; i < pipelines.size(); ++i) {
+                llvm::outs() << i << " ";
+                for (auto op : pipelines.at(i)) {
+                    llvm::outs() << op->getName().getStringRef().str() << ", ";
+                }
+                llvm::outs() << "\n";
+            }
+        }
+
+        static void printVectorizableOperation (mlir::daphne::Vectorizable vectOp) {
+            llvm::outs() << vectOp->getName().getStringRef().str() << ":\n";
+
+            for (size_t i = 0; i < vectOp.getVectorCombines().size(); ++i) {
+                llvm::outs() << i << " ";
+                auto splits = vectOp.getVectorSplits().at(i);
+                auto combine = vectOp.getVectorCombines().at(i)[0];
+                llvm::outs() << "S:" << " ";
+                for (auto split : splits) {
+                    llvm::outs() << split << ", ";
+                }
+                llvm::outs() << "C:" << combine << "\n";
+            }
+            llvm::outs() << "\n";
         }
 
     };

@@ -16,6 +16,7 @@
 
 #include "runtime/local/vectorized/Tasks.h"
 #include "ir/daphneir/Daphne.h"
+#include "runtime/local/datastructures/DenseMatrix.h"
 #include "runtime/local/kernels/EwBinaryMat.h"
 #include <cstdint>
 #include <llvm/Support/raw_ostream.h>
@@ -54,35 +55,35 @@ void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batch
     }
     
     for(size_t o = 0; o < _data._numOutputs; ++o) {
-        if(_data._combines[o] == VectorCombine::ADD) {
-            auto &result = (*_res[o]);
-            _resLock.lock();
-            if(result == nullptr) {
-                result = localAddRes[o];
-                _resLock.unlock();
-            }
-            else {
-                ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
-                _resLock.unlock();
-                //cleanup
-                DataObjectFactory::destroy(localAddRes[o]);
-            }
-        }
-        if (_data._combines[o] == VectorCombine::SUM_ADD_SCALAR) {
-            
-            throw std::runtime_error("not implemented");
 
-            auto &result = (*_res[o]);
-            _resLock.lock();
-            if(result == nullptr) {
-                result = localAddRes[o];
-                _resLock.unlock();
+        if (_data._combines[o] == VectorCombine::ROWS || 
+            _data._combines[o] == VectorCombine::COLS)
+            continue;
+
+        auto &result = (*_res[o]);
+        _resLock.lock();
+        if(result == nullptr) {
+            result = localAddRes[o];
+            _resLock.unlock();
+        }
+        else {
+            switch (_data._combines[o]) {
+                case VectorCombine::ADD:
+                    ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
+                    break;
+                case VectorCombine::MIN:
+                    ewBinaryMat(BinaryOpCode::MIN, result, result, localAddRes[o], _data._ctx);
+                    break;
+                case VectorCombine::MAX:
+                    ewBinaryMat(BinaryOpCode::MAX, result, result, localAddRes[o], _data._ctx);
+                    break;
+                default:
+                    throw std::runtime_error("not implemented");
+                    break;
             }
-            else {
-                //is pointer, however value of the pointer is the reduction value not a real address
-                llvm::outs() << localAddRes[0] << "\n";
-                //reinterpret cast does not work, static_cast
-            }
+            _resLock.unlock();
+            //cleanup
+            DataObjectFactory::destroy(localAddRes[o]);
         }
     }
 }
@@ -182,6 +183,28 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 }
                 else {
                     ewBinaryMat(BinaryOpCode::ADD, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
+                break;
+            }
+            case VectorCombine::MAX: {
+                if(localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                }
+                else {
+                    ewBinaryMat(BinaryOpCode::MAX, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
+                break;
+            }
+            case VectorCombine::MIN: {
+                if(localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                }
+                else {
+                    ewBinaryMat(BinaryOpCode::MIN, localAddRes[o], localAddRes[o], localResults[o], nullptr);
                 }
                 break;
             }

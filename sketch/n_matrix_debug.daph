@@ -1,0 +1,12 @@
+//10x20
+//m1 = readMatrix("10_X.csv");
+//m2 = readMatrix("10_Y.csv");
+m1 = readMatrix("1000_Z.csv");
+
+//x = sum(m1, 0);
+//y = sum(m1, 1);
+
+x = m1 @ t(m1);
+
+print(x[4,5]);
+//print(y);

@@ -73,6 +73,10 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
     });
     std::reverse(ops.begin(), ops.end()); 
 
+    /*for (auto op : ops) {
+        VectorUtils::DEBUG::printVectorizableOperation(op);
+    }*/
+
     //result
     std::vector<Pipeline*> pipelines;
     std::map<mlir::Operation*, size_t> decisionIxs;
@@ -97,7 +101,7 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
         }
     }
 
-    VectorUtils::DEBUG::drawGraph(leafOps, "graph-gr2-pre.dot");
+    VectorUtils::DEBUG::drawGraph(leafOps, "graph-gr2-null.dot");
 
     std::multimap<PipelinePair, DisconnectReason> mmProducerConsumerRelationships;
     std::map<mlir::Operation*, Pipeline*> operationToPipeline;
@@ -129,9 +133,11 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
         VectorIndex vectIx = decisionIxs.at(op);
         currPipeline->push_back(op);
 
+        //llvm::outs() << "\n";
         auto vectOp = llvm::dyn_cast<daphne::Vectorizable>(op);
 
-        for (size_t i = 0; i < vectOp->getNumOperands(); ++i) {
+        for (int i = vectOp->getNumOperands() - 1; i >= 0; --i) {
+        //for (size_t i = 0; i < vectOp->getNumOperands(); ++i) {
             auto operand = vectOp->getOperand(i);
 
             if (!llvm::isa<daphne::MatrixType>(operand.getType()))
@@ -146,46 +152,65 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
             if (auto vectDefOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
                 auto numberOfDecisions = vectDefOp.getVectorCombines().size();
 
+                auto split = vectOp.getVectorSplits()[vectIx][i];
                 //llvm::outs() << vectDefOp->getName().getStringRef().str() << "\n";
 
-                bool foundMatch = false;
-                for (VectorIndex vectDefOpIx = 0; vectDefOpIx < numberOfDecisions; ++vectDefOpIx) {
+                if (decisionIxs.find(vectDefOp) != decisionIxs.end()) {
+                    auto combine  = vectDefOp.getVectorCombines()[decisionIxs.at(vectDefOp)][0];
+                    if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock())
+                        stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
+                    else
+                        stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
+                } 
+                else {
+                    bool foundMatch = false;
+                    for (VectorIndex vectDefOpIx = 0; vectDefOpIx < numberOfDecisions; ++vectDefOpIx) {
+    
+                        //llvm::outs() << vectDefOpIx << ": " << "\n";
 
-                    auto split = vectOp.getVectorSplits()[vectIx][i];
-                    auto combine  = vectDefOp.getVectorCombines()[vectDefOpIx][0];
+                        auto combine  = vectDefOp.getVectorCombines()[vectDefOpIx][0];
 
-                    //same block missing
-                    if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock()) {
-                        if (vectDefOp->hasOneUse()) {
-                            stack.push({vectDefOp, currPipeline, DisconnectReason::NONE});
+                        //llvm::outs() << split << " " << combine << "\n";
+
+                        if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock()) {
+                            if (vectDefOp->hasOneUse()) {
+                                stack.push({vectDefOp, currPipeline, DisconnectReason::NONE});
+                            }
+                            else {
+                                stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
+                            }
+                            decisionIxs.insert({vectDefOp, vectDefOpIx});
+                            foundMatch = true;
+                            break;
                         }
-                        else {
-                            stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
-                        }
-                        decisionIxs.insert({vectDefOp, vectDefOpIx});
-                        foundMatch = true;
-                        break;
+                    }
+                    if(!foundMatch) {
+                        decisionIxs.insert({vectDefOp, 0});
+                        stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
                     }
                 }
-                if(!foundMatch) {
-                    decisionIxs.insert({vectDefOp, 0});
-                    stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
-                }
-            } else {
+            } 
+            else {
                 //defOp is outside of consideration, top horz. fusion possible
                 //boundingOperations.push_back(op);
-                //llvm::outs() << " test123\n";
+                //llvm::outs() << "\n";
             }
         }
     }
 
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-post.dot");
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-step1.dot");
 
     //mmPCR to PCR
     std::map<PipelinePair, DisconnectReason> producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmProducerConsumerRelationships); 
+    //VectorUtils::DEBUG::printMMPCR(mmProducerConsumerRelationships);
+    //VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
+    //VectorUtils::DEBUG::printPipelines(pipelines);
+
 
     //Topologoically greedy merge along the (valid) MULTIPLE_CONSUMER relationships
+    //llvm::outs() << "-------------------------------------------------" << "\n";
     bool change = true;
+    size_t count = 0;
     while (change) {
         change = false;
         
@@ -226,9 +251,20 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
         //In case of no change the mmPCR is not filled, ignore
         if(change)
             producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmPCR);
+
+        std::ostringstream oss;
+        oss << "graph-gr2-step2-" << count << ".dot";
+
+        VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, oss.str());
+        //VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
+        //VectorUtils::DEBUG::printPipelines(pipelines);
+
+        count++;
     }
 
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-pre-horz.dot");
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-step2.dot");
+    //VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
+    //VectorUtils::DEBUG::printPipelines(pipelines);
 
     //-----------------------------------------------------------------
     // Consumer <- Producer -> Consumer
@@ -314,10 +350,16 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
         if (VectorUtils::arePipelinesConnected(producerConsumerRelationships, pipe2, pipe1))
             continue;
 
-        VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
+        //better
+        if (pipePair.first->size() > pipePair.second->size()) {
+            VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
+        }
+        else {
+            VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.second, pipePair.first);
+        }
     }
 
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2.dot");
+    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-step3.dot");
 
     //Post Processing
 

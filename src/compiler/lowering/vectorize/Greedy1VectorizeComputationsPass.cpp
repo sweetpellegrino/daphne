@@ -223,7 +223,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     //Needed as Greedy1 is only considering the first possiblity
     std::map<mlir::Operation*, size_t> decisionIxs;
     for (const auto& op : ops) {
-        decisionIxs.insert({op, 0});
+        decisionIxs.insert({op, ZeroDecision});
     }
     
     VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-post.dot");
@@ -362,7 +362,12 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         if (VectorUtils::arePipelinesConnected(producerConsumerRelationships, pipe2, pipe1))
             continue;
 
-        VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
+        if (pipePair.first->size() > pipePair.second->size()) {
+            VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
+        }
+        else {
+            VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.second, pipePair.first);
+        }
     }
 
     VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1.dot");
