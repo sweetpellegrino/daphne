@@ -43,6 +43,8 @@ using VectorIndex = std::size_t;
 using Pipeline = std::vector<mlir::Operation*>; 
 using PipelinePair = std::pair<Pipeline*, Pipeline*>;
 
+using PipelineOpPair = std::pair<mlir::daphne::VectorizedPipelineOp, mlir::daphne::VectorizedPipelineOp>;
+
 namespace std {
     template <>
     struct hash<PipelinePair> {
@@ -493,6 +495,35 @@ struct VectorUtils {
 
         return false;
     }       
+
+    //only works if pipeline ops are topologically sorted in reverse
+    static bool arePipelineOpsDependent(mlir::daphne::VectorizedPipelineOp pipeOp1, mlir::daphne::VectorizedPipelineOp pipeOp2) {
+
+        if (pipeOp1 == pipeOp2)
+            return true;
+        
+        std::stack<mlir::Operation*> s; 
+        std::unordered_set<mlir::Operation*> visited;
+
+        s.push(pipeOp1);
+        while (!s.empty()) {
+            mlir::Operation* currOp = s.top(); s.pop();
+
+            //Connection found
+            if (currOp == pipeOp2) 
+                return true;
+
+            if (visited.insert(currOp).second) {
+                for (const auto& operand : currOp->getOperands()) {
+                    if (auto defOp = operand.getDefiningOp()) {
+                        s.push(defOp);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }    
 
     static bool tryTopologicalSortMerged(std::vector<Pipeline*> &pipelines, std::map<PipelinePair, DisconnectReason> &rel, Pipeline* pipe1, Pipeline* pipe2) {
 

@@ -72,12 +72,15 @@ namespace mlir::daphne {
     std::unique_ptr<Pass> createRewriteToCallKernelOpPass(const DaphneUserConfig& cfg, std::unordered_map<std::string, bool> & usedLibPaths);
     std::unique_ptr<Pass> createSelectMatrixRepresentationsPass(const DaphneUserConfig& cfg);
     std::unique_ptr<Pass> createSpecializeGenericFunctionsPass(const DaphneUserConfig& cfg);
+
     std::unique_ptr<Pass> createDaphneVectorizeComputationsPass();
     std::unique_ptr<Pass> createGreedy1VectorizeComputationsPass();
     std::unique_ptr<Pass> createGreedy2VectorizeComputationsPass();
     std::unique_ptr<Pass> createGreedyXVectorizeComputationsPass();
     std::unique_ptr<Pass> createOneVectorizeComputationsPass(const DaphneUserConfig& cfg);
     std::unique_ptr<Pass> createAllVectorizeComputationsPass();
+    std::unique_ptr<Pass> createHorizontalFusionPass();
+
     std::unique_ptr<Pass> createWhileLoopInvariantCodeMotionPass();
 #ifdef USE_CUDA
     std::unique_ptr<Pass> createMarkCUDAOpsPass(const DaphneUserConfig& cfg);

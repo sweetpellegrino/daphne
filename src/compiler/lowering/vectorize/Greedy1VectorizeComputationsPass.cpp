@@ -123,7 +123,12 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
 
     std::vector<mlir::Operation*> ops;
     func->walk([&](daphne::Vectorizable op) {
-        ops.emplace_back(op);
+        for (auto opType : op->getOperandTypes()) {
+            if (!opType.isIntOrIndexOrFloat()) {
+                ops.emplace_back(op);
+                break;
+            }
+        }
     });
     std::reverse(ops.begin(), ops.end()); 
 
@@ -194,6 +199,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
                 continue;
             }
 
+            //could it help to check if we check if operand.getDefiningOp is inside (global) ops vector?
             if (auto vectDefOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
                 //llvm::outs() << vectDefOp->getName().getStringRef().str() << "\n";
 
@@ -276,101 +282,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     }
 
     VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-pre-horz.dot");
-
-    //-----------------------------------------------------------------
-    // Consumer <- Producer -> Consumer
-    //-----------------------------------------------------------------
-
-    //TODO: change me
-    //Based on the operand, check if the operand is also used from another operation
-    //If yes, these are potentially candidates for horizontal fusion
-    //Horizontal Fusion / Sibling Fusion:
-    //
-    //          producer
-    //         /        \
-    //        opv       user
-    //
-    // => (opv, user)
-
-    //identify horizintal fusions / scan sharing candidates
-
-    //we need to know the operations of a pipeline that have somekind of input from outside (or another pipeline)
-    std::map<Pipeline*, std::vector<mlir::Operation*>> boundingOpsOfPipelines;
-    //TODO: this step could be combined with the intital dfs for identifiying pipelines
-    //TODO: block arguments, what to do in this case, how do we know there are the same block arguments?
-    for (auto pipe : pipelines) {
-        std::vector<mlir::Operation*> boundingOpsOfPipe;
-        for (auto op : *pipe) {
-            for (auto operand : op->getOperands()) {
-                if (auto defOp = operand.getDefiningOp()) {
-                    if (operationToPipeline.find(defOp) != operationToPipeline.end()) {
-                        if (operationToPipeline.at(defOp) != pipe) {
-                            boundingOpsOfPipe.push_back(defOp); 
-                        }
-                    } 
-                    else {
-                        boundingOpsOfPipe.push_back(defOp); 
-                    }
-                }
-            }
-        }
-        boundingOpsOfPipelines.insert({pipe, boundingOpsOfPipe});
-    }
-
-    //check for overlapping/intersection between the bounding ops
-    std::vector<PipelinePair> horizontalRelationships;
-    for (auto it1 = boundingOpsOfPipelines.begin(); it1 != boundingOpsOfPipelines.end(); ++it1) {
-        auto& opsSet1 = it1->second;
-        std::unordered_set<mlir::Operation*> opsUnique(opsSet1.begin(), opsSet1.end());
-
-        for (auto it2 = next(it1); it2 != boundingOpsOfPipelines.end(); ++it2) {
-            auto& opsSet2 = it2->second;
-
-            // Check if there is any overlapping operation in the two sets.
-            for (const auto& op : opsSet2) {
-                if (opsUnique.find(op) != opsUnique.end()) {
-                    horizontalRelationships.push_back({it1->first, it2->first});
-                    break; // Break once found an overlapping operation in the current pair.
-                }
-            }
-        }
-    }
-
-    /*//derive from existing producer consumer relationships
-    std::vector<PipelinePair> horizontalRelationships;
-    for(auto pipePairIt1 = producerConsumerRelationships.begin(); pipePairIt1 != producerConsumerRelationships.end(); ++pipePairIt1) {
-        for(auto pipePairIt2 = std::next(pipePairIt1); pipePairIt2 != producerConsumerRelationships.end(); ++pipePairIt2) {
-            //Must share the same pipeline as a producer (sufficient condition)
-            //However this does not mean, that the individual ops also share inputs, where horz. Fusion makes sense (necessary condition)
-            if(pipePairIt1->first.second == pipePairIt2->first.second) {
-                horizontalRelationships.push_back({pipePairIt1->first.first, pipePairIt2->first.first});
-            }
-        }
-    }*/
-    //derive from top pipelines
-
-    for(auto pipePair : horizontalRelationships) {
-
-        auto pipe1 = pipePair.first;
-        auto pipe2 = pipePair.second;
-
-        //check if pipelines are connected somehow transitively
-        //cannot merge a operation into another pipeline if it is connected somehow, as we basically decided against it earlier
-        //TODO: combine
-        if (VectorUtils::arePipelinesConnected(producerConsumerRelationships, pipe1, pipe2))
-            continue;
-        if (VectorUtils::arePipelinesConnected(producerConsumerRelationships, pipe2, pipe1))
-            continue;
-
-        if (pipePair.first->size() > pipePair.second->size()) {
-            VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
-        }
-        else {
-            VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.second, pipePair.first);
-        }
-    }
-
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1.dot");
 
     //Post Processing
 

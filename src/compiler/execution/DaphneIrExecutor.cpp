@@ -15,6 +15,7 @@
  */
 
 #include "DaphneIrExecutor.h"
+#include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <util/ErrorHandler.h>
 
 #include <ir/daphneir/Daphne.h>
@@ -192,6 +193,8 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
                 break;
         }
         pm.addPass(mlir::createCanonicalizerPass());
+        pm.addNestedPass<mlir::func::FuncOp>
+            (mlir::daphne::createHorizontalFusionPass());
     }
     if (userConfig_.explain_vectorized)
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));

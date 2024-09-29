@@ -1,6 +1,7 @@
 //producer
 n = fill(2.0, $dim, $dim*2);
 m = fill(3.0, $dim, $dim*2);
+u = fill(3.0, $dim, $dim*2);
 
 //consumer1
 z = m + n;
@@ -8,8 +9,8 @@ t1 = abs(z);
 y1 = sqrt(z);
 
 //consumer1
-x = m - n;
-t2 = exp(x);
+x = m * 2;
+t2 = exp(x) + u;
 y2 = sqrt(x);
 
 print(t1);
