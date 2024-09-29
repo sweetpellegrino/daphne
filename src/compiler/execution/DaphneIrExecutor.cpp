@@ -195,6 +195,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
         pm.addPass(mlir::createCanonicalizerPass());
         pm.addNestedPass<mlir::func::FuncOp>
             (mlir::daphne::createHorizontalFusionPass());
+        pm.addPass(mlir::createCanonicalizerPass());
     }
     if (userConfig_.explain_vectorized)
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));

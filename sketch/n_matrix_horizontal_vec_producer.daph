@@ -13,7 +13,11 @@ x = m * 2;
 t2 = exp(x) + u;
 y2 = sqrt(x);
 
+//consumer1
+y = m * 3;
+
 print(t1);
 print(y1);
 print(t2);
 print(y2);
+print(y);

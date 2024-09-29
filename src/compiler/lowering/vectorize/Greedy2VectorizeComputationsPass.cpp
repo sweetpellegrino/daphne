@@ -69,7 +69,12 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
 
     std::vector<mlir::Operation*> ops;
     func->walk([&](daphne::Vectorizable op) {
-        ops.emplace_back(op);
+        for (auto opType : op->getOperandTypes()) {
+            if (!opType.isIntOrIndexOrFloat()) {
+                ops.emplace_back(op);
+                break;
+            }
+        }
     });
     std::reverse(ops.begin(), ops.end()); 
 
