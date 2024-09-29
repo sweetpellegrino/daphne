@@ -19,13 +19,16 @@
 #include <runtime/local/context/DaphneContext.h>
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/List.h>
+#include <runtime/local/datastructures/DenseMatrix.h>
+#include <runtime/local/datastructures/CSRMatrix.h>
 
 // ****************************************************************************
 // Convenience function
 // ****************************************************************************
 
-template<class DT>
-void append(List<DT> *& resList, const List<DT> * argList, const DT * elem, DCTX(ctx)) {
+template <class DT>
+void append(List<DT> *&resList, const List<DT> *argList, const DT *elem,
+            DCTX(ctx)) {
     resList = DataObjectFactory::create<List<DT>>(argList);
     resList->append(elem);
 }
