@@ -20,6 +20,7 @@
 #include "ir/daphneir/Passes.h"
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include <cmath>
 #include <mlir/IR/OpDefinition.h>
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Operation.h"
@@ -47,18 +48,102 @@ namespace
 {
 
     //-----------------------------------------------------------------
-    // CONST
-    //-----------------------------------------------------------------
-
-    const VectorIndex ZeroDecision = 0;
-
-    //-----------------------------------------------------------------
-    // Class functions
+    // Class
     //-----------------------------------------------------------------
 
     struct Greedy2VectorizeComputationsPass : public PassWrapper<Greedy2VectorizeComputationsPass, OperationPass<func::FuncOp>> {
         void runOnOperation() final;
     }; 
+
+    //-----------------------------------------------------------------
+    // Helper
+    //-----------------------------------------------------------------
+
+    void greedyFindMinimumPipelines(std::stack<std::tuple<mlir::Operation*, Pipeline*, DisconnectReason>>& stack, std::vector<Pipeline*> &pipelines,  
+        std::map<mlir::Operation*, Pipeline*> &operationToPipeline, std::multimap<PipelinePair, DisconnectReason> &mmProducerConsumerRelationships,
+        std::map<mlir::Operation*, size_t> &decisionIxs) {
+
+        while (!stack.empty()) {
+            auto t = stack.top(); stack.pop();
+            auto op = std::get<0>(t);
+            auto currPipeline = std::get<1>(t);
+            auto disReason = std::get<2>(t);
+
+            // Operation was already visited.
+            if(operationToPipeline.find(op) != operationToPipeline.end()) {
+                auto producerPipeline = operationToPipeline.at(op);
+                mmProducerConsumerRelationships.insert({{currPipeline, producerPipeline}, disReason});
+                continue;
+            }
+
+            if (disReason != DisconnectReason::NONE) {
+                auto _pipeline = new Pipeline();
+                pipelines.push_back(_pipeline);
+                
+                // Check needed as initially the first element on stack does not have any precursor pipeline.
+                if (currPipeline != nullptr)
+                    mmProducerConsumerRelationships.insert({{currPipeline, _pipeline}, disReason});
+
+                currPipeline = _pipeline;
+            }
+
+            operationToPipeline.insert({op, currPipeline});
+            VectorIndex vectIx = decisionIxs.at(op);
+            currPipeline->push_back(op);
+
+            auto vectOp = llvm::dyn_cast<daphne::Vectorizable>(op);
+
+            //for (int i = vectOp->getNumOperands() - 1; i >= 0; --i) {
+            for (size_t i = 0; i < vectOp->getNumOperands(); ++i) {
+                auto operand = vectOp->getOperand(i);
+
+                if (!llvm::isa<daphne::MatrixType>(operand.getType()))
+                    continue;
+
+                if (llvm::isa<mlir::BlockArgument>(operand)) {
+                    continue;
+                }
+
+                if (auto vectDefOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
+                    auto numberOfDecisions = vectDefOp.getVectorCombines().size();
+
+                    auto split = vectOp.getVectorSplits()[vectIx][i];
+
+                    if (decisionIxs.find(vectDefOp) != decisionIxs.end()) {
+                        auto combine  = vectDefOp.getVectorCombines()[decisionIxs.at(vectDefOp)][0];
+                        if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock())
+                            stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
+                        else
+                            stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
+                    } 
+                    else {
+                        bool foundMatch = false;
+                        for (VectorIndex vectDefOpIx = 0; vectDefOpIx < numberOfDecisions; ++vectDefOpIx) {
+        
+                            auto combine  = vectDefOp.getVectorCombines()[vectDefOpIx][0];
+
+                            if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock()) {
+                                if (vectDefOp->hasOneUse()) {
+                                    stack.push({vectDefOp, currPipeline, DisconnectReason::NONE});
+                                }
+                                else {
+                                    stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
+                                }
+                                decisionIxs.insert({vectDefOp, vectDefOpIx});
+                                foundMatch = true;
+                                break;
+                            }
+                        }
+                        if(!foundMatch) {
+                            decisionIxs.insert({vectDefOp, 0});
+                            stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
+                        }
+                    }
+                } 
+            }
+        }
+    }
+
 }
 
     
@@ -70,7 +155,7 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
     std::vector<mlir::Operation*> ops;
     func->walk([&](daphne::Vectorizable op) {
         for (auto opType : op->getOperandTypes()) {
-            if (!opType.isIntOrIndexOrFloat()) {
+            if (!opType.isIntOrIndexOrFloat() && !llvm::isa<daphne::StringType>(opType)) {
                 ops.emplace_back(op);
                 break;
             }
@@ -78,207 +163,81 @@ void Greedy2VectorizeComputationsPass::runOnOperation()
     });
     std::reverse(ops.begin(), ops.end()); 
 
-    /*for (auto op : ops) {
-        VectorUtils::DEBUG::printVectorizableOperation(op);
-    }*/
+    std::vector<VectorIndex> startingDecisions = {0, 1};
 
-    //result
-    std::vector<Pipeline*> pipelines;
-    std::map<mlir::Operation*, size_t> decisionIxs;
+    std::vector<std::vector<Pipeline*>> solutions;
+    solutions.reserve(startingDecisions.size());
 
-    //helper
-    std::vector<mlir::Operation*> leafOps;
-    std::stack<std::tuple<mlir::Operation*, Pipeline*, DisconnectReason>> stack;
+    std::vector<std::map<mlir::Operation*, VectorIndex>> solutions_decisionIxs;
+    solutions_decisionIxs.reserve(startingDecisions.size());
 
-    for (const auto &op : ops) {
-        auto users = op->getUsers();
-        bool found = false;
-        for (auto u : users) {
-            if (std::find(ops.begin(), ops.end(), u) != ops.end()) { 
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            leafOps.push_back(op);
-            decisionIxs.insert({op, 1});
-            stack.push({op, nullptr, DisconnectReason::INVALID});
-        }
-    }
+    for (size_t i = 0; i < startingDecisions.size(); ++i) {
+        auto startVectIndex = startingDecisions[i];
 
-    VectorUtils::DEBUG::drawGraph(leafOps, "graph-gr2-null.dot");
+        std::vector<Pipeline*> pipelines;
+        std::map<mlir::Operation*, size_t> decisionIxs;
 
-    std::multimap<PipelinePair, DisconnectReason> mmProducerConsumerRelationships;
-    std::map<mlir::Operation*, Pipeline*> operationToPipeline;
+        std::vector<mlir::Operation*> leafOps;
+        std::stack<std::tuple<mlir::Operation*, Pipeline*, DisconnectReason>> stack;
 
-    while (!stack.empty()) {
-        auto t = stack.top(); stack.pop();
-        auto op = std::get<0>(t);
-        auto currPipeline = std::get<1>(t);
-        auto disReason = std::get<2>(t);
-
-        if(operationToPipeline.find(op) != operationToPipeline.end()) {
-            auto producerPipeline = operationToPipeline.at(op);
-            mmProducerConsumerRelationships.insert({{currPipeline, producerPipeline}, disReason});
-            continue;
-        }
-
-        if (disReason != DisconnectReason::NONE) {
-            auto _pipeline = new Pipeline();
-            pipelines.push_back(_pipeline);
-            
-            //check needed for empty init
-            if (currPipeline != nullptr)
-                mmProducerConsumerRelationships.insert({{currPipeline, _pipeline}, disReason});
-
-            currPipeline = _pipeline;
-        }
-
-        operationToPipeline.insert({op, currPipeline});
-        VectorIndex vectIx = decisionIxs.at(op);
-        currPipeline->push_back(op);
-
-        //llvm::outs() << "\n";
-        auto vectOp = llvm::dyn_cast<daphne::Vectorizable>(op);
-
-        for (int i = vectOp->getNumOperands() - 1; i >= 0; --i) {
-        //for (size_t i = 0; i < vectOp->getNumOperands(); ++i) {
-            auto operand = vectOp->getOperand(i);
-
-            if (!llvm::isa<daphne::MatrixType>(operand.getType()))
-                continue;
-
-            //llvm::outs() << vectOp->getName().getStringRef().str() << " ";
-
-            if (llvm::isa<mlir::BlockArgument>(operand)) {
-                continue;
-            }
-
-            if (auto vectDefOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
-                auto numberOfDecisions = vectDefOp.getVectorCombines().size();
-
-                auto split = vectOp.getVectorSplits()[vectIx][i];
-                //llvm::outs() << vectDefOp->getName().getStringRef().str() << "\n";
-
-                if (decisionIxs.find(vectDefOp) != decisionIxs.end()) {
-                    auto combine  = vectDefOp.getVectorCombines()[decisionIxs.at(vectDefOp)][0];
-                    if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock())
-                        stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
-                    else
-                        stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
-                } 
-                else {
-                    bool foundMatch = false;
-                    for (VectorIndex vectDefOpIx = 0; vectDefOpIx < numberOfDecisions; ++vectDefOpIx) {
-    
-                        //llvm::outs() << vectDefOpIx << ": " << "\n";
-
-                        auto combine  = vectDefOp.getVectorCombines()[vectDefOpIx][0];
-
-                        //llvm::outs() << split << " " << combine << "\n";
-
-                        if (VectorUtils::matchingVectorSplitCombine(split, combine) && vectDefOp->getBlock() == vectOp->getBlock()) {
-                            if (vectDefOp->hasOneUse()) {
-                                stack.push({vectDefOp, currPipeline, DisconnectReason::NONE});
-                            }
-                            else {
-                                stack.push({vectDefOp, currPipeline, DisconnectReason::MULTIPLE_CONSUMERS});
-                            }
-                            decisionIxs.insert({vectDefOp, vectDefOpIx});
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    if(!foundMatch) {
-                        decisionIxs.insert({vectDefOp, 0});
-                        stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
-                    }
+        for (const auto &op : ops) {
+            auto users = op->getUsers();
+            bool found = false;
+            for (auto u : users) {
+                if (std::find(ops.begin(), ops.end(), u) != ops.end()) { 
+                    found = true;
+                    break;
                 }
-            } 
-            else {
-                //defOp is outside of consideration, top horz. fusion possible
-                //boundingOperations.push_back(op);
-                //llvm::outs() << "\n";
             }
-        }
-    }
-
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-step1.dot");
-
-    //mmPCR to PCR
-    std::map<PipelinePair, DisconnectReason> producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmProducerConsumerRelationships); 
-    //VectorUtils::DEBUG::printMMPCR(mmProducerConsumerRelationships);
-    //VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
-    //VectorUtils::DEBUG::printPipelines(pipelines);
-
-
-    //Topologoically greedy merge along the (valid) MULTIPLE_CONSUMER relationships
-    //llvm::outs() << "-------------------------------------------------" << "\n";
-    bool change = true;
-    size_t count = 0;
-    while (change) {
-        change = false;
-        
-        std::multimap<PipelinePair, DisconnectReason> mmPCR;
-        for (const auto& [pipePair, disReason] : producerConsumerRelationships) {
-
-            if (disReason == DisconnectReason::INVALID)
-                continue;
-
-            if (VectorUtils::tryTopologicalSortMerged(pipelines, producerConsumerRelationships, pipePair.first, pipePair.second)) {
-                auto mergedPipeline = VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
+            if(!found) {
+                leafOps.push_back(op);
+                auto vectOp = llvm::cast<daphne::Vectorizable>(op);
                 
-                for (const auto& [_pipePair, _disReason] : producerConsumerRelationships) {
-
-                    //Ignore in case that is current pair is pipePair 
-                    if(_pipePair.first == pipePair.first && _pipePair.second == pipePair.second)
-                        continue;
-
-                    //Rewrite Relationships
-                    if (_pipePair.first == pipePair.first || _pipePair.first == pipePair.second) {
-                        auto newPipePair = std::make_pair(mergedPipeline, _pipePair.second);
-                        mmPCR.insert({newPipePair, _disReason});
-                    }
-                    else if (_pipePair.second == pipePair.first || _pipePair.second == pipePair.second) {
-                        auto newPipePair = std::make_pair(_pipePair.first, mergedPipeline);
-                        mmPCR.insert({newPipePair, _disReason});
-                    }
-                    else { 
-                        mmPCR.insert({_pipePair, _disReason});
-                    }
-                }
-
-                change = true;
-                break;
+                // Fallback to Zero
+                if (vectOp.getVectorCombines().size() <= startVectIndex)
+                    decisionIxs.insert({op, 0});
+                else
+                    decisionIxs.insert({op, startVectIndex});
+                stack.push({op, nullptr, DisconnectReason::INVALID});
             }
         }
 
-        //In case of no change the mmPCR is not filled, ignore
-        if(change)
-            producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmPCR);
+        std::multimap<PipelinePair, DisconnectReason> mmProducerConsumerRelationships;
+        std::map<mlir::Operation*, Pipeline*> operationToPipeline;
 
-        std::ostringstream oss;
-        oss << "graph-gr2-step2-" << count << ".dot";
+        // Step 1
+        greedyFindMinimumPipelines(stack, pipelines, operationToPipeline, mmProducerConsumerRelationships, decisionIxs);
 
-        VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, oss.str());
-        //VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
-        //VectorUtils::DEBUG::printPipelines(pipelines);
+        // Aggreagate
+        std::map<PipelinePair, DisconnectReason> producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmProducerConsumerRelationships); 
 
-        count++;
+        // Step 2
+        VectorUtils::greedyMergePipelinesProducerConsumer(pipelines, operationToPipeline, producerConsumerRelationships);
+
+        solutions.push_back(pipelines);
+        solutions_decisionIxs.push_back(decisionIxs);
+
     }
 
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr2-step2.dot");
-    //VectorUtils::DEBUG::printPCR(producerConsumerRelationships);
-    //VectorUtils::DEBUG::printPipelines(pipelines);
+    //TODO improve
+    size_t min = 0;
+    size_t min_size = INFINITY;
+    for (size_t i = 0; i < solutions.size(); ++i){
+        size_t size = solutions.at(i).size();
+        if(min_size > size) {
+            min = i;
+            min_size = size;
+        }
+    }
 
-    //Post Processing
+    std::vector<Pipeline*> pipelines = solutions.at(min);
+    std::map<mlir::Operation*, VectorIndex> decisionIxs = solutions_decisionIxs.at(min);
 
+    // Post Processing
     std::vector<Pipeline> _pipelines;
     _pipelines.resize(pipelines.size());
-
     std::transform(pipelines.begin(), pipelines.end(), _pipelines.begin(), [](const auto& ptr) { return *ptr; }); 
 
-    //will crash if for some reason the pipelines itself are not topologically sorted 
     VectorUtils::createVectorizedPipelineOps(func, _pipelines, decisionIxs);
 
     return;

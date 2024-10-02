@@ -1,0 +1,6 @@
+X = readMatrix($X);
+
+t = t(X);
+s = sum(t);
+
+print(s);

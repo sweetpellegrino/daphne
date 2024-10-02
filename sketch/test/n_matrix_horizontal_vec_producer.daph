@@ -2,6 +2,7 @@
 n = fill(2.0, $dim, $dim*2);
 m = fill(3.0, $dim, $dim*2);
 u = fill(3.0, $dim, $dim*2);
+j = fill(3.0, $dim, $dim*2);
 
 //consumer1
 z = m + n;
@@ -14,10 +15,14 @@ t2 = exp(x) + u;
 y2 = sqrt(x);
 
 //consumer1
-y = m * 3;
+z2 = m + n;
+x2 = sqrt(z2);
+
+l = j + 2;
 
 print(t1);
 print(y1);
 print(t2);
 print(y2);
-print(y);
+print(x2);
+print(l);

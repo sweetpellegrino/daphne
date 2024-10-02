@@ -1,0 +1,26 @@
+//./bin/daphne  --timing --vec-type GREEDY_1 --explain=vectorized --vec  ./sketch/bench/complex_sum.daph X=\"m_20000_1000.csv\" Y=\"m_1000_20000.csv\" Z=\"m2_20000_1000.csv\" H=\"m2_1000_20000.csv\"
+
+X = readMatrix($X); //RxC
+Y = readMatrix($Y); //CxR
+Z = readMatrix($Z); //RxC
+H = readMatrix($H); //CxR
+
+a1 = abs(X);
+a2 = sqrt(Y);
+a3 = exp(Z);
+a4 = sin(H);
+
+b1 = t(a1) + a2;
+b2 = t(a1) - a2;
+
+b3 = a3 + t(a4);
+b4 = a3 - t(a4);
+
+c1 = b1 @ b3;
+c2 = b2 @ b4;
+
+e1 = sum(c1);
+e2 = sum(c2);
+
+print(e1);
+print(e2);

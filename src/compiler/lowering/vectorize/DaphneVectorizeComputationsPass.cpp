@@ -250,7 +250,7 @@ void DaphneVectorizeComputationsPass::runOnOperation() {
                     // find the corresponding `OpResult` to figure out combine
                     auto opResult = *llvm::find(defOp->getResults(), operand);
                     auto combine =
-                        defOp.getVectorCombines()[opResult.getResultNumber()];
+                        defOp.getVectorCombines()[0][opResult.getResultNumber()];
 
                     if (split == daphne::VectorSplit::ROWS) {
                         if (combine == daphne::VectorCombine::ROWS)

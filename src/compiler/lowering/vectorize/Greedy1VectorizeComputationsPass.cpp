@@ -27,14 +27,10 @@
 #include "mlir/IR/Value.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
-#include "mlir/Transforms/TopologicalSortUtils.h"
-#include "spdlog/fmt/bundled/core.h"
 
 #include <algorithm>
-#include <sstream>
 #include <stack>
 #include <string>
-#include <unordered_set>
 #include <cstddef>
 #include <memory>
 #include <utility>
@@ -111,9 +107,6 @@ namespace
         dot << "}";
         dot.close();
     }
-
- 
-
 }
 
 void Greedy1VectorizeComputationsPass::runOnOperation()
@@ -124,7 +117,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
     std::vector<mlir::Operation*> ops;
     func->walk([&](daphne::Vectorizable op) {
         for (auto opType : op->getOperandTypes()) {
-            if (!opType.isIntOrIndexOrFloat()) {
+            if (!opType.isIntOrIndexOrFloat() && !llvm::isa<daphne::StringType>(opType)) {
                 ops.emplace_back(op);
                 break;
             }
@@ -151,8 +144,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             stack.push({op, nullptr, DisconnectReason::INVALID});
         }
     }
-
-    VectorUtils::DEBUG::drawGraph(leafOps, "graph-gr1-pre.dot");
 
     std::multimap<PipelinePair, DisconnectReason> mmProducerConsumerRelationships;
     std::map<mlir::Operation*, Pipeline*> operationToPipeline;
@@ -190,10 +181,10 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         for (size_t i = 0; i < vectOp->getNumOperands(); ++i) {
             auto operand = vectOp->getOperand(i);
 
+            //llvm::outs() << op->getName().getStringRef().str() << " ";
+
             if (!llvm::isa<daphne::MatrixType>(operand.getType()))
                 continue;
-
-            //llvm::outs() << vectOp->getName().getStringRef().str() << " ";
 
             if (llvm::isa<mlir::BlockArgument>(operand)) {
                 continue;
@@ -221,7 +212,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
             } else {
                 //defOp is outside of consideration, top horz. fusion possible
                 //boundingOperations.push_back(op);
-                //llvm::outs() << " test123\n";
+                //llvm::outs() << "\n";
             }
         }
     }
@@ -232,56 +223,12 @@ void Greedy1VectorizeComputationsPass::runOnOperation()
         decisionIxs.insert({op, ZeroDecision});
     }
     
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-post.dot");
-
     //mmPCR to PCR
     std::map<PipelinePair, DisconnectReason> producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmProducerConsumerRelationships); 
 
-    //Topologoically greedy merge along the (valid) MULTIPLE_CONSUMER relationships
-    bool change = true;
-    while (change) {
-        change = false;
-        
-        std::multimap<PipelinePair, DisconnectReason> mmPCR;
-        for (const auto& [pipePair, disReason] : producerConsumerRelationships) {
+    VectorUtils::greedyMergePipelinesProducerConsumer(pipelines, operationToPipeline, producerConsumerRelationships);
 
-            if (disReason == DisconnectReason::INVALID)
-                continue;
-
-            if (VectorUtils::tryTopologicalSortMerged(pipelines, producerConsumerRelationships, pipePair.first, pipePair.second)) {
-                auto mergedPipeline = VectorUtils::mergePipelines(pipelines, operationToPipeline, pipePair.first, pipePair.second);
-                
-                for (const auto& [_pipePair, _disReason] : producerConsumerRelationships) {
-
-                    //Ignore in case that is current pair is pipePair 
-                    if(_pipePair.first == pipePair.first && _pipePair.second == pipePair.second)
-                        continue;
-
-                    //Rewrite Relationships
-                    if (_pipePair.first == pipePair.first || _pipePair.first == pipePair.second) {
-                        auto newPipePair = std::make_pair(mergedPipeline, _pipePair.second);
-                        mmPCR.insert({newPipePair, _disReason});
-                    }
-                    else if (_pipePair.second == pipePair.first || _pipePair.second == pipePair.second) {
-                        auto newPipePair = std::make_pair(_pipePair.first, mergedPipeline);
-                        mmPCR.insert({newPipePair, _disReason});
-                    }
-                    else { 
-                        mmPCR.insert({_pipePair, _disReason});
-                    }
-                }
-
-                change = true;
-                break;
-            }
-        }
-
-        //In case of no change the mmPCR is not filled, ignore
-        if(change)
-            producerConsumerRelationships = VectorUtils::consolidateProducerConsumerRelationship(mmPCR);
-    }
-
-    VectorUtils::DEBUG::drawPipelines(ops, operationToPipeline, decisionIxs, "graph-gr1-pre-horz.dot");
+    //VectorUtils::DEBUG::printPipelines(pipelines);
 
     //Post Processing
 

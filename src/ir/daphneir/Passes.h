@@ -76,12 +76,14 @@ std::unique_ptr<Pass>
 createSpecializeGenericFunctionsPass(const DaphneUserConfig &cfg);
 
 std::unique_ptr<Pass> createDaphneVectorizeComputationsPass();
-    std::unique_ptr<Pass> createGreedy1VectorizeComputationsPass();
-    std::unique_ptr<Pass> createGreedy2VectorizeComputationsPass();
-    std::unique_ptr<Pass> createGreedyXVectorizeComputationsPass();
-    std::unique_ptr<Pass> createOneVectorizeComputationsPass(const DaphneUserConfig& cfg);
-    std::unique_ptr<Pass> createAllVectorizeComputationsPass();
-    std::unique_ptr<Pass> createHorizontalFusionPass();
+std::unique_ptr<Pass> createGreedy1VectorizeComputationsPass();
+std::unique_ptr<Pass> createGreedy2VectorizeComputationsPass();
+std::unique_ptr<Pass> createGreedyXVectorizeComputationsPass();
+std::unique_ptr<Pass> createOneVectorizeComputationsPass(
+    const DaphneUserConfig& cfg);
+std::unique_ptr<Pass> createAllVectorizeComputationsPass();
+std::unique_ptr<Pass> createHorizontalFusionPass();
+std::unique_ptr<Pass> createDrawPipelineOpsPass(const std::string filename);
 
 #ifdef USE_CUDA
 std::unique_ptr<Pass> createMarkCUDAOpsPass(const DaphneUserConfig &cfg);
