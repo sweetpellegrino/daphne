@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include "runtime/local/kernels/OuterBinary.h"
 #include <compiler/utils/CompilerUtils.h>
 #include <ir/daphneir/Daphne.h>
 
@@ -30,6 +31,7 @@ using namespace mlir;
 // ****************************************************************************
 // For families of operations.
 
+// EwBinaryOp
 template <class EwBinaryOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_EwBinaryOp(EwBinaryOp *op) {
     // Matrix -> row-wise, Scalar -> none
@@ -63,6 +65,8 @@ createOpsOutputSizes_EwBinaryOp(EwBinaryOp *op, OpBuilder &builder) {
     // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
     return {{{lhsRows, lhsCols}}, {{lhsRows, lhsCols}}};
 }
+
+// EwUnaryOp
 template <class EwUnaryOp>
 std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_EwUnaryOp(EwUnaryOp *op) {
     return {{daphne::VectorSplit::ROWS},
@@ -84,7 +88,27 @@ createOpsOutputSizes_EwUnaryOp(EwUnaryOp *op, OpBuilder &builder) {
     return {{{rows, cols}},{{rows, cols}}};
 }
 
-
+// OuterBinary
+template <class OuterBinaryOp>
+std::vector<std::vector<daphne::VectorSplit>> getVectorSplits_OuterBinaryOp(OuterBinaryOp *op) {
+    return {{daphne::VectorSplit::ROWS, daphne::VectorSplit::NONE},
+            {daphne::VectorSplit::NONE, daphne::VectorSplit::COLS}};
+}
+template <class OuterBinaryOp>
+std::vector<std::vector<daphne::VectorCombine>> getVectorCombines_OuterBinaryOp(OuterBinaryOp *op) {
+    return {{daphne::VectorCombine::ROWS}, 
+            {daphne::VectorCombine::COLS}};
+}
+template <class OuterBinaryOp>
+std::vector<std::vector<std::pair<Value, Value>>>
+createOpsOutputSizes_OuterBinaryOp(OuterBinaryOp *op, OpBuilder &builder) {
+    auto loc = op->getLoc();
+    auto sizeTy = builder.getIndexType();
+    auto rows = builder.create<daphne::NumRowsOp>(loc, sizeTy, op->getLhs());
+    auto cols = builder.create<daphne::NumColsOp>(loc, sizeTy, op->getRhs());
+    // TODO: do max on #rows/#cols of lhs and rhs for broadcasting
+    return {{{rows, cols}},{{rows, cols}}};
+}
 
 // ****************************************************************************
 // Vector split and combine implementations
@@ -436,6 +460,56 @@ daphne::ColBindOp::createOpsOutputSizes(OpBuilder &builder) {
                        loc, builder.create<daphne::CastOp>(loc, i64Ty, colsLhs),
                        builder.create<daphne::CastOp>(loc, i64Ty, colsRhs)))}}};
 }
+// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// Outer binary (generalized outer product)
+// ----------------------------------------------------------------------------
+#define IMPL_SPLIT_COMBINE_OUTERBINARY(OP)                                       \
+    std::vector<std::vector<daphne::VectorSplit>> daphne::OP::getVectorSplits() {           \
+        return getVectorSplits_OuterBinaryOp(this);                                \
+    }                                                                          \
+    std::vector<std::vector<daphne::VectorCombine>> daphne::OP::getVectorCombines() {       \
+        return getVectorCombines_OuterBinaryOp(this);                              \
+    }                                                                          \
+    std::vector<std::vector<std::pair<Value, Value>>> daphne::OP::createOpsOutputSizes(     \
+        OpBuilder &builder) {                                                  \
+        return createOpsOutputSizes_OuterBinaryOp(this, builder);                  \
+    }
+
+
+// Arithmetic
+
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterAddOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterSubOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterMulOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterDivOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterPowOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterModOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterLogOp)
+
+// Min/max
+
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterMinOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterMaxOp)
+
+// Logical
+
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterAndOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterOrOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterXorOp)
+
+// Comparisons
+
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterEqOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterNeqOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterLtOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterLeOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterGtOp)
+IMPL_SPLIT_COMBINE_OUTERBINARY(OuterGeOp)
+
+#undef IMPL_SPLIT_COMBINE_OUTERBINARY
+
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------

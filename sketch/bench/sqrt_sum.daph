@@ -1,0 +1,8 @@
+X = rand($r, $c, 0.0, 1.0, 1, 12345);
+
+startProfiling();
+i1 = sqrt(X);
+i2 = sum(i1);
+stopProfiling();
+
+print(i2);

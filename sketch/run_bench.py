@@ -22,27 +22,27 @@ samples = 3
 
 scripts = [
     {
-        "script": "./sketch/bench/single_sum.daph",
-        "args": ["X=\\\"m_200000_100.csv\\\""]
+        "script": "../sketch/bench/single_sum.daph",
+        "args": ["X=\"../m_200000_100.csv\""]
     },
     {
-        "script": "./sketch/bench/transpose_sum.daph",
-        "args": ["X=\\\"m_200000_100.csv\\\""]
+        "script": "../sketch/bench/transpose_sum.daph",
+        "args": ["X=\"../m_200000_100.csv\""]
+    },
+    {
+        "script": "../sketch/bench/transpose_chain.daph",
+        "args": ["X=\"../m_200000_100.csv\""]
     },
      {
-        "script": "./sketch/bench/complex_sum.daph",
-        "args": ["r=100000", "c=500", "rep=2", "icpt=1"]
+        "script": "../sketch/bench/complex_sum.daph",
+        "args": ["X=\"../m_20000_1000.csv\"", "Y=\"../m_1000_20000.csv\"", "Z=\"../m2_20000_1000.csv\"",  "H=\"../m2_1000_20000.csv\""]
     },
     {
-        "script": "./sketch/bench/kmeans.daphne",
-        "args": ["X=\\\"m_200000_100.csv\\\"", "X=\\\"m_200000_100.csv\\\""]
+        "script": "../sketch/bench/kmeans.daphne",
+        "args": ["X=\"../m_200000_100.csv\"", "C=\"../m_50_100.csv\"", "i=2"]
     },
     {
-        "script": "./sketch/bench/lmDS_rnd.daphne",
-        "args": ["r=100000", "c=500", "rep=2", "icpt=1"]
-    },
-    {
-        "script": "./sketch/bench/lmDS_rnd.daphne",
+        "script": "../sketch/bench/lmDS_rnd.daphne",
         "args": ["r=100000", "c=500", "rep=2", "icpt=1"]
     },
 ]
@@ -81,13 +81,13 @@ def save_sys_info(folder):
 def generate_commands():
 
     vec_settings = {
-        "daphne-org": [
-            ["run-daphne.sh"],
-            ["run-daphne.sh", "--vec"]
+        "daphne-X86-64-org-bin": [
+            ["./run-daphne.sh"],
+            ["./run-daphne.sh", "--vec"]
         ],
-        "daphne-vec": [
-            ["run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
-            ["run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
+        "daphne-X86-64-vec-bin": [
+            ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
+            ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
         ]
     }
 
@@ -161,8 +161,6 @@ def setup_exp_run():
          
     return
 
-
-
 def run_command(command, cwd):
     _command = []
     if use_perf:
@@ -175,7 +173,6 @@ def run_command(command, cwd):
     stdout, stderr = process.communicate()
 
     return stdout.decode(), stderr.decode()
-    #return "", "{\"startup_seconds\": 0.133933, \"parsing_seconds\": 0.00888668, \"compilation_seconds\": 0.108842, \"execution_seconds\": 0.0627116, \"total_seconds\": 0.314373}"
 
 if to_print:
     for c in range(0, len(commands)):
@@ -195,7 +192,8 @@ for c in range(0, len(commands)):
     for i in range(0, samples):
         stdout, stderr = run_command(commands[c]["cmd"], commands[c]["cwd"])
         
-        timing = stderr.split("\n")[-1]
+        timing = stderr
+        print (stdout)
         print(str(i) + ": " + timing)
         timings.append(json.loads(timing))
     
