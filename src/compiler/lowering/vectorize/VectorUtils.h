@@ -1045,6 +1045,21 @@ struct VectorUtils {
                 std::string color = VectorUtils::DEBUG::getColor(i);
 
                 outfile << "subgraph cluster_" << pipeName << " {\n";
+
+                outfile << "label=\"S: [";
+                for (const auto& x : ops.at(i).getSplits()) {
+                    auto attr = static_cast<uint64_t>(llvm::dyn_cast<mlir::daphne::VectorSplitAttr>(x).getValue());
+                    outfile << attr << ", ";
+                }
+                outfile << "]\\n";
+
+                outfile << " C: [";
+                for (const auto& x : ops.at(i).getCombines()) {
+                    auto attr = static_cast<uint64_t>(llvm::dyn_cast<mlir::daphne::VectorCombineAttr>(x).getValue());
+                    outfile << attr << ", ";
+                }
+                outfile << "]\";\n";
+
                 outfile << "node [style=filled,color=" << color << "];\n";
                 outfile << "color=" << "lightgrey" << ";\n";
                 size_t j = 0;
