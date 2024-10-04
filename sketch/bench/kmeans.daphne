@@ -11,6 +11,7 @@ X = readMatrix($X);
 C = readMatrix($C);
 
 // K-means clustering (decisive part).
+start = now();
 for(i in 1:$i) {
     D = (X @ t(C)) * -2 + t(sum(C ^ 2, 0));
     minD = aggMin(D, 0);
@@ -19,8 +20,11 @@ for(i in 1:$i) {
     P_denom = sum(P, 1);
     C = (t(P) @ X) / t(P_denom);
 }
+end = now();
 
 // Result output.
 print(C[0,0]);
 print(C[1,1]);
 print(C[2,2]);
+
+print("F1XM3:"+ (end - start));

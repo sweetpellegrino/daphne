@@ -1,6 +1,9 @@
 X = readMatrix($X);
 
+start = now();
 t = t(X);
 s = sum(t);
+end = now();
 
 print(s);
+print("F1XM3:"+ (end - start));

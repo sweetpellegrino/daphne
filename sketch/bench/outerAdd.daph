@@ -18,4 +18,4 @@ end = now();
 
 
 print(i3[0,0]);
-print(end - start);
+print("F1XM3:"+ (end - start));

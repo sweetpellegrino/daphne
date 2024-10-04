@@ -183,11 +183,14 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
         pm.addPass(mlir::createCanonicalizerPass());
         pm.addNestedPass<mlir::func::FuncOp>
             (mlir::daphne::createDrawPipelineOpsPass("graph-pcr.dot"));
-        pm.addNestedPass<mlir::func::FuncOp>
-            (mlir::daphne::createHorizontalFusionPass());
-        pm.addPass(mlir::createCanonicalizerPass());
-        pm.addNestedPass<mlir::func::FuncOp>
-            (mlir::daphne::createDrawPipelineOpsPass("graph-horz.dot"));
+        if (!userConfig_.no_horizontal_fusion) {
+            pm.addNestedPass<mlir::func::FuncOp>
+                (mlir::daphne::createHorizontalFusionPass());
+            pm.addPass(mlir::createCanonicalizerPass());
+            pm.addNestedPass<mlir::func::FuncOp>
+                (mlir::daphne::createDrawPipelineOpsPass("graph-horz.dot"));
+
+        }
     }
     if (userConfig_.explain_vectorized)
         pm.addPass(mlir::daphne::createPrintIRPass("IR after vectorization:"));

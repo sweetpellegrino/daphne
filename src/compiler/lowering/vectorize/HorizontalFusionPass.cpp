@@ -236,7 +236,9 @@ void HorizontalFusionPass::runOnOperation()
             pipeOp1->erase();
             pipeOp2->erase();
 
+            //suboptimal
             changed = true;
+            break;
         }
     }
 

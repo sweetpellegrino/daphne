@@ -385,6 +385,10 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes,
             )
     );
 
+    static opt<bool> noHorizontalFusion(
+        "no-hf", cat(daphneOptions),
+        desc("No horizontal fusion"));
+
     static llvm::cl::list<string> scriptArgs1(
         "args", cat(daphneOptions),
         desc("Alternative way of specifying arguments to the DaphneDSL "
@@ -611,6 +615,10 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes,
 
     if (fpgaopencl) {
         user_config.use_fpgaopencl = true;
+    }
+
+    if (noHorizontalFusion) {
+        user_config.no_horizontal_fusion = true;
     }
 
     if (enableProfiling) {

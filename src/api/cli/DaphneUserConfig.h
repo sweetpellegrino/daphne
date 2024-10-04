@@ -42,6 +42,7 @@ struct DaphneUserConfig {
     bool use_cuda = false;
     bool use_vectorized_exec = false;
 
+    bool no_horizontal_fusion = false;
     VectorizationType vectorizationType = GREEDY_1;
     size_t runCombKey = 0;
 

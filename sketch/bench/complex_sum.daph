@@ -5,6 +5,7 @@ Y = readMatrix($Y); //CxR
 Z = readMatrix($Z); //RxC
 H = readMatrix($H); //CxR
 
+start = now();
 a1 = abs(X);
 a2 = sqrt(Y);
 a3 = exp(Z);
@@ -21,6 +22,9 @@ c2 = b2 @ b4;
 
 e1 = sum(c1);
 e2 = sum(c2);
+end = now();
 
 print(e1);
 print(e2);
+
+print("F1XM3:"+ (end - start));
