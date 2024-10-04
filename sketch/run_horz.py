@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import subprocess
+import json
 
 to_print = False
 if "--print" in sys.argv:
@@ -72,9 +73,33 @@ def generate_script(num_ops):
     #script.insert(0, "#total: "+str(width*depth+num_input+width))
     return script
     
+
+def extract_f1xm3(stdout):
+    lines = stdout.split('\n')
+
+    for line in reversed(lines):
+        if 'F1XM3' in line:
+            number = line.split('F1XM3:')[1]
+            return int(number)
+    return None
+
+
 #command = ["../bin/daphne", "--vec-type=GREEDY_1", "--num-threads=1", "_horz.daph"]
 #command = ["../bin/daphne", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "_horz.daph"]
-command = ["../bin/daphne", "--vec", "--vec-type=GREEDY_1", "--num-threads=1", "_horz.daph"]
+'''
+cwd = "daphne-X86-64-vec-bin"
+commands = [
+    ["./run-daphne.sh", "--timing", "--vec", "--vec-type=GREEDY_1", "--num-threads=1", "../_horz.daph"],
+    ["./run-daphne.sh", "--timing", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "../_horz.daph"]
+]'''
+
+samples = 3
+
+cwd = "./"
+commands = [
+    ["../bin/daphne", "--timing", "--vec", "--vec-type=GREEDY_1", "--num-threads=1", "./_horz.daph"],
+    ["../bin/daphne", "--timing", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "./_horz.daph"]
+]
 
 def run_command(command, cwd):
     _command = []
@@ -86,20 +111,46 @@ def run_command(command, cwd):
     return stdout.decode(), stderr.decode()
 
 #for ops in log:
-#for ops in range(0, len(operators)):
-for ops in range(0, 27):
+#for ops in range(0, 27):
 
-    print("Run: " + " ".join(command) + " " + str(int((ops))))
+output = []
+for c in commands: 
 
-    script = generate_script(int(ops))
-    with open("_horz.daph", "w") as f:
-        for line in script:
-            f.write(line + '\n')
+    print(c)
 
-    stdout, stderr = run_command(command, "./");
+    _out = {}
+    for ops in range(0, len(operators)):
 
-    print(stdout)
-    print(stderr)
+        print("Run: " + " ".join(c) + " " + str(int((ops))))
+
+        script = generate_script(int(ops))
+        with open("_horz.daph", "w") as f:
+            for line in script:
+                f.write(line + '\n')
+
+        stdout, stderr = run_command(c, "./");
+
+        timings = []
+        for i in range(0, samples):
+            stdout, stderr = run_command(c, cwd)
+            
+            timing = json.loads(stderr)
+            timing["vectorized_nanoseconds"] = extract_f1xm3(stdout)
+
+            print(timing)
+            timings.append(timing)
+       
+        _out[ops] = timings 
+        
+    output.append({
+        "cmd": c,
+        "timings": _out
+    })
+
+
+with open("horz_timings.json", "w+") as f:
+    json.dump(output, f, indent=4)
+    f.close()
 
     
     
