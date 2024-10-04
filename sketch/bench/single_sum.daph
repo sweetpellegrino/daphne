@@ -1,5 +1,0 @@
-X = readMatrix($X);
-
-s = sum(X);
-
-print(s);
