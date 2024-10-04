@@ -20,6 +20,7 @@ if "--print" in sys.argv:
 
 samples = 3
 
+'''
 scripts = [
     {
         "script": "../sketch/bench/single_sum.daph",
@@ -45,7 +46,27 @@ scripts = [
         "script": "../sketch/bench/lmDS_rnd.daphne",
         "args": ["r=100000", "c=500", "rep=2", "icpt=1"]
     },
+]'''
+
+scripts = [
+    {
+        "script": "../sketch/bench/sqrt_sum.daph",
+        "args": ["r=27500", "c=27500"]
+    },
+    {
+        "script": "../sketch/bench/outerAdd.daph",
+        "args": ["r=27500", "c=27500"]
+    }
+    {
+        "script": "../sketch/bench/transpose_sum.daph",
+        "args": ["r=27500", "c=27500"]
+    }
+    {
+        "script": "../sketch/bench/kmeans.daph",
+        "args": ["r=1000000", "f=100", "c=500", "i=2"]
+    }
 ]
+
 
 num_threads = ["1", "4"]
 global_args = ["--timing"]
@@ -174,6 +195,15 @@ def run_command(command, cwd):
 
     return stdout.decode(), stderr.decode()
 
+def extract_f1xm3(stdout):
+    lines = stdout.split('\n')
+
+    for line in reversed(lines):
+        if 'F1XM3' in line:
+            number = line.split('F1XM3:')[1]
+            return int(number)
+    return None
+
 if to_print:
     for c in range(0, len(commands)):
         print(" ".join(commands[c]["cmd"]) + " in " + commands[c]["cwd"])
@@ -182,22 +212,34 @@ if to_print:
 
 setup_exp_run()
 
+output = []
 for c in range(0, len(commands)):
+ 
+    print(c)
+
     folder = exp_folder + "/" + str(c)
-    os.mkdir(folder)
+
+    cmd = commands[c]["cmd"]
+    cwd = commands[c]["cwd"]
     
-    print("Running: " + " ".join(commands[c]["cmd"]) + " in " + commands[c]["cwd"] + " " + str(samples) + " times")
+    print("Running: " + " ".join(cmd) + " in " + cwd + ", " + str(samples) + " times")
 
     timings = []
     for i in range(0, samples):
-        stdout, stderr = run_command(commands[c]["cmd"], commands[c]["cwd"])
+        stdout, stderr = run_command(cmd, cwd)
         
-        timing = stderr
-        print (stdout)
-        print(str(i) + ": " + timing)
-        timings.append(json.loads(timing))
+        timing = json.loads(stderr)
+        timing["vectorized_nanoseconds"] = extract_f1xm3(stdout)
+
+        print(timing)
+        timings.append(timing)
     
-    print(exp_folder)
-    with open(folder + "/timings.json", "w+") as f:
-        json.dump(timings, f, indent=4)
-        f.close()
+    output.append({
+        "cmd": cmd,
+        "cwd": cwd,
+        "timings": timings
+    })
+
+with open(exp_folder + "/timings.json", "w+") as f:
+    json.dump(output, f, indent=4)
+    f.close()

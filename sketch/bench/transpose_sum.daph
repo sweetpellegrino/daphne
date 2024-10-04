@@ -1,4 +1,4 @@
-X = readMatrix($X);
+X = rand($r, $c, 0.0, 1.0, 1, 12345);
 
 start = now();
 t = t(X);
