@@ -18,7 +18,7 @@ if "--print" in sys.argv:
 # EXPERIMENTS
 #------------------------------------------------------------------------------
 
-samples = 3
+samples = 5
 
 '''
 scripts = [
@@ -46,23 +46,24 @@ scripts = [
         "script": "../sketch/bench/lmDS_rnd.daphne",
         "args": ["r=100000", "c=500", "rep=2", "icpt=1"]
     },
-]'''
+]
+'''
 
 scripts = [
     {
-        "script": "../sketch/bench/sqrt_sum.daph",
-        "args": ["r=27500", "c=27500"]
+        "path": "../sketch/bench/outerAdd.daph",
+        "args": ["r=30000", "c=30000"]
     },
     {
-        "script": "../sketch/bench/outerAdd.daph",
-        "args": ["r=27500", "c=27500"]
-    }
+        "path": "../sketch/bench/sqrt_sum.daph",
+        "args": ["r=30000", "c=30000"]
+    },
     {
-        "script": "../sketch/bench/transpose_sum.daph",
-        "args": ["r=27500", "c=27500"]
-    }
+        "path": "../sketch/bench/transpose_sum.daph",
+        "args": ["r=30000", "c=30000"]
+    },
     {
-        "script": "../sketch/bench/kmeans.daph",
+        "path": "../sketch/bench/kmeans.daph",
         "args": ["r=1000000", "f=100", "c=500", "i=2"]
     }
 ]
@@ -128,20 +129,25 @@ def generate_commands():
                     "cmd": var + global_args
                 })
 
-    commands = []
-    for item in vec_commands:
-        cwd = item["cwd"]
-        cmd = item["cmd"]
-        for script in scripts:
+    experiments = []
+    for script in scripts:
+        _commands = []
+        for item in vec_commands:
+            cwd = item["cwd"]
+            cmd = item["cmd"]
             command = {
-               "cwd": cwd,
-               "cmd": cmd + [script["script"]] + script["args"]
+                "cwd": cwd,
+                "cmd": cmd + [script["path"]] + script["args"]
             }
-            commands.append(command)
+            _commands.append(command)
+        experiments.append({
+            "script": script,
+            "exec": _commands
+        })
     
-    return commands
+    return experiments
 
-commands = generate_commands()
+experiments = generate_commands()
 
 '''
 matrices = [
@@ -159,12 +165,11 @@ def setup_exp_run():
 
     save_sys_info(exp_folder) 
 
+    '''
     with open(exp_folder + "/commands.json", "w+") as f:
         json.dump(commands, f, indent=4)
         f.close()
 
-    # check if file exists
-    '''
     if os.path.exists("done"):
         with open("done", "r+") as f:
             j = json.load(f)
@@ -174,11 +179,11 @@ def setup_exp_run():
         with open("done", "w+") as f:
             json.dump({"seeds": [seed]}, f, indent=4)
             f.close()
-    '''
     
     if not os.path.exists("done"):
         with open("done", "w+") as f:
             pass
+    '''
          
     return
 
@@ -205,41 +210,35 @@ def extract_f1xm3(stdout):
     return None
 
 if to_print:
-    for c in range(0, len(commands)):
-        print(" ".join(commands[c]["cmd"]) + " in " + commands[c]["cwd"])
+    #for c in range(0, len(commands)):
+    #    print(" ".join(commands[c]["cmd"]) + " in " + commands[c]["cwd"])
+    print(experiments)
 
     exit(0)
 
 setup_exp_run()
 
-output = []
-for c in range(0, len(commands)):
+for i, e in enumerate(experiments):
  
-    print(c)
+    for j, c in enumerate(e["exec"]):
 
-    folder = exp_folder + "/" + str(c)
-
-    cmd = commands[c]["cmd"]
-    cwd = commands[c]["cwd"]
-    
-    print("Running: " + " ".join(cmd) + " in " + cwd + ", " + str(samples) + " times")
-
-    timings = []
-    for i in range(0, samples):
-        stdout, stderr = run_command(cmd, cwd)
+        cmd = c["cmd"]
+        cwd = c["cwd"]
         
-        timing = json.loads(stderr)
-        timing["vectorized_nanoseconds"] = extract_f1xm3(stdout)
+        print("Running: " + " ".join(cmd) + " in " + cwd + ", " + str(samples) + " times")
 
-        print(timing)
-        timings.append(timing)
-    
-    output.append({
-        "cmd": cmd,
-        "cwd": cwd,
-        "timings": timings
-    })
+        timings = []
+        for i in range(0, samples):
+            stdout, stderr = run_command(cmd, cwd)
+            
+            timing = json.loads(stderr)
+            timing["vectorized_nanoseconds"] = extract_f1xm3(stdout)
+
+            print(timing)
+            timings.append(timing)
+        
+        experiments[i]["exec"][j]["timings"] = timings
 
 with open(exp_folder + "/timings.json", "w+") as f:
-    json.dump(output, f, indent=4)
+    json.dump(experiments, f, indent=4)
     f.close()

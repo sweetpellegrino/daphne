@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import subprocess
 import json
+import datetime
 
 to_print = False
 if "--print" in sys.argv:
@@ -48,6 +49,9 @@ operators = [
 #depth = int(sys.argv[1])
 #width = int(sys.argv[2])
 
+
+prefix = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+
 def generate_script(num_ops):
 
     script = []
@@ -86,20 +90,22 @@ def extract_f1xm3(stdout):
 
 #command = ["../bin/daphne", "--vec-type=GREEDY_1", "--num-threads=1", "_horz.daph"]
 #command = ["../bin/daphne", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "_horz.daph"]
-'''
+
 cwd = "daphne-X86-64-vec-bin"
 commands = [
     ["./run-daphne.sh", "--timing", "--vec", "--vec-type=GREEDY_1", "--num-threads=1", "../_horz.daph"],
     ["./run-daphne.sh", "--timing", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "../_horz.daph"]
-]'''
+]
 
-samples = 3
+samples = 5
 
+'''
 cwd = "./"
 commands = [
     ["../bin/daphne", "--timing", "--vec", "--vec-type=GREEDY_1", "--num-threads=1", "./_horz.daph"],
     ["../bin/daphne", "--timing", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "./_horz.daph"]
 ]
+'''
 
 def run_command(command, cwd):
     _command = []
@@ -128,8 +134,6 @@ for c in commands:
             for line in script:
                 f.write(line + '\n')
 
-        stdout, stderr = run_command(c, "./");
-
         timings = []
         for i in range(0, samples):
             stdout, stderr = run_command(c, cwd)
@@ -148,9 +152,6 @@ for c in commands:
     })
 
 
-with open("horz_timings.json", "w+") as f:
+with open(prefix + "-horz_timings.json", "w+") as f:
     json.dump(output, f, indent=4)
     f.close()
-
-    
-    
