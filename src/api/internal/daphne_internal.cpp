@@ -15,6 +15,7 @@
  */
 
 #include "runtime/local/datastructures/IAllocationDescriptor.h"
+#include <cstddef>
 #include <vector>
 #ifdef USE_MPI
 #include "runtime/distributed/worker/MPIWorker.h"
@@ -329,6 +330,13 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
             )
     );
 
+    static opt<size_t> batchSize(
+            "batchSize", cat(daphneOptions),
+            desc(
+                "batchSize"
+            )
+    );
+
     static opt<bool> noHorizontalFusion(
         "no-hf", cat(daphneOptions),
         desc("No horizontal fusion"));
@@ -398,6 +406,8 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
     user_config.use_vectorized_exec = useVectorizedPipelines;
     user_config.vectorizationType = vectorizeTypeList;
     user_config.runCombKey = runKey;
+    user_config.batchSize = batchSize;
+
     user_config.use_distributed = useDistributedRuntime;
     user_config.use_obj_ref_mgnt = !noObjRefMgnt;
     user_config.use_ipa_const_propa = !noIPAConstPropa;

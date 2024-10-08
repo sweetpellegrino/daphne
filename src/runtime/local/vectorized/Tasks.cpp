@@ -30,15 +30,15 @@ template <typename VT> void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint3
     std::vector<DenseMatrix<VT> **> outputs;
     for (auto &lres : localResults)
         outputs.push_back(&lres);
-    for (uint64_t r = _data._rl; r < _data._ru; r += batchSize) {
+    for (uint64_t d = _data._dl; d < _data._du; d += batchSize) {
         // create zero-copy views of inputs/outputs
-        uint64_t r2 = std::min(r + batchSize, _data._ru);
+        uint64_t d2 = std::min(d + batchSize, _data._du);
 
-        auto linputs = this->createFuncInputs(r, r2);
+        auto linputs = this->createFuncInputs(d, d2);
 
         // execute function on given data binding (batch size)
         _data._funcs[fid](outputs.data(), linputs.data(), _data._ctx);
-        accumulateOutputs(localResults, localAddRes, r, r2);
+        accumulateOutputs(localResults, localAddRes, d, d2);
 
         // cleanup
         for (auto &localResult : localResults)
@@ -84,19 +84,19 @@ template <typename VT> void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint3
     }
 }
 
-template <typename VT> uint64_t CompiledPipelineTask<DenseMatrix<VT>>::getTaskSize() { return _data._ru - _data._rl; }
+template <typename VT> uint64_t CompiledPipelineTask<DenseMatrix<VT>>::getTaskSize() { return _data._du - _data._dl; }
 
 template <typename VT>
 void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseMatrix<VT> *> &localResults,
                                                               std::vector<DenseMatrix<VT> *> &localAddRes,
-                                                              uint64_t rowStart, uint64_t rowEnd) {
+                                                              uint64_t dimStart, uint64_t dimEnd) {
     // TODO: in-place computation via better compiled pipelines
     // TODO: multi-return
     for (auto o = 0u; o < _data._numOutputs; ++o) {
         auto &result = (*_res[o]);
         switch (_data._combines[o]) {
             case VectorCombine::ROWS: {
-                auto slice = result->sliceRow(rowStart - _data._offset, rowEnd - _data._offset);
+                auto slice = result->sliceRow(dimStart - _data._offset, dimEnd - _data._offset);
     #if 0
                 llvm::outs() << "ROWS" << "\n";
                 llvm::outs() << _data._offset << "\n";
@@ -124,7 +124,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
             }
             case VectorCombine::COLS: {
 
-                auto slice = result->sliceCol(rowStart - _data._offset, rowEnd - _data._offset);
+                auto slice = result->sliceCol(dimStart - _data._offset, dimEnd - _data._offset);
     #if 0
                 llvm::outs() << "COLS" << "\n";
                 llvm::outs() << _data._offset << "\n";
@@ -197,7 +197,7 @@ template <typename VT> void CompiledPipelineTask<CSRMatrix<VT>>::execute(uint32_
             if (_data._wholeResultCols[i] == -1)
                 throw std::runtime_error("TODO: CompiledPipeLineTask (CSRMatrix) Rows "
                                          "_data._wholeResultCols[i] == -1");
-            localResNumRows[i] = _data._ru - _data._rl;
+            localResNumRows[i] = _data._du - _data._dl;
             localResNumCols[i] = _data._wholeResultCols[i];
             break;
         }
@@ -206,7 +206,7 @@ template <typename VT> void CompiledPipelineTask<CSRMatrix<VT>>::execute(uint32_
                 throw std::runtime_error("TODO: CompiledPipeLineTask (CSRMatrix) Cols "
                                          "_data._wholeResultRows[i] == -1");
             localResNumRows[i] = _data._wholeResultRows[i];
-            localResNumCols[i] = _data._ru - _data._rl;
+            localResNumCols[i] = _data._du - _data._dl;
             break;
         }
         default:
@@ -220,11 +220,11 @@ template <typename VT> void CompiledPipelineTask<CSRMatrix<VT>>::execute(uint32_
             new VectorizedDataSink<CSRMatrix<VT>>(_data._combines[i], localResNumRows[i], localResNumCols[i]);
 
     std::vector<CSRMatrix<VT> *> lres(_data._numOutputs, nullptr);
-    for (uint64_t r = _data._rl; r < _data._ru; r += batchSize) {
+    for (uint64_t d = _data._dl; d < _data._du; d += batchSize) {
         // create zero-copy views of inputs/outputs
-        uint64_t r2 = std::min(r + batchSize, _data._ru);
+        uint64_t d2 = std::min(d + batchSize, _data._du);
 
-        auto linputs = this->createFuncInputs(r, r2);
+        auto linputs = this->createFuncInputs(d, d2);
         CSRMatrix<VT> ***outputs = new CSRMatrix<VT> **[_data._numOutputs];
         for (size_t i = 0; i < _data._numOutputs; i++)
             outputs[i] = &(lres[i]);
@@ -232,7 +232,7 @@ template <typename VT> void CompiledPipelineTask<CSRMatrix<VT>>::execute(uint32_
         _data._funcs[fid](outputs, linputs.data(), _data._ctx);
         delete[] outputs;
         for (size_t i = 0; i < _data._numOutputs; i++)
-            localSinks[i]->add(lres[i], r - _data._rl, false);
+            localSinks[i]->add(lres[i], d - _data._dl, false);
 
         // cleanup
         for (size_t i = 0; i < _data._numOutputs; i++)
@@ -243,12 +243,12 @@ template <typename VT> void CompiledPipelineTask<CSRMatrix<VT>>::execute(uint32_
         // here.
     }
     for (size_t i = 0; i < _data._numOutputs; i++) {
-        _resultSinks[i]->add(localSinks[i]->consume(), _data._rl);
+        _resultSinks[i]->add(localSinks[i]->consume(), _data._dl);
         delete localSinks[i];
     }
 }
 
-template <typename VT> uint64_t CompiledPipelineTask<CSRMatrix<VT>>::getTaskSize() { return _data._ru - _data._rl; }
+template <typename VT> uint64_t CompiledPipelineTask<CSRMatrix<VT>>::getTaskSize() { return _data._du - _data._dl; }
 
 template class CompiledPipelineTask<DenseMatrix<double>>;
 template class CompiledPipelineTask<DenseMatrix<float>>;
