@@ -51,9 +51,23 @@ scripts = [
 
 scripts = [
     {
-        "path": "../sketch/bench/outerAdd.daph",
+        "path": "../sketch/bench/outerAdd_t.daph",
         "args": ["r=30000", "c=30000"]
     },
+    {
+        "path": "../sketch/bench/outerAdd_exp.daph",
+        "args": ["r=30000", "c=30000"]
+    },
+    {
+        "path": "../sketch/bench/outerAdd_t_exp.daph",
+        "args": ["r=30000", "c=30000"]
+    },
+    {
+        "path": "../sketch/bench/abs_t_exp.daph",
+        "args": ["r=30000", "c=30000"]
+    },
+]
+'''
     {
         "path": "../sketch/bench/sqrt_sum.daph",
         "args": ["r=30000", "c=30000"]
@@ -63,10 +77,11 @@ scripts = [
         "args": ["r=30000", "c=30000"]
     },
     {
-        "path": "../sketch/bench/kmeans.daph",
+        "path": "../sketch/bench/kmeans.daphne",
         "args": ["r=1000000", "f=100", "c=500", "i=2"]
     }
 ]
+'''
 
 
 num_threads = ["1", "4"]
@@ -209,10 +224,11 @@ def extract_f1xm3(stdout):
             return int(number)
     return None
 
+
 if to_print:
-    #for c in range(0, len(commands)):
-    #    print(" ".join(commands[c]["cmd"]) + " in " + commands[c]["cwd"])
-    print(experiments)
+    for i, e in enumerate(experiments):
+        for j, c in enumerate(e["exec"]):
+            print(str(i) + ": " + " ".join(c["cmd"]) + " in " + c["cwd"])
 
     exit(0)
 
@@ -228,7 +244,7 @@ for i, e in enumerate(experiments):
         print("Running: " + " ".join(cmd) + " in " + cwd + ", " + str(samples) + " times")
 
         timings = []
-        for i in range(0, samples):
+        for _ in range(0, samples):
             stdout, stderr = run_command(cmd, cwd)
             
             timing = json.loads(stderr)

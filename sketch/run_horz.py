@@ -43,6 +43,9 @@ operators = [
     "X / 0.5;",
 ]
 
+def generate_operator(i, arg):
+    return "v" + str(i) + " = " + arg + " + " +  str(i*0.1) + ";"
+    
 #num_points = 16
 #log = np.logspace(np.log10(min_horz_ops), np.log10(max_horz_ops), num=num_points)
 
@@ -62,9 +65,8 @@ def generate_script(num_ops):
     count = 0
 
     for j in range(0, num_ops):
-        script.append("v"+str(count)+" = "+ operators[j])
-        #script.append("v"+str(count)+" = sqrt(m0);")
-        #script.append("v"+str(count)+" = sum(m0);") 
+        #script.append("v"+str(count)+" = "+ operators[j])
+        script.append(generate_operator(j, "X"))
         count = count + 1
     script.append("end = now();")
 
@@ -97,7 +99,7 @@ commands = [
     ["./run-daphne.sh", "--timing", "--vec", "--no-hf", "--vec-type=GREEDY_1", "--num-threads=1", "../_horz.daph"]
 ]
 
-samples = 5
+samples = 0
 
 '''
 cwd = "./"
@@ -117,7 +119,6 @@ def run_command(command, cwd):
     return stdout.decode(), stderr.decode()
 
 #for ops in log:
-#for ops in range(0, 27):
 
 output = []
 for c in commands: 
@@ -126,6 +127,7 @@ for c in commands:
 
     _out = {}
     for ops in range(0, len(operators)):
+    #for ops in range(0, 14):
 
         print("Run: " + " ".join(c) + " " + str(int((ops))))
 

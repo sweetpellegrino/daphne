@@ -1,0 +1,12 @@
+X = rand($r, 1, 0.0, 1.0, 1, 12345);
+Y = rand(1, $c, 0.0, 1.0, 1, 67890);
+
+start = now();
+i1 = outerAdd(X,Y);
+i2 = t(i1);
+i3 = i2 + 2;
+end = now();
+
+
+print(i3[0,0]);
+print("F1XM3:"+ (end - start));

@@ -142,7 +142,10 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     if (userConfig_.use_vectorized_exec || userConfig_.use_distributed) {
         // TODO: add inference here if we have rewrites that could apply to
         // vectorized pipelines due to smaller sizes
+        pm.addNestedPass<mlir::func::FuncOp>(
+        mlir::daphne::createAnnotateMaterializationSizesPass());
         switch (userConfig_.vectorizationType) {
+
             case DAPHNE:
                 pm.addNestedPass<mlir::func::FuncOp>(
                     mlir::daphne::createDaphneVectorizeComputationsPass());

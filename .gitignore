@@ -71,3 +71,4 @@ data*.json
 *.csv
 *.csv.meta
 *.dot
+sketch/results

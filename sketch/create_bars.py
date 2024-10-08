@@ -3,11 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-#0...5 outerAdd
-#5...11 sqrt_sum
-#etc.
-
-exp_folder = "results/2024-10-05_15:32:40/"
+exp_folder = "results/2024-10-05_19:58:15/"
 with open(exp_folder + "timings.json", "r") as f:
     data = json.load(f)
 
@@ -15,7 +11,7 @@ nrows = len(data)
 if len(data) == 1:
     nrows = 2
 
-fig, axs = plt.subplots(nrows, 1, figsize=(12, 9))
+fig, axs = plt.subplots(nrows, 1, figsize=(12, 3*nrows))
 
 colors = ["tab:gray", "seagreen", "seagreen", "mediumseagreen", "mediumseagreen", "springgreen", "springgreen"]
 
@@ -35,16 +31,22 @@ for i, d in enumerate(data):
 
         name = "".join([s[-1] for s in c["cmd"]])
         legend += name + ": " + " ".join(c["cmd"]) + " of " + c["cwd"] + "\n"
-        
+
         x.append(name)
         y.append(mean)
 
-    ax.bar(x, y, color=colors)
+    handle = ax.bar(x, y, color=colors)
+    for h in handle:
+        height = h.get_height()
+        ax.text(h.get_x() + h.get_width() / 2.0, h.get_height() + 0.15, f"{h.get_height():.5f}", color='black', ha='center')
+
+    _max = np.max(y)
+    ax.set_ylim(0, _max + 0.15*_max)
 
     legend += "\n"
 
     ax.set_title(script_args)
-    ax.set_ylabel("(Vectorized) Seconds")
+    ax.set_ylabel("(Mean) Seconds")
     ax.set_xlabel("Commands")
 
 plt.tight_layout()

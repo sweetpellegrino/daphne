@@ -22,7 +22,6 @@
 #include <llvm/Support/raw_ostream.h>
 #include <stdexcept>
 #include <chrono>
-#include <thread>
 
 template <typename VT> void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
     // local add aggregation to minimize locking
@@ -52,36 +51,34 @@ template <typename VT> void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint3
         // internally. Thus, we do not need to care about freeing the inputs
         // here.
     }
-    
-    for(size_t o = 0; o < _data._numOutputs; ++o) {
 
-        if (_data._combines[o] == VectorCombine::ROWS || 
-            _data._combines[o] == VectorCombine::COLS)
+    for (size_t o = 0; o < _data._numOutputs; ++o) {
+
+        if (_data._combines[o] == VectorCombine::ROWS || _data._combines[o] == VectorCombine::COLS)
             continue;
 
         auto &result = (*_res[o]);
         _resLock.lock();
-        if(result == nullptr) {
+        if (result == nullptr) {
             result = localAddRes[o];
             _resLock.unlock();
-        }
-        else {
+        } else {
             switch (_data._combines[o]) {
-                case VectorCombine::ADD:
-                    ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
-                    break;
-                case VectorCombine::MIN:
-                    ewBinaryMat(BinaryOpCode::MIN, result, result, localAddRes[o], _data._ctx);
-                    break;
-                case VectorCombine::MAX:
-                    ewBinaryMat(BinaryOpCode::MAX, result, result, localAddRes[o], _data._ctx);
-                    break;
-                default:
-                    throw std::runtime_error("not implemented");
-                    break;
+            case VectorCombine::ADD:
+                ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
+                break;
+            case VectorCombine::MIN:
+                ewBinaryMat(BinaryOpCode::MIN, result, result, localAddRes[o], _data._ctx);
+                break;
+            case VectorCombine::MAX:
+                ewBinaryMat(BinaryOpCode::MAX, result, result, localAddRes[o], _data._ctx);
+                break;
+            default:
+                throw std::runtime_error("not implemented");
+                break;
             }
             _resLock.unlock();
-            //cleanup
+            // cleanup
             DataObjectFactory::destroy(localAddRes[o]);
         }
     }
@@ -98,116 +95,95 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
     for (auto o = 0u; o < _data._numOutputs; ++o) {
         auto &result = (*_res[o]);
         switch (_data._combines[o]) {
-        case VectorCombine::ROWS: {
-            auto slice = result->sliceRow(rowStart - _data._offset, rowEnd - _data._offset);
-#if 0
+            case VectorCombine::ROWS: {
+                auto slice = result->sliceRow(rowStart - _data._offset, rowEnd - _data._offset);
+    #if 0
                 llvm::outs() << "ROWS" << "\n";
                 llvm::outs() << _data._offset << "\n";
                 llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
                 llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
                 llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
                 llvm::outs() << "\n";
-#endif
-#if 0
-            // TODO It's probably more efficient to memcpy than to get/set.
-            // But eventually, we don't want to copy at all.
-            for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                    slice->set(i, j, localResults[o]->get(i, j));
-                }
-            }
-#else
+    #endif
 
-                VT* sliceValues = slice->getValues();
-                VT* localResultsValues = localResults[o]->getValues();
-                for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
-                    for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
-                        sliceValues[i*slice->getRowSkip()+j] = localResultsValues[i*localResults[o]->getRowSkip()+j];
+                auto start = std::chrono::high_resolution_clock::now();
+                VT *sliceValues = slice->getValues();
+                VT *localResultsValues = localResults[o]->getValues();
+                for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                    for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                        sliceValues[i * slice->getRowSkip() + j] =
+                            localResultsValues[i * localResults[o]->getRowSkip() + j];
                     }
                 }
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::nano> diff = end - start;
+                llvm::outs() << "ROWS: " << diff.count() << "\n";
 
-#endif
-            DataObjectFactory::destroy(slice);
-            break;
-        }
-        case VectorCombine::COLS: {
+                DataObjectFactory::destroy(slice);
+                break;
+            }
+            case VectorCombine::COLS: {
 
-            auto slice = result->sliceCol(rowStart - _data._offset, rowEnd - _data._offset);
-#if 0
+                auto slice = result->sliceCol(rowStart - _data._offset, rowEnd - _data._offset);
+    #if 0
                 llvm::outs() << "COLS" << "\n";
                 llvm::outs() << _data._offset << "\n";
                 llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
                 llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
                 llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
                 llvm::outs() << "\n";
-#endif
-#if 0
-            // TODO It's probably more efficient to memcpy than to get/set.
-            // But eventually, we don't want to copy at all.
-            for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                    slice->set(i, j, localResults[o]->get(i, j));
-                }
-            }
-#else
-                VT* sliceValues = slice->getValues();
-                VT* localResultsValues = localResults[o]->getValues();
-                for(auto i = 0u ; i < slice->getNumRows() ; ++i) {
-                    for(auto j = 0u ; j < slice->getNumCols() ; ++j) {
-                        sliceValues[i*slice->getRowSkip()+j] = localResultsValues[i*localResults[o]->getRowSkip()+j];
+    #endif
+                auto start = std::chrono::high_resolution_clock::now();
+                VT *sliceValues = slice->getValues();
+                VT *localResultsValues = localResults[o]->getValues();
+                for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                    for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                        sliceValues[i * slice->getRowSkip() + j] =
+                            localResultsValues[i * localResults[o]->getRowSkip() + j];
                     }
                 }
-#endif
-            DataObjectFactory::destroy(slice);
-            break;
-        }
-        case VectorCombine::ADD: {
-            if (localAddRes[o] == nullptr) {
-                // take lres and reset it to nullptr
-                localAddRes[o] = localResults[o];
-                localResults[o] = nullptr;
-            } else {
-                ewBinaryMat(BinaryOpCode::ADD, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::nano> diff = end - start;
+                llvm::outs() << "COLS: " << diff.count() << "\n";
+
+                DataObjectFactory::destroy(slice);
+                break;
             }
-            break;
-        }
-            case VectorCombine::SUM_ADD_SCALAR: {
-                if(localAddRes[o] == nullptr) {
+            case VectorCombine::ADD: {
+                if (localAddRes[o] == nullptr) {
                     // take lres and reset it to nullptr
                     localAddRes[o] = localResults[o];
                     localResults[o] = nullptr;
-                }
-                else {
+                } else {
                     ewBinaryMat(BinaryOpCode::ADD, localAddRes[o], localAddRes[o], localResults[o], nullptr);
                 }
                 break;
             }
             case VectorCombine::MAX: {
-                if(localAddRes[o] == nullptr) {
+                if (localAddRes[o] == nullptr) {
                     // take lres and reset it to nullptr
                     localAddRes[o] = localResults[o];
                     localResults[o] = nullptr;
-                }
-                else {
+                } else {
                     ewBinaryMat(BinaryOpCode::MAX, localAddRes[o], localAddRes[o], localResults[o], nullptr);
                 }
                 break;
             }
             case VectorCombine::MIN: {
-                if(localAddRes[o] == nullptr) {
+                if (localAddRes[o] == nullptr) {
                     // take lres and reset it to nullptr
                     localAddRes[o] = localResults[o];
                     localResults[o] = nullptr;
-                }
-                else {
+                } else {
                     ewBinaryMat(BinaryOpCode::MIN, localAddRes[o], localAddRes[o], localResults[o], nullptr);
                 }
                 break;
             }
-        default: {
-            throw std::runtime_error(("VectorCombine case `" +
-                                      std::to_string(static_cast<int64_t>(_data._combines[o])) + "` not supported"));
-        }
+            default: {
+                throw std::runtime_error(("VectorCombine case `" +
+                                        std::to_string(static_cast<int64_t>(_data._combines[o])) + "` not supported"));
+            }
         }
     }
 }

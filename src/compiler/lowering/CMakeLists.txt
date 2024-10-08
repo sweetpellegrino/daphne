@@ -35,6 +35,7 @@ add_mlir_dialect_library(MLIRDaphneTransforms
     vectorize/simdjson.cpp
     vectorize/HorizontalFusionPass.cpp
     vectorize/DrawPipelineOpsPass.cpp
+    vectorize/AnnotateMaterializationSizesPass.cpp
 
     DaphneOptPass.cpp
     EwOpsLowering.cpp
