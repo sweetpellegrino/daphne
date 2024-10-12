@@ -106,7 +106,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 llvm::outs() << "\n";
     #endif
 
-                auto start = std::chrono::high_resolution_clock::now();
+                //auto start = std::chrono::high_resolution_clock::now();
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
                 for (auto i = 0u; i < slice->getNumRows(); ++i) {
@@ -115,9 +115,9 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                             localResultsValues[i * localResults[o]->getRowSkip() + j];
                     }
                 }
-                auto end = std::chrono::high_resolution_clock::now();
+                /*auto end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::nano> diff = end - start;
-                llvm::outs() << "ROWS: " << diff.count() << "\n";
+                llvm::outs() << "ROWS: " << diff.count() << "\n";*/
 
                 DataObjectFactory::destroy(slice);
                 break;
@@ -133,7 +133,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
                 llvm::outs() << "\n";
     #endif
-                auto start = std::chrono::high_resolution_clock::now();
+                //auto start = std::chrono::high_resolution_clock::now();
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
                 for (auto i = 0u; i < slice->getNumRows(); ++i) {
@@ -143,9 +143,9 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                     }
                 }
 
-                auto end = std::chrono::high_resolution_clock::now();
+                /*auto end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::nano> diff = end - start;
-                llvm::outs() << "COLS: " << diff.count() << "\n";
+                llvm::outs() << "COLS: " << diff.count() << "\n";*/
 
                 DataObjectFactory::destroy(slice);
                 break;

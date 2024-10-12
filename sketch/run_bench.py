@@ -51,6 +51,14 @@ scripts = [
 
 scripts = [
     {
+        "path": "../sketch/bench/outerAdd_sumCol_exp.daph",
+        "args": ["r=30000", "c=30000"]
+    }
+]
+
+'''
+scripts = [
+    {
         "path": "../sketch/bench/outerAdd_t.daph",
         "args": ["r=30000", "c=30000"]
     },
@@ -68,6 +76,7 @@ scripts = [
     },
 ]
 '''
+'''
     {
         "path": "../sketch/bench/sqrt_sum.daph",
         "args": ["r=30000", "c=30000"]
@@ -84,8 +93,11 @@ scripts = [
 '''
 
 
-num_threads = ["1", "4"]
+num_threads = ["1"]
+#num_threads = ["1", "4"]
 global_args = ["--timing"]
+batchSize = []
+batchSize = ["1", "10", "25", "50", "100", "150", "200", "250", "300", "500"]
 
 #------------------------------------------------------------------------------
 # HELPER
@@ -118,6 +130,14 @@ def save_sys_info(folder):
 def generate_commands():
 
     vec_settings = {
+        "daphne-X86-64-vec-bin": [
+            ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
+            ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
+        ]
+    }
+    
+    '''
+    vec_settings = {
         "daphne-X86-64-org-bin": [
             ["./run-daphne.sh"],
             ["./run-daphne.sh", "--vec"]
@@ -127,6 +147,8 @@ def generate_commands():
             ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
         ]
     }
+    '''
+
 
     #commands
     vec_commands = []
@@ -144,10 +166,21 @@ def generate_commands():
                     "cmd": var + global_args
                 })
 
+    batch_commands = []
+    for i, item in enumerate(vec_commands):
+        for bs in batchSize:
+            batch_commands.append({
+                "cwd": cwd,
+                "cmd": item["cmd"] + ["--batchSize="+bs]
+            })
+    
+    if not batch_commands:
+        batch_commands = vec_commands
+
     experiments = []
     for script in scripts:
         _commands = []
-        for item in vec_commands:
+        for item in batch_commands:
             cwd = item["cwd"]
             cmd = item["cmd"]
             command = {

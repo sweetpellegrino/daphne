@@ -94,6 +94,7 @@ void AnnotateMaterializationSizesPass::runOnOperation() {
     auto func = getOperation();
 
     func->walk([&](daphne::Vectorizable op) {
+
         bool isValidOp = false;
         for (auto opType : op->getOperandTypes()) {
             if (!opType.isIntOrIndexOrFloat() && !llvm::isa<daphne::StringType>(opType)) {
@@ -103,8 +104,10 @@ void AnnotateMaterializationSizesPass::runOnOperation() {
         }
         if (isValidOp) {
             //estimation
-            op->getResultTypes()[0].print(llvm::outs());
             auto m = op->getResultTypes()[0].dyn_cast<daphne::MatrixType>();
+            
+            if (!m)
+                return;
 
             mlir::Builder builder(&getContext());
             mlir::IntegerAttr a = builder.getI64IntegerAttr(estimateSize(m));
