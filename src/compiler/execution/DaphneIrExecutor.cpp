@@ -238,8 +238,6 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
     // Initialize the use of each distinct kernels library to false.
     usedLibPaths = userConfig_.kernelCatalog.getLibPaths();
     
-    pm.printAsTextualPipeline(llvm::outs());
-
     try {
         if (failed(pm.run(module))) {
             module->dump();

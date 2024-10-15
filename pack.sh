@@ -140,7 +140,7 @@ if [[ $? == 0 ]];then
   cp -a "$projectRoot"/{containers,deploy,doc,lib,scripts} "$PACK_ROOT"
   mkdir -p "$PACK_ROOT"/{bin,src/api}
   cp -a "$projectRoot"/src/api/python "$PACK_ROOT"/src/api/
-  cp -a "$projectRoot"/bin/{daphne,DistributedWorker} "$PACK_ROOT"/bin/
+  cp -a "$projectRoot"/bin/daphne "$PACK_ROOT"/bin/
   cp -a "$projectRoot"/run-*.sh "$PACK_ROOT"/
   cp -a "$projectRoot"/sketch "$PACK_ROOT"/
   # cp -a "$projectRoot"/bench !("$projectRoot"/bench/results) "$PACK_ROOT"/
