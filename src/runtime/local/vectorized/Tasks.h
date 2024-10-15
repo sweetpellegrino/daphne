@@ -133,6 +133,8 @@ template <typename VT> class CompiledPipelineTask<DenseMatrix<VT>> : public Comp
   private:
     void accumulateOutputs(std::vector<DenseMatrix<VT> *> &localResults, std::vector<DenseMatrix<VT> *> &localAddRes,
                            uint64_t dimStart, uint64_t dimEnd);
+    void accumulateAggregate(DenseMatrix<VT>*& localAddRes, DenseMatrix<VT>* &localResult, 
+                           BinaryOpCode opCode);
 };
 
 template <typename VT> class CompiledPipelineTask<CSRMatrix<VT>> : public CompiledPipelineTaskBase<CSRMatrix<VT>> {

@@ -340,6 +340,10 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
     static opt<bool> noHorizontalFusion(
         "no-hf", cat(daphneOptions),
         desc("No horizontal fusion"));
+    
+    static opt<bool> colFirst(
+        "gr1-col", cat(daphneOptions),
+        desc("ZeroDecision = 1"));
 
     static llvm::cl::list<string> scriptArgs1("args", cat(daphneOptions),
                                               desc("Alternative way of specifying arguments to the DaphneDSL "
@@ -407,6 +411,7 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
     user_config.vectorizationType = vectorizeTypeList;
     user_config.runCombKey = runKey;
     user_config.batchSize = batchSize;
+    user_config.colFirst = colFirst;
 
     user_config.use_distributed = useDistributedRuntime;
     user_config.use_obj_ref_mgnt = !noObjRefMgnt;

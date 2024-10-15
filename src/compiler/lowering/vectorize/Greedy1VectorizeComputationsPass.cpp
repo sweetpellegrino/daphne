@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include "api/cli/DaphneUserConfig.h"
 #include "compiler/lowering/vectorize/VectorUtils.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
@@ -52,7 +53,6 @@ namespace {
 // CONST
 //-----------------------------------------------------------------
 
-const VectorIndex ZeroDecision = 0;
 
 //-----------------------------------------------------------------
 // Class functions
@@ -61,6 +61,10 @@ const VectorIndex ZeroDecision = 0;
 struct Greedy1VectorizeComputationsPass
     : public PassWrapper<Greedy1VectorizeComputationsPass, OperationPass<func::FuncOp>> {
     void runOnOperation() final;
+
+    const DaphneUserConfig& userConfig;
+
+    explicit Greedy1VectorizeComputationsPass(const DaphneUserConfig& cfg) : userConfig(cfg) {}
 };
 
 void printStack(std::stack<std::tuple<mlir::Operation *, Pipeline *, Pipeline *>> s) {
@@ -115,6 +119,11 @@ void printGraph(std::vector<mlir::Operation *> leafOps, std::string filename) {
 void Greedy1VectorizeComputationsPass::runOnOperation() {
 
     auto func = getOperation();
+
+    VectorIndex ZeroDecision = 0;
+    if (userConfig.colFirst) {
+        ZeroDecision = 1;
+    }
 
     std::vector<mlir::Operation *> ops;
     func->walk([&](daphne::Vectorizable op) {
@@ -457,6 +466,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation() {
 #endif
 }
 
-std::unique_ptr<Pass> daphne::createGreedy1VectorizeComputationsPass() {
-    return std::make_unique<Greedy1VectorizeComputationsPass>();
+std::unique_ptr<Pass> daphne::createGreedy1VectorizeComputationsPass(const DaphneUserConfig& cfg) {
+    return std::make_unique<Greedy1VectorizeComputationsPass>(cfg);
 }

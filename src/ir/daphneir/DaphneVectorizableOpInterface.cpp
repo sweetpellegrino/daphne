@@ -381,7 +381,6 @@ std::vector<std::vector<std::pair<Value, Value>>> daphne::ExtractColOp::createOp
 // ----------------------------------------------------------------------------
 std::vector<std::vector<daphne::VectorSplit>> daphne::TransposeOp::getVectorSplits() {
     return {{daphne::VectorSplit::ROWS}, {daphne::VectorSplit::COLS}};
-    // return {{daphne::VectorSplit::COLS}, {daphne::VectorSplit::ROWS}};
 }
 std::vector<std::vector<daphne::VectorCombine>> daphne::TransposeOp::getVectorCombines() {
     return {{daphne::VectorCombine::COLS}, {daphne::VectorCombine::ROWS}};

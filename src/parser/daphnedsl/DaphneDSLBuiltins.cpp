@@ -1249,7 +1249,7 @@ antlrcpp::Any DaphneDSLBuiltins::build(mlir::Location loc, const std::string &fu
     }
 
     // ****************************************************************************
-    // Higher-order operations
+    // Profiling
     // ****************************************************************************
 
     if (func == "startProfiling") {
@@ -1258,7 +1258,6 @@ antlrcpp::Any DaphneDSLBuiltins::build(mlir::Location loc, const std::string &fu
     if (func == "stopProfiling") {
         return builder.create<StopProfilingOp>(loc);
     }
-
 
     // ****************************************************************************
     // List operations

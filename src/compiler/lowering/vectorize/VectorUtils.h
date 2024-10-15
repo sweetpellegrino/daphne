@@ -33,6 +33,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <thread>
 
 #include "mlir/IR/Operation.h"
 #include "mlir/Support/LLVM.h"
@@ -807,6 +808,8 @@ struct VectorUtils {
             auto argsIx = 0u;
             auto resultsIx = 0u;
             // for every op in pipeline
+            try {
+            
             for (auto vIt = pipeline.begin(); vIt != pipeline.end(); ++vIt) {
                 auto v = *vIt;
                 auto numOperands = v->getNumOperands();
@@ -832,7 +835,20 @@ struct VectorUtils {
                     // FIXME: if output is dynamic sized, we can't do this
                     // replace `NumRowOp` and `NumColOp`s for output size inference
                     for (auto &use : old.getUses()) {
+                        
                         auto *op = use.getOwner();
+
+                        /*if (op == nullptr)
+                            continue;
+
+                        use.get().print(llvm::outs());
+                        llvm::outs() << "\n";
+                        
+                        llvm::outs() << op << "\n";
+
+                        int milliseconds = 500;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));*/
+
                         if (auto nrowOp = llvm::dyn_cast<mlir::daphne::NumRowsOp>(op)) {
                             nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
                             nrowOp.erase();
@@ -847,6 +863,11 @@ struct VectorUtils {
                         return llvm::count(pipeline, opOperand.getOwner()) == 0;
                     });
                 }
+            }
+            } catch (...) {
+                llvm::outs() << "TEST:" << "\n";
+                func.print(llvm::outs());
+                llvm::outs() << "\n";
             }
             bodyBlock->walk([](mlir::Operation *op) {
                 for (auto resVal : op->getResults()) {

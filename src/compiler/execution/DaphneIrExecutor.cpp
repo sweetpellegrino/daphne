@@ -152,7 +152,7 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
                 break;
             case GREEDY_1: 
                 pm.addNestedPass<mlir::func::FuncOp>(
-                    mlir::daphne::createGreedy1VectorizeComputationsPass());
+                    mlir::daphne::createGreedy1VectorizeComputationsPass(userConfig_));
                 break;
             case GREEDY_2: 
                 pm.addNestedPass<mlir::func::FuncOp>(
@@ -237,6 +237,8 @@ bool DaphneIrExecutor::runPasses(mlir::ModuleOp module) {
 
     // Initialize the use of each distinct kernels library to false.
     usedLibPaths = userConfig_.kernelCatalog.getLibPaths();
+    
+    pm.printAsTextualPipeline(llvm::outs());
 
     try {
         if (failed(pm.run(module))) {
