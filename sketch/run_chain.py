@@ -30,6 +30,14 @@ def extract_papi(stdout):
     out = j["threads"]["0"]["regions"]["0"]
     del out["name"]
     del out["parent_region_id"]
+
+    for k, v in list(out.items()):
+        if isinstance(v, str):
+            try:
+                out[k] = int(v)
+            except ValueError:
+                pass
+
     return out
 
 #------------------------------------------------------------------------------
@@ -78,25 +86,25 @@ TOOLS = {
 }
 
 GENERATE_FUNCS = {
-    "ADD": lambda i, arg: [f"v{i} = {arg} + {i * 0.1};"],
-    "ADD_SUM": lambda i, arg: [f"i{i} = {arg} + {i * 0.1};", f"v{i} = sum(i{i});"]
+    "T": lambda i, arg: [f"v{i} = t({arg});"],
+    "ADD": lambda i, arg: [f"v{i} = {arg} + {i * 0.1 + 0.1};"],
 }
 
 GENERATE_PRINT_FUNCS = {
-    "ADD": lambda i: [f"print(v{i}[0,0]);"],
-    "ADD_SUM": lambda i: [f"print(v{i});"]
+    "T": lambda i: [f"print(v{i}[0,0]);"],
+    "ADD": lambda i: [f"print(v{i}[0,0]);"]
 }
 
 BASE_CWD = "daphne-X86-64-vec-bin"
-BASE_COMMAND = lambda th, bs, no_hf: [
+BASE_COMMAND = lambda th, bs, gr1_col: [
     "./run-daphne.sh",
     "--timing",
     "--vec",
     "--vec-type=GREEDY_1",
     f"--num-threads={th}",
     f"--batchSize={bs}",
-    "--no-hf" if no_hf else "",
-    "../_horz.daph"
+    "--gr1-col" if gr1_col else "",
+    "../_chain.daph"
 ]
 
 #------------------------------------------------------------------------------
@@ -111,11 +119,13 @@ def generate_script(num_ops, tool, func, rows, cols):
     script.append(TOOLS[tool]["START_OP"])
 
     for j in range(0, num_ops):
-        script += GENERATE_FUNCS[func](j, "X")
+        if j == 0:
+            script += GENERATE_FUNCS[func](j, "X")
+        else:
+            script += GENERATE_FUNCS[func](j, f"v{j - 1}")
     script.append(TOOLS[tool]["STOP_OP"])
 
-    for j in range(0, num_ops):
-        script += GENERATE_PRINT_FUNCS[func](j)
+    script += GENERATE_PRINT_FUNCS[func](num_ops - 1)
 
     script.append(TOOLS[tool]["END_OP"])
 
@@ -137,13 +147,14 @@ def run_command(command, cwd, env):
 
 parser = argparse.ArgumentParser(description="Arguments")
 parser.add_argument("--tool", type=str, choices=TOOLS.keys(), help="", required=True)
-parser.add_argument("--script", type=str, choices=GENERATE_FUNCS.keys(), help="", required=True)
+parser.add_argument("--script", type=str, choices=GENERATE_FUNCS.keys(), default="T", help="")
 parser.add_argument("--rows", type=int, default=10000, help="rows")
 parser.add_argument("--cols", type=int, default=10000, help="rows")
 parser.add_argument("--samples", type=int, default=3, help="")
 parser.add_argument("--num-ops", type=int, default=12, help="")
 parser.add_argument("--threads", type=int, default=1, help="")
 parser.add_argument("--batchSize", type=int, default=0, help="")
+parser.add_argument("--silent", type=bool, default=False, help="")
 
 #------------------------------------------------------------------------------
 # MAIN
@@ -169,7 +180,7 @@ if __name__ == "__main__":
             print(f"Run: {env_str} {command_str} {ops}")
 
             script = generate_script(ops, args.tool, args.script, args.rows, args.cols)
-            with open("_horz.daph", "w") as f:
+            with open("_chain.daph", "w") as f:
                 for line in script:
                     f.write(line + '\n')
 
@@ -180,8 +191,9 @@ if __name__ == "__main__":
                 timing = json.loads(stderr)
                 timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout)
 
-                df = pd.json_normalize(timing, sep=".")
-                print(tabulate(df, headers="keys", tablefmt="psql", showindex=False))
+                if not args.silent:
+                    df = pd.json_normalize(timing, sep=".")
+                    print(tabulate(df, headers="keys", tablefmt="psql", showindex=False))
                 timings.append(timing)
         
             #command_output[ops] = timings 
@@ -192,10 +204,9 @@ if __name__ == "__main__":
         output.append({
             "cmd": command,
             "timings": command_output,
-          
         })
 
-    with open(exp_start + "-horz_timings.json", "w+") as f:
+    with open(exp_start + "-tc-timings.json", "w+") as f:
         _output = {
             "settings": {
                 "num-ops": args.num_ops,
@@ -211,3 +222,10 @@ if __name__ == "__main__":
         }
         json.dump(_output, f, indent=4)
         f.close()
+    
+    for i in output:
+        print(" ".join(i["cmd"]))
+        df = pd.json_normalize(i["timings"], sep=".")
+        tools_cols = [col for col in df.columns if col.startswith("tool")]
+        df[tools_cols] = df[tools_cols].astype(int)
+        print(tabulate(df.describe(), headers="keys", tablefmt="psql", showindex=True))

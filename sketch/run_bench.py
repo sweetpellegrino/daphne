@@ -39,7 +39,7 @@ def extract_papi(stdout):
 TOOLS = {
     "PAPI_STD": {
         "ENV": {
-            "PAPI_EVENTS": "perf::CYCLES,perf::INSTRUCTIONS,perf::CACHE-REFERENCES,perf::CACHE MISSES,perf::BRANCHES,perf::BRANCH-MISSES",
+            "PAPI_EVENTS": "perf::CYCLES,perf::INSTRUCTIONS,perf::CACHE-REFERENCES,perf::CACHE-MISSES,perf::BRANCHES,perf::BRANCH-MISSES",
             "PAPI_REPORT": "1"
         },
         "START_OP": "startProfiling();",
@@ -59,7 +59,7 @@ TOOLS = {
     },
     "PAPI_MPLX": {
         "ENV": {
-            "PAPI_EVENTS": "perf::CYCLES,perf::INSTRUCTIONS,perf::CACHE-REFERENCES,perf::CACHE MISSES,perf::BRANCHES,perf::BRANCH-MISSES,perf::L1-dcache-load-misses,perf::L1-dcache-loads,perf::L1-dcache-prefetches,perf::L1-icache-load-misses,perf::L1-icache-loads",
+            "PAPI_EVENTS": "perf::CYCLES,perf::INSTRUCTIONS,perf::CACHE-REFERENCES,perf::CACHE-MISSES,perf::BRANCHES,perf::BRANCH-MISSES,perf::L1-dcache-load-misses,perf::L1-dcache-loads,perf::L1-dcache-prefetches,perf::L1-icache-load-misses,perf::L1-icache-loads",
             "PAPI_REPORT": "1",
             "PAPI_MULTIPLEX": "1",
         },
@@ -216,8 +216,8 @@ parser = argparse.ArgumentParser(description="Arguments")
 parser.add_argument("--tool", type=str, choices=list(TOOLS.keys()), help="", required=True)
 parser.add_argument("--exp", type=str, choices=list(EXPERIMENTS.keys()) + ["ALL"], default="ALL", help="")
 parser.add_argument("--samples", type=int, default=3, help="")
-parser.add_argument("--threads", type=list, nargs="+", default=[1], help="")
-parser.add_argument("--batchSizes", type=list, default=[0], nargs="+", help="")
+parser.add_argument("--threads", type=int, nargs="+", default=[1], help="")
+parser.add_argument("--batchSizes", type=int, default=[0], nargs="+", help="")
 
 #------------------------------------------------------------------------------
 # MAIN

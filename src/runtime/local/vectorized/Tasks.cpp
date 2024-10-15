@@ -103,7 +103,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
             case VectorCombine::ROWS: {
                 auto slice = result->sliceRow(dimStart - _data._offset, dimEnd - _data._offset);
 
-                PAPI_hl_region_begin("fixme_rows");
+                //PAPI_hl_region_begin("fixme_rows");
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
                 for (auto i = 0u; i < slice->getNumRows(); ++i) {
@@ -112,7 +112,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                             localResultsValues[i * localResults[o]->getRowSkip() + j];
                     }
                 }
-                PAPI_hl_region_end("fixme_rows");
+                //PAPI_hl_region_end("fixme_rows");
 
                 DataObjectFactory::destroy(slice);
                 break;
@@ -121,7 +121,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
 
                 auto slice = result->sliceCol(dimStart - _data._offset, dimEnd - _data._offset);
 
-                PAPI_hl_region_begin("fixme_cols");
+                //PAPI_hl_region_begin("fixme_cols");
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
                 for (auto i = 0u; i < slice->getNumRows(); ++i) {
@@ -130,7 +130,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                             localResultsValues[i * localResults[o]->getRowSkip() + j];
                     }
                 }
-                PAPI_hl_region_end("fixme_cols");
+                //PAPI_hl_region_end("fixme_cols");
 
                 DataObjectFactory::destroy(slice);
                 break;
