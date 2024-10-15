@@ -11,7 +11,7 @@ X = rand($r, $f, 0.0, 1.0, 1, 12345);
 C = rand($c, $f, 0.0, 1.0, 1, 67890);
 
 // K-means clustering (decisive part).
-<start>
+start = now();
 for(i in 1:$i) {
     D = (X @ t(C)) * -2 + t(sum(C ^ 2, 0));
     minD = aggMin(D, 0);
@@ -20,10 +20,11 @@ for(i in 1:$i) {
     P_denom = sum(P, 1);
     C = (t(P) @ X) / t(P_denom);
 }
-<stop>
+end = now();
 
 // Result output.
 print(C[0,0]);
 print(C[1,1]);
 print(C[2,2]);
-<end>
+
+print("F1XM3:"+ (end - start));

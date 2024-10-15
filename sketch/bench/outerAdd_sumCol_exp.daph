@@ -6,14 +6,14 @@
 X = rand($r, 1, 0.0, 1.0, 1, 12345);
 Y = rand(1, $c, 0.0, 1.0, 1, 67890);
 
-start = now();
+<start>
 i1 = outerAdd(X,Y);
 i2 = sum(i1, 1);
 i3 = outerAdd(X,i2);
 i4 = sqrt(i3); 
 i5 = i4 + 2; 
-end = now();
+<stop>
 
 
 print(i5[0,0]);
-print("F1XM3:"+ (end - start));
+<end>

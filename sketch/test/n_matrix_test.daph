@@ -1,6 +1,8 @@
 //10x20
-m1 = readMatrix("10_Z.csv");
-m2 = readMatrix("10_Z.csv");
+//m1 = readMatrix("10_Z.csv");
+//m2 = readMatrix("10_Z.csv");
+m1 = rand($dim, $dim, 1.0, 2.0, 1.0, 12345);
+m2 = rand($dim, $dim, 1.0, 2.0, 1.0, 67890);
 
 a = sqrt(m1);
 
@@ -10,6 +12,6 @@ c = a + b;
 
 d = sqrt(a);
 
-z = c @ d;
+z = c + d;
 
-print(c);
+print(z[0,0]);

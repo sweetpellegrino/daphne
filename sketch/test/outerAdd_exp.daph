@@ -1,0 +1,16 @@
+//r=40000, c=40000
+//NoVec: Killed
+//GR1: Killed
+//GR2: ~33s
+X = rand($r, 1, 0.0, 1.0, 1, 12345);
+Y = rand(1, $c, 0.0, 1.0, 1, 67890);
+
+start = now();
+i1 = outerAdd(X,Y); //vec in gr1 gr2, not org, only combined with gr2
+i2 = exp(i1); //vec in gr1, gr2 but combined with ewAdd in both cases
+i3 = i2 + 2; //vec in org, gr1, gr2
+end = now();
+
+
+print(i3[0,0]);
+print("F1XM3:"+ (end - start));

@@ -1,9 +1,9 @@
 X = rand($r, $c, 0.0, 1.0, 1, 12345);
 
-<start>
+start = now();
 i1 = sqrt(X);
 i2 = sum(i1);
-<stop>
+end = now();
 
 print(i2);
-<end>
+print("F1XM3:"+ (end - start));

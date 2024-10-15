@@ -1,6 +1,7 @@
 //n = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 //m = rand($dim, $dim, 1.0, 2.0, 0.2, -1);
 
-n = fill(4.0, $dim, $dim*2);
-t = sum(n);
+n = rand($dim, $dim, 1.0, 2.0, 0.5, 12345);
+//n = fill(4.0, $dim, $dim*2);
+t = sum(n, 1);
 print(t);

@@ -22,7 +22,7 @@ def extract_papi(stdout):
 
     offset = 0
     for i, line in enumerate(lines):
-        if line.startswith('PAPI-HL Output:'):
+        if line.startswith("PAPI-HL Output:"):
            offset = i
            break
     t = "".join(lines[offset+1:])
@@ -35,9 +35,6 @@ def extract_papi(stdout):
 #------------------------------------------------------------------------------
 # GLOBAL
 #------------------------------------------------------------------------------
-
-MAX_HORZ_OPS = 11
-MIN_HORZ_OPS = 10
 
 TOOLS = {
     "PAPI_STD": {
@@ -139,12 +136,14 @@ def run_command(command, cwd, env):
 #------------------------------------------------------------------------------
 
 parser = argparse.ArgumentParser(description="Arguments")
-parser.add_argument("--tool", type=str, choices=["PAPI_STD", "PAPI_L1", "PAPI_MPLX", "NOW"], help="", required=True)
-parser.add_argument("--script", type=str, choices=["ADD", "ADD_SUM"], help="", required=True)
+parser.add_argument("--tool", type=str, choices=TOOLS.keys(), help="", required=True)
+parser.add_argument("--script", type=str, choices=GENERATE_FUNCS.keys(), help="", required=True)
 parser.add_argument("--rows", type=int, default=10000, help="rows")
 parser.add_argument("--cols", type=int, default=10000, help="rows")
 parser.add_argument("--samples", type=int, default=3, help="")
 parser.add_argument("--num-ops", type=int, default=12, help="")
+parser.add_argument("--threads", type=int, default=1, help="")
+parser.add_argument("--batchSize", type=int, default=0, help="")
 
 #------------------------------------------------------------------------------
 # MAIN
@@ -159,7 +158,7 @@ if __name__ == "__main__":
     for no_hf in [False, True]: 
         
         tool_env = TOOLS[args.tool]["ENV"]
-        command = BASE_COMMAND(1, 0, no_hf)
+        command = BASE_COMMAND(args.threads, args.batchSize, no_hf)
 
         env_str = " ".join(f"{k}=\"{v}\"" for k, v in tool_env.items())
         command_str = " ".join(command)
@@ -192,10 +191,22 @@ if __name__ == "__main__":
         output.append({
             "cmd": command,
             "timings": command_output,
-            "min-ops": MIN_HORZ_OPS,
-            "max-ops": MAX_HORZ_OPS
+          
         })
 
     with open(exp_start + "-horz_timings.json", "w+") as f:
-        json.dump(output, f, indent=4)
+        _output = {
+            "settings": {
+                "num-ops": args.num_ops,
+                "rows": args.rows,
+                "cols": args.cols,
+                "type": args.script,
+                "tool": args.tool,
+                "threads": args.threads,
+                "samples": args.samples,
+                "batchSize": args.batchSize
+            }
+            "execs": output
+        }
+        json.dump(_output, f, indent=4)
         f.close()
