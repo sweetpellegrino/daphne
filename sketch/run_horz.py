@@ -30,7 +30,7 @@ BASE_COMMAND = lambda th, bs, no_hf: [
     "--vec-type=GREEDY_1",
     f"--num-threads={th}",
     f"--batchSize={bs}",
-] + (["--no-hf"] if no_hf else []) + GLOBAL_ARGS + ["../_chain.daph"]
+] + (["--no-hf"] if no_hf else []) + GLOBAL_ARGS + ["../_horz.daph"]
 
 #------------------------------------------------------------------------------
 # HELPER
@@ -124,3 +124,10 @@ if __name__ == "__main__":
         }
         json.dump(_output, f, indent=4)
         f.close()
+    
+    for i in output:
+        print(" ".join(i["cmd"]))
+        df = pd.json_normalize(i["timings"], sep=".")
+        tools_cols = [col for col in df.columns if col.startswith("tool")]
+        df[tools_cols] = df[tools_cols].astype(int)
+        print(tabulate(df.describe(), headers="keys", tablefmt="psql", showindex=True))
