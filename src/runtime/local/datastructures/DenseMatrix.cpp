@@ -18,6 +18,7 @@
 #include <runtime/local/datastructures/AllocationDescriptorHost.h>
 #include <runtime/local/io/DaphneSerializer.h>
 
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 #include <sstream>
@@ -340,4 +341,3 @@ template class DenseMatrix<unsigned char>;
 template class DenseMatrix<unsigned int>;
 template class DenseMatrix<unsigned long>;
 template class DenseMatrix<bool>;
-template class DenseMatrix<const char *>;

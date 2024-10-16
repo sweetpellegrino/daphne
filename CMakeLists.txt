@@ -32,6 +32,7 @@ set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard to conform to")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_OPTIMIZE_DEPENDENCIES 1)
 
 set(CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -111,6 +112,9 @@ if(USE_PAPI)
     add_definitions(-DUSE_PAPI)
 endif()
 ##########
+
+find_package(fmt)
+add_definitions(-DSPDLOG_FMT_EXTERNAL)
 
 option(USE_CUDA "Whether to activate compilation of CUDA features" OFF)
 include(CheckLanguage)
