@@ -312,7 +312,7 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
         llvm::cl::desc("Apply specific Vectorization pass"),
         llvm::cl::values(
             clEnumVal(DAPHNE, "Use original DAPHNE Vectorization pass"),
-            clEnumVal(GREEDY_1, "Use first Greedy Vectorization pass"),
+            clEnumVal(GREEDY_1, "Use first Greedy Vectorization pass")),
             init(GREEDY_1)
     );
 
@@ -395,7 +395,6 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
 
     user_config.use_vectorized_exec = useVectorizedPipelines;
     user_config.vectorizationType = vectorizeTypeList;
-    user_config.runCombKey = runKey;
     user_config.batchSize = batchSize;
     user_config.colFirst = colFirst;
 

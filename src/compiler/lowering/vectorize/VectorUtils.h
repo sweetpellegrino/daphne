@@ -15,7 +15,6 @@
  */
 
 #pragma once
-#include "compiler/lowering/vectorize/simdjson.h"
 #include "ir/daphneir/Daphne.h"
 #include "ir/daphneir/DaphneVectorizableOpInterface.h"
 #include "mlir/IR/Value.h"
