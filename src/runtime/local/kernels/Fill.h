@@ -49,13 +49,17 @@ template <typename VT> struct Fill<DenseMatrix<VT>, VT> {
     static void apply(DenseMatrix<VT> *&res, VT arg, size_t numRows, size_t numCols, DCTX(ctx)) {
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, arg == 0);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
+
+        llvm::outs() << "numItems:" <<  res->getNumItems() << "\n";
+        llvm::outs() << "rowSkip:" <<  res->getRowSkip() << "\n";
 
         if (arg != 0) {
             VT *valuesRes = res->getValues();
             for (auto i = 0ul; i < res->getNumItems(); ++i)
-                valuesRes[i] = arg;
+                valuesRes[i] = (VT) (arg * i);
         }
+        
     }
 };
 
@@ -66,7 +70,7 @@ template <typename VT> struct Fill<DenseMatrix<VT>, VT> {
 template <typename VT> struct Fill<Matrix<VT>, VT> {
     static void apply(Matrix<VT> *&res, VT arg, size_t numRows, size_t numCols, DCTX(ctx)) {
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, arg == 0);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
 
         if (arg != 0) {
             res->prepareAppend();

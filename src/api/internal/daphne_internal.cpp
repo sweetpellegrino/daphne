@@ -335,6 +335,10 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
             )
     );
 
+    static opt<bool> isRowMajor(
+        "isRowMajor", cat(daphneOptions),
+        desc("Force DenseMatrix to be Row-Major. Set explicitly to false for Column-Major"));
+
     static opt<bool> noHorizontalFusion(
         "no-hf", cat(daphneOptions),
         desc("No horizontal fusion"));
@@ -410,6 +414,7 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
     user_config.runCombKey = runKey;
     user_config.batchSize = batchSize;
     user_config.colFirst = colFirst;
+    user_config.isRowMajor = isRowMajor;
 
     user_config.use_distributed = useDistributedRuntime;
     user_config.use_obj_ref_mgnt = !noObjRefMgnt;

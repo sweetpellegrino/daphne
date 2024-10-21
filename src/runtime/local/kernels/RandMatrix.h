@@ -84,8 +84,10 @@ template <typename VT> struct RandMatrix<DenseMatrix<VT>, VT> {
                       int64_t seed, DCTX(ctx)) {
         validateArgsRandMatrix(numRows, numCols, min, max, sparsity);
 
+        bool isRowMajor = ctx->getUserConfig().isRowMajor;
+
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, isRowMajor);
 
         if (seed == -1) {
             std::random_device rd;
@@ -270,7 +272,7 @@ template <typename VT> struct RandMatrix<Matrix<VT>, VT> {
         validateArgsRandMatrix(numRows, numCols, min, max, sparsity);
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
 
         if (seed == -1) {
             std::random_device rd;

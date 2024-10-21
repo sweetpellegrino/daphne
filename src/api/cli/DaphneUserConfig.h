@@ -46,7 +46,8 @@ struct DaphneUserConfig {
     VectorizationType vectorizationType = GREEDY_1;
     size_t runCombKey = 0;
     size_t batchSize = 0;
-    bool  colFirst = false;
+    bool colFirst = false;
+    bool isRowMajor = true;
 
     bool use_distributed = false;
     bool use_obj_ref_mgnt = true;

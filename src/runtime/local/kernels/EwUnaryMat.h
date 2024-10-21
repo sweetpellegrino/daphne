@@ -54,21 +54,46 @@ template <typename VT> struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
     static void apply(UnaryOpCode opCode, DenseMatrix<VT> *&res, const DenseMatrix<VT> *arg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
+        
+        bool isRowMajor = arg->getIsRowMajor();
+        llvm::outs() << "isRowMajor:";
+        llvm::outs() << isRowMajor << "\n";
+        llvm::outs() << "numRows:";
+        llvm::outs() << numRows << "\n";
+        llvm::outs() << "numCols:";
+        llvm::outs() << numCols << "\n";
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, isRowMajor);
 
         const VT *valuesArg = arg->getValues();
         VT *valuesRes = res->getValues();
 
         EwUnaryScaFuncPtr<VT, VT> func = getEwUnaryScaFuncPtr<VT, VT>(opCode);
 
-        for (size_t r = 0; r < numRows; r++) {
-            for (size_t c = 0; c < numCols; c++)
-                valuesRes[c] = func(valuesArg[c], ctx);
-            valuesArg += arg->getRowSkip();
-            valuesRes += res->getRowSkip();
+        if(isRowMajor) {
+            for (size_t r = 0; r < numRows; r++) {
+                for (size_t c = 0; c < numCols; c++) {
+                    valuesRes[c] = func(valuesArg[c], ctx);
+                }
+                valuesArg += arg->getRowSkip();
+                valuesRes += res->getRowSkip();
+            }
         }
+        else {
+            for (size_t c = 0; c < numCols; c++) {
+                for (size_t r = 0; r < numRows; r++) {
+                    valuesRes[r] = func(valuesArg[r], ctx);
+                }
+                valuesArg += arg->getRowSkip();
+                valuesRes += res->getRowSkip();
+            } 
+        }
+        /*const VT *test = res->getValues();
+        for (size_t i = 0; i < arg->getNumItems(); i++) {
+            llvm::outs() << test[i] << ", ";
+        }
+        llvm::outs() << "\n";*/
     }
 };
 

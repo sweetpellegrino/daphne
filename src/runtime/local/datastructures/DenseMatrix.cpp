@@ -65,10 +65,11 @@ void validateArgs(const DenseMatrix<ValueType> *src, int64_t rowLowerIncl, int64
 // ****************************************************************************
 
 template <typename ValueType>
-DenseMatrix<ValueType>::DenseMatrix(size_t maxNumRows, size_t numCols, bool zero, IAllocationDescriptor *allocInfo)
-    : Matrix<ValueType>(maxNumRows, numCols), is_view(false), rowSkip(numCols),
-      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0) {
+DenseMatrix<ValueType>::DenseMatrix(size_t maxNumRows, size_t numCols, bool zero, IAllocationDescriptor *allocInfo, bool isRowMajor)
+    : Matrix<ValueType>(maxNumRows, numCols), is_view(false), rowSkip(isRowMajor ? numCols : numRows),
+      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
     DataPlacement *new_data_placement;
+    llvm::outs() << "3twerrwerwer" << "\n";
     if (allocInfo != nullptr) {
         spdlog::debug("Creating {} x {} dense matrix of type: {}. Required memory: {} Mb", numRows, numCols,
                       static_cast<int>(allocInfo->getType()), static_cast<float>(getBufferSize()) / (1048576));
@@ -78,7 +79,7 @@ DenseMatrix<ValueType>::DenseMatrix(size_t maxNumRows, size_t numCols, bool zero
     } else {
         AllocationDescriptorHost myHostAllocInfo;
         alloc_shared_values();
-        if (zero)
+        if (!zero)
             memset(values.get(), 0, maxNumRows * numCols * sizeof(ValueType));
         new_data_placement = this->mdo->addDataPlacement(&myHostAllocInfo);
     }
@@ -86,9 +87,9 @@ DenseMatrix<ValueType>::DenseMatrix(size_t maxNumRows, size_t numCols, bool zero
 }
 
 template <typename ValueType>
-DenseMatrix<ValueType>::DenseMatrix(size_t numRows, size_t numCols, std::shared_ptr<ValueType[]> &values)
-    : Matrix<ValueType>(numRows, numCols), is_view(false), rowSkip(numCols), values(values),
-      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0) {
+DenseMatrix<ValueType>::DenseMatrix(size_t numRows, size_t numCols, std::shared_ptr<ValueType[]> &values, bool isRowMajor)
+    : Matrix<ValueType>(numRows, numCols), is_view(false), rowSkip(isRowMajor ? numCols : numRows), values(values),
+      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
     AllocationDescriptorHost myHostAllocInfo;
     DataPlacement *new_data_placement = this->mdo->addDataPlacement(&myHostAllocInfo);
     this->mdo->addLatest(new_data_placement->dp_id);
@@ -96,10 +97,12 @@ DenseMatrix<ValueType>::DenseMatrix(size_t numRows, size_t numCols, std::shared_
 
 template <typename ValueType>
 DenseMatrix<ValueType>::DenseMatrix(const DenseMatrix<ValueType> *src, int64_t rowLowerIncl, int64_t rowUpperExcl,
-                                    int64_t colLowerIncl, int64_t colUpperExcl)
+                                    int64_t colLowerIncl, int64_t colUpperExcl, bool isRowMajor)
     : Matrix<ValueType>(rowUpperExcl - rowLowerIncl, colUpperExcl - colLowerIncl), is_view(true),
-      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0) {
+      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
     validateArgs(src, rowLowerIncl, rowUpperExcl, colLowerIncl, colUpperExcl);
+
+    llvm::outs() << "twerrwerwer" << "\n";
 
     this->row_offset = rowLowerIncl;
     this->col_offset = colLowerIncl;
@@ -108,15 +111,20 @@ DenseMatrix<ValueType>::DenseMatrix(const DenseMatrix<ValueType> *src, int64_t r
     // ToDo: manage host mem (values) in a data placement
     if (src->values) {
         alloc_shared_values(src->values, offset());
-        bufferSize = numRows * rowSkip * sizeof(ValueType);
+        if (isRowMajor) {
+            bufferSize = numRows * rowSkip * sizeof(ValueType);
+        } else {
+            bufferSize = numCols * rowSkip * sizeof(ValueType);
+        }
     }
     this->clone_mdo(src);
 }
 
 template <typename ValueType>
-DenseMatrix<ValueType>::DenseMatrix(size_t numRows, size_t numCols, const DenseMatrix<ValueType> *src)
-    : Matrix<ValueType>(numRows, numCols), is_view(false), rowSkip(numCols),
-      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0) {
+DenseMatrix<ValueType>::DenseMatrix(size_t numRows, size_t numCols, const DenseMatrix<ValueType> *src, bool isRowMajor)
+    : Matrix<ValueType>(numRows, numCols), is_view(false), rowSkip(isRowMajor ? numCols : numRows),
+      bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
+    llvm::outs() << "2twerrwerwer" << "\n";
     if (src->values)
         values = src->values;
     this->clone_mdo(src);

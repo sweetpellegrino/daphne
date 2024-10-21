@@ -151,6 +151,7 @@ struct VectorUtils {
 
     // Function merges two pipelines into one by appending all operations from one pipeline to another
     // Order is not really considered, as it is embodied in IR
+    // Needed for AllVectorizeComputationPass
     static void mergePipelines(std::vector<Pipeline *> &pipelines,
                                std::map<mlir::Operation *, size_t> &operationToPipelineIx, size_t pipeIx1,
                                size_t pipeIx2) {
@@ -171,6 +172,7 @@ struct VectorUtils {
         pipelines.erase(pipelines.begin() + pipeIx1);
     }
 
+    // Needed for Greedy-Alg
     static Pipeline *mergePipelines(std::vector<Pipeline *> &pipelines,
                                     std::map<mlir::Operation *, Pipeline *> &operationToPipeline, Pipeline *pipe1,
                                     Pipeline *pipe2) {
@@ -189,105 +191,10 @@ struct VectorUtils {
         return pipe1;
     }
 
-    // Function merges two pipelines into one by appending all operations from one pipeline to another
-    // Order is not really considered, as it is embodied in IR
-    static size_t mergePipelines(std::vector<std::vector<mlir::Operation *>> &pipelines,
-                                 std::map<mlir::Operation *, size_t> &operationToPipelineIx, size_t pipeIx1,
-                                 size_t pipeIx2) {
-        // llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
-        /*if (pipeIx1 == pipeIx2)
-            return pipeIx1;
-
-        if (pipeIx2 > pipeIx1)
-            std::swap(pipeIx1, pipeIx2);*/
-
-        std::vector<mlir::Operation *> mergedPipeline(pipelines.at(pipeIx2));
-        for (auto op : pipelines.at(pipeIx1)) {
-            if (std::find(mergedPipeline.begin(), mergedPipeline.end(), op) == mergedPipeline.end()) {
-                mergedPipeline.push_back(op);
-                operationToPipelineIx[op] = pipeIx2;
-            }
-        }
-        pipelines.at(pipeIx2) = std::move(mergedPipeline);
-        pipelines.erase(pipelines.begin() + pipeIx1);
-
-        // returns the Ix the pipeline that does not longer exist was merged into
-        return pipeIx2;
-    }
-
     //------------------------------------------------------------------------------
 
-    static bool arePipelinesConnected(const std::vector<std::vector<mlir::Operation *>> &pipelines,
-                                      const std::map<mlir::Operation *, size_t> &operationToPipelineIx, size_t pipeIx1,
-                                      size_t pipeIx2) {
-
-        // false better?
-        if (pipeIx1 == pipeIx2)
-            return true;
-
-        auto pipe1 = pipelines[pipeIx1];
-        for (auto op : pipe1) {
-            for (auto operandValue : op->getOperands()) {
-                auto defOp = operandValue.getDefiningOp();
-                if (operationToPipelineIx.find(defOp) != operationToPipelineIx.end()) {
-                    auto defOpPipeIx = operationToPipelineIx.at(defOp);
-                    if (defOpPipeIx == pipeIx2) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // other way, as potentially bidirectional relationship
-        // we are checking only the operands not results
-        auto pipe2 = pipelines[pipeIx2];
-        for (auto op : pipe2) {
-            for (auto operandValue : op->getOperands()) {
-                auto defOp = operandValue.getDefiningOp();
-                if (operationToPipelineIx.find(defOp) != operationToPipelineIx.end()) {
-                    auto defOpPipeIx = operationToPipelineIx.at(defOp);
-                    if (defOpPipeIx == pipeIx1) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    // TODO: improve
-    static bool arePipelinesConnected(const std::map<PipelinePair, DisconnectReason> pcr, Pipeline *pipe1,
-                                      Pipeline *pipe2) {
-
-        if (pipe1 == pipe2)
-            return true;
-
-        std::stack<Pipeline *> s;
-        std::vector<Pipeline *> visited;
-
-        s.push(pipe1);
-        while (!s.empty()) {
-            Pipeline *currPipe = s.top();
-            s.pop();
-
-            // Connection found
-            if (currPipe == pipe2)
-                return true;
-
-            for (const auto &pipePair : pcr) {
-                if (pipePair.first.first == currPipe &&
-                    std::find(visited.begin(), visited.end(), pipePair.first.first) == visited.end()) {
-                    s.push(pipePair.first.second);
-                }
-            }
-            visited.push_back(currPipe);
-        }
-
-        return false;
-    }
-
     // only works if pipeline ops are topologically sorted in reverse
+    //Only used for HorizontalFusion
     static bool arePipelineOpsDependent(mlir::daphne::VectorizedPipelineOp pipeOp1,
                                         mlir::daphne::VectorizedPipelineOp pipeOp2) {
 
@@ -318,6 +225,7 @@ struct VectorUtils {
         return false;
     }
 
+    // Used by greedyMergePipelinesProducerConsumer
     static bool tryTopologicalSortMerged(std::vector<Pipeline *> &pipelines,
                                          std::map<PipelinePair, DisconnectReason> &rel, Pipeline *pipe1,
                                          Pipeline *pipe2) {
@@ -381,63 +289,7 @@ struct VectorUtils {
         return pcr;
     }
 
-    static bool tryTopologicalSortPreMergedPipelines(const std::vector<std::vector<mlir::Operation *>> &pipelines,
-                                                     const std::map<mlir::Operation *, size_t> &operationToPipelineIx,
-                                                     size_t pipeIx1, size_t pipeIx2) {
-
-        if (pipeIx2 > pipeIx1)
-            std::swap(pipeIx1, pipeIx2);
-
-        std::map<size_t, std::unordered_set<size_t>> pipeline_graph;
-
-        for (size_t i = 0; i < pipelines.size(); i++) {
-
-            auto pipeline = pipelines.at(i);
-
-            std::unordered_set<size_t> incomingPipelinesIxs;
-            for (auto op : pipeline) {
-                size_t currIx = operationToPipelineIx.at(op);
-
-                if (currIx != i)
-                    throw std::runtime_error("integrity error");
-
-                if (currIx == pipeIx2)
-                    currIx = pipeIx1;
-
-                for (auto operand : op->getOperands()) {
-                    auto defOp = operand.getDefiningOp();
-                    if (operationToPipelineIx.find(defOp) == operationToPipelineIx.end())
-                        continue;
-
-                    auto defOpIx = operationToPipelineIx.at(defOp);
-
-                    if (defOpIx == pipeIx1)
-                        defOpIx = pipeIx2;
-
-                    if (defOpIx != currIx) {
-                        op->print(llvm::outs());
-                        llvm::outs() << "\n";
-                        defOp->print(llvm::outs());
-                        llvm::outs() << "\n";
-                        incomingPipelinesIxs.insert(defOpIx);
-                    }
-                }
-            }
-            pipeline_graph.insert({i, incomingPipelinesIxs});
-        }
-
-        for (auto node : pipeline_graph) {
-            llvm::outs() << "Key: " << node.first << ", Values: ";
-            for (auto dependency : node.second) {
-                llvm::outs() << dependency << " ";
-            }
-            llvm::outs() << "\n";
-        }
-        llvm::outs() << "\n";
-
-        return tryTopologicalSort(pipeline_graph);
-    }
-
+    // Used for AllVectorize
     static bool tryTopologicalSortPipelines(const std::vector<std::vector<mlir::Operation *> *> &pipelines,
                                             const std::map<mlir::Operation *, size_t> operationToPipelineIx) {
 
@@ -466,47 +318,6 @@ struct VectorUtils {
         }
 
         return tryTopologicalSort(pipeline_graph);
-    }
-
-    //------------------------------------------------------------------------------
-
-    static std::pair<std::vector<mlir::Operation *>, std::vector<mlir::Operation *>>
-    getConnectedOpsBetweenPipelines(Pipeline *pipe1, Pipeline *pipe2) {
-
-        std::vector<mlir::Operation *> _io;
-        std::vector<mlir::Operation *> _oo;
-
-        for (auto op : *pipe1) {
-            bool isInput = true;
-            bool isOutput = true;
-
-            for (const auto operand : op->getOperands()) {
-                mlir::Operation *defOp = operand.getDefiningOp();
-
-                // check if feasible for blockargs
-                if (!defOp)
-                    continue;
-                else {
-                    if (std::find(pipe2->begin(), pipe2->end(), defOp) == pipe2->end()) {
-                        isInput = false;
-                        break;
-                    }
-                }
-            }
-
-            for (const auto user : op->getUsers()) {
-                if (std::find(pipe2->begin(), pipe2->end(), user) == pipe2->end()) {
-                    isOutput = false;
-                    break;
-                }
-            }
-
-            if (isInput)
-                _io.push_back(op);
-            if (isOutput)
-                _oo.push_back(op);
-        }
-        return {_io, _oo};
     }
 
   private:

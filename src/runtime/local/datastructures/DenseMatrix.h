@@ -45,6 +45,9 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
     using Matrix<ValueType>::numRows;
     using Matrix<ValueType>::numCols;
 
+    // For testing purposes
+    const bool isRowMajor;
+
     const bool is_view;
     size_t rowSkip;
 
@@ -69,7 +72,7 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
      * @param zero Whether the allocated memory of the `values` array shall be
      * initialized to zeros (`true`), or be left uninitialized (`false`).
      */
-    DenseMatrix(size_t maxNumRows, size_t numCols, bool zero, IAllocationDescriptor *allocInfo = nullptr);
+    DenseMatrix(size_t maxNumRows, size_t numCols, bool zero, IAllocationDescriptor *allocInfo = nullptr, bool isRowMajor = true);
 
     /**
      * @brief Creates a `DenseMatrix` around an existing array of values without
@@ -79,7 +82,7 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
      * @param numCols The exact number of columns.
      * @param values A `std::shared_ptr` to an existing array of values.
      */
-    DenseMatrix(size_t numRows, size_t numCols, std::shared_ptr<ValueType[]> &values);
+    DenseMatrix(size_t numRows, size_t numCols, std::shared_ptr<ValueType[]> &values, bool isRowMajor = true);
 
     /**
      * @brief Creates a `DenseMatrix` around a sub-matrix of another
@@ -96,9 +99,9 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
      * extract.
      */
     DenseMatrix(const DenseMatrix<ValueType> *src, int64_t rowLowerIncl, int64_t rowUpperExcl, int64_t colLowerIncl,
-                int64_t colUpperExcl);
-    DenseMatrix(const DenseMatrix<ValueType> *src, int64_t rowLowerIncl, int64_t rowUpperExcl)
-        : DenseMatrix(src, rowLowerIncl, rowUpperExcl, 0, src->numCols){};
+                int64_t colUpperExcl, bool isRowMajor = true);
+    DenseMatrix(const DenseMatrix<ValueType> *src, int64_t rowLowerIncl, int64_t rowUpperExcl, bool isRowMajor = true)
+        : DenseMatrix(src, rowLowerIncl, rowUpperExcl, 0, src->numCols, isRowMajor){};
 
     /**
      * @brief Creates a `DenseMatrix` around an existing array of values without
@@ -108,7 +111,7 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
      * @param numCols The exact number of columns.
      * @param values A `std::shared_ptr` to an existing array of values.
      */
-    DenseMatrix(size_t numRows, size_t numCols, const DenseMatrix<ValueType> *src);
+    DenseMatrix(size_t numRows, size_t numCols, const DenseMatrix<ValueType> *src, bool isRowMajor = true);
 
     ~DenseMatrix() override = default;
 
@@ -117,7 +120,13 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
             throw std::runtime_error("rowIdx is out of bounds");
         if (colIdx >= numCols)
             throw std::runtime_error("colIdx is out of bounds");
-        return rowIdx * (rowSkipOverride ? numCols : rowSkip) + colIdx;
+
+        if (isRowMajor) {
+            return rowIdx * (rowSkipOverride ? numCols : rowSkip) + colIdx;
+        }
+        else {
+            return colIdx * (rowSkipOverride ? numRows : rowSkip) + rowIdx;
+        }
     }
 
     void fillZeroUntil(size_t rowIdx, size_t colIdx) {
@@ -173,17 +182,27 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
     auto getValuesInternal(const IAllocationDescriptor *alloc_desc = nullptr,
                            const Range *range = nullptr) -> std::tuple<bool, size_t, ValueType *>;
 
-    [[nodiscard]] size_t offset() const { return this->row_offset * rowSkip + this->col_offset; }
+    [[nodiscard]] size_t offset() const { 
+        if (isRowMajor)
+            return this->row_offset * rowSkip + this->col_offset; 
+        else
+            return this->col_offset * rowSkip + this->row_offset; 
+    }
 
     ValueType *startAddress() const { return isPartialBuffer() ? values.get() + offset() : values.get(); }
 
   public:
+
+
     template <typename NewValueType> using WithValueType = DenseMatrix<NewValueType>;
 
     static std::string getName() { return "DenseMatrix"; }
 
     [[nodiscard]] bool isPartialBuffer() const {
-        return bufferSize != this->getNumRows() * this->getRowSkip() * sizeof(ValueType);
+        if (isRowMajor)
+            return bufferSize != this->getNumRows() * this->getRowSkip() * sizeof(ValueType);
+        else
+            return bufferSize != this->getNumCols() * this->getRowSkip() * sizeof(ValueType);
     }
 
     void shrinkNumRows(size_t numRows) {
@@ -239,6 +258,7 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
      */
     ValueType *getValues(IAllocationDescriptor *alloc_desc = nullptr, const Range *range = nullptr) {
         auto [isLatest, id, ptr] = const_cast<DenseMatrix<ValueType> *>(this)->getValuesInternal(alloc_desc, range);
+        std::cout << isLatest << " " << id << " " << ptr << "\n";
         if (!isLatest)
             this->mdo->setLatest(id);
         return ptr;
@@ -247,11 +267,13 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
     std::shared_ptr<ValueType[]> getValuesSharedPtr() const { return values; }
 
     ValueType get(size_t rowIdx, size_t colIdx) const override {
+        // std::cout << "pos: " << pos(rowIdx, colIdx, isPartialBuffer()) << "\n";
         return getValues()[pos(rowIdx, colIdx, isPartialBuffer())];
     }
 
     void set(size_t rowIdx, size_t colIdx, ValueType value) override {
         auto vals = getValues();
+        std::cout << "set" << "\n";
         vals[pos(rowIdx, colIdx)] = value;
     }
 
@@ -281,7 +303,7 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
     }
 
     void print(std::ostream &os) const override {
-        os << "DenseMatrix(" << numRows << 'x' << numCols << ", " << ValueTypeUtils::cppNameFor<ValueType> << ')'
+        os << "DenseMatrix(" << numRows << 'x' << numCols << ", " << ValueTypeUtils::cppNameFor<ValueType> << ", isRowMajor=" << isRowMajor << ')'
            << std::endl;
 
         for (size_t r = 0; r < numRows; r++) {
@@ -299,7 +321,7 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
     DenseMatrix<ValueType> *sliceCol(size_t cl, size_t cu) const override { return slice(0, numRows, cl, cu); }
 
     DenseMatrix<ValueType> *slice(size_t rl, size_t ru, size_t cl, size_t cu) const override {
-        return DataObjectFactory::create<DenseMatrix<ValueType>>(this, rl, ru, cl, cu);
+        return DataObjectFactory::create<DenseMatrix<ValueType>>(this, rl, ru, cl, cu, isRowMajor);
     }
 
     [[nodiscard]] size_t getBufferSize() const { return bufferSize; }
@@ -338,6 +360,10 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
             }
             return true;
         }
+    }
+    
+    bool getIsRowMajor() const {
+        return isRowMajor;
     }
 
     size_t serialize(std::vector<char> &buf) const override;
@@ -439,6 +465,7 @@ template <> class DenseMatrix<const char *> : public Matrix<const char *> {
             throw std::runtime_error("rowIdx is out of bounds");
         if (colIdx >= numCols)
             throw std::runtime_error("colIdx is out of bounds");
+
         return rowIdx * (rowSkipOverride ? numCols : rowSkip) + colIdx;
     }
 
