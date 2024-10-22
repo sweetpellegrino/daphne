@@ -103,6 +103,13 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
             case VectorCombine::ROWS: {
                 auto slice = result->sliceRow(dimStart - _data._offset, dimEnd - _data._offset);
 
+                llvm::outs() << "numRows: " << slice->getNumRows() << "\n";
+                llvm::outs() << "numCols: " << slice->getNumCols() << "\n";
+                llvm::outs() << "rowSkip: " << slice->getRowSkip() << "\n";
+                llvm::outs() << "dimStart: " << dimStart << "\n";
+                llvm::outs() << "dimEnd: " << dimEnd << "\n";
+                llvm::outs() << "offset"   << _data._offset << "\n";
+
                 //PAPI_hl_region_begin("fixme_rows");
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();

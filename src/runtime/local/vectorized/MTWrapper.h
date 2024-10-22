@@ -166,7 +166,9 @@ template <typename DT> class MTWrapperBase {
         // output allocation for row-wise combine
         for (size_t i = 0; i < numOutputs; ++i) {
             if ((*res[i]) == nullptr && outRows[i] != -1 && outCols[i] != -1) {
-                auto zeroOut = combines[i] == mlir::daphne::VectorCombine::ADD;
+                auto zeroOut = combines[i] == mlir::daphne::VectorCombine::ADD ||
+                                     combines[i] == mlir::daphne::VectorCombine::MAX ||
+                                     combines[i] == mlir::daphne::VectorCombine::MIN;
                 (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut);
                 mem_required += static_cast<DT *>((*res[i]))->getBufferSize();
             }

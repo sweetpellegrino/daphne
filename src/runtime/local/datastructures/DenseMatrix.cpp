@@ -79,7 +79,7 @@ DenseMatrix<ValueType>::DenseMatrix(size_t maxNumRows, size_t numCols, bool zero
     } else {
         AllocationDescriptorHost myHostAllocInfo;
         alloc_shared_values();
-        if (!zero)
+        if (zero)
             memset(values.get(), 0, maxNumRows * numCols * sizeof(ValueType));
         new_data_placement = this->mdo->addDataPlacement(&myHostAllocInfo);
     }
@@ -262,10 +262,14 @@ void DenseMatrix<ValueType>::alloc_shared_values(std::shared_ptr<ValueType[]> sr
     // correct since C++17: Calls delete[] instead of simple delete
     if (src) {
         values = std::shared_ptr<ValueType[]>(src, src.get() + offset);
-    } else
+    } else {
         //        values = std::shared_ptr<ValueType[]>(new
         //        ValueType[numRows*numCols]);
-        values = std::shared_ptr<ValueType[]>(new ValueType[numRows * getRowSkip()]);
+        if (isRowMajor) 
+            values = std::shared_ptr<ValueType[]>(new ValueType[numRows * getRowSkip()]);
+        else
+            values = std::shared_ptr<ValueType[]>(new ValueType[numCols * getRowSkip()]);
+    }
 }
 
 template <typename ValueType> size_t DenseMatrix<ValueType>::serialize(std::vector<char> &buf) const {
