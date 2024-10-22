@@ -59,9 +59,14 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const size_t numColsLhs = lhs->getNumCols();
         const size_t numRowsRhs = rhs->getNumRows();
         const size_t numColsRhs = rhs->getNumCols();
+        const bool isRowMajorLhs = lhs->getIsRowMajor();
+        const bool isRowMajorRhs = rhs->getIsRowMajor();
+
+        if (isRowMajorLhs != isRowMajorRhs)
+            throw std::runtime_error("??");
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false);
+            res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
 
         const VTlhs *valuesLhs = lhs->getValues();
         const VTrhs *valuesRhs = rhs->getValues();
@@ -69,40 +74,79 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
 
         EwBinaryScaFuncPtr<VTres, VTlhs, VTrhs> func = getEwBinaryScaFuncPtr<VTres, VTlhs, VTrhs>(opCode);
 
-        if (numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
-            // matrix op matrix (same size)
-            for (size_t r = 0; r < numRowsLhs; r++) {
-                for (size_t c = 0; c < numColsLhs; c++)
-                    valuesRes[c] = func(valuesLhs[c], valuesRhs[c], ctx);
-                valuesLhs += lhs->getRowSkip();
-                valuesRhs += rhs->getRowSkip();
-                valuesRes += res->getRowSkip();
+        if (isRowMajorLhs) {
+            if (numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
+                // matrix op matrix (same size)
+                for (size_t r = 0; r < numRowsLhs; r++) {
+                    for (size_t c = 0; c < numColsLhs; c++)
+                        valuesRes[c] = func(valuesLhs[c], valuesRhs[c], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRhs += rhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+            } else if (numColsLhs == numColsRhs && (numRowsRhs == 1 || numRowsLhs == 1)) {
+                // matrix op row-vector
+                for (size_t r = 0; r < numRowsLhs; r++) {
+                    for (size_t c = 0; c < numColsLhs; c++)
+                        valuesRes[c] = func(valuesLhs[c], valuesRhs[c], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+            } else if (numRowsLhs == numRowsRhs && (numColsRhs == 1 || numColsLhs == 1)) {
+                // matrix op col-vector
+                for (size_t r = 0; r < numRowsLhs; r++) {
+                    for (size_t c = 0; c < numColsLhs; c++)
+                        valuesRes[c] = func(valuesLhs[c], valuesRhs[0], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRhs += rhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+            } else {
+                throw std::runtime_error("EwBinaryMat(Dense) - lhs and rhs must either "
+                                        "have the same dimensions, or one of them must be a row/column "
+                                        "vector "
+                                        "with the width/height of the other, but lhs has shape (" +
+                                        std::to_string(numRowsLhs) + " x " + std::to_string(numColsLhs) +
+                                        ") and rhs has shape (" + std::to_string(numRowsRhs) + " x " +
+                                        std::to_string(numColsRhs) + ")");
             }
-        } else if (numColsLhs == numColsRhs && (numRowsRhs == 1 || numRowsLhs == 1)) {
-            // matrix op row-vector
-            for (size_t r = 0; r < numRowsLhs; r++) {
-                for (size_t c = 0; c < numColsLhs; c++)
-                    valuesRes[c] = func(valuesLhs[c], valuesRhs[c], ctx);
-                valuesLhs += lhs->getRowSkip();
-                valuesRes += res->getRowSkip();
+        }
+        else {
+            if (numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
+                // matrix op matrix (same size)
+                for (size_t c = 0; c < numColsLhs; c++) {
+                    for (size_t r = 0; r < numRowsLhs; r++)
+                        valuesRes[r] = func(valuesLhs[r], valuesRhs[r], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRhs += rhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+            } else if (numRowsLhs == numRowsRhs && (numColsRhs == 1 || numColsLhs == 1)) {
+                // matrix op col-vector
+                for (size_t c = 0; c < numColsLhs; c++) {
+                    for (size_t r = 0; r < numRowsLhs; r++)
+                        valuesRes[r] = func(valuesLhs[r], valuesRhs[r], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+            } else if (numColsLhs == numColsRhs && (numRowsRhs == 1 || numRowsLhs == 1)) {
+                // matrix op row-vector
+                for (size_t c = 0; c < numColsLhs; c++) {
+                    for (size_t r = 0; r < numRowsLhs; r++)
+                        valuesRes[r] = func(valuesLhs[r], valuesRhs[0], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRhs += rhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+            } else {
+                throw std::runtime_error("EwBinaryMat(Dense) - lhs and rhs must either "
+                                        "have the same dimensions, or one of them must be a row/column "
+                                        "vector "
+                                        "with the width/height of the other, but lhs has shape (" +
+                                        std::to_string(numRowsLhs) + " x " + std::to_string(numColsLhs) +
+                                        ") and rhs has shape (" + std::to_string(numRowsRhs) + " x " +
+                                        std::to_string(numColsRhs) + ")");
             }
-        } else if (numRowsLhs == numRowsRhs && (numColsRhs == 1 || numColsLhs == 1)) {
-            // matrix op col-vector
-            for (size_t r = 0; r < numRowsLhs; r++) {
-                for (size_t c = 0; c < numColsLhs; c++)
-                    valuesRes[c] = func(valuesLhs[c], valuesRhs[0], ctx);
-                valuesLhs += lhs->getRowSkip();
-                valuesRhs += rhs->getRowSkip();
-                valuesRes += res->getRowSkip();
-            }
-        } else {
-            throw std::runtime_error("EwBinaryMat(Dense) - lhs and rhs must either "
-                                     "have the same dimensions, or one of them must be a row/column "
-                                     "vector "
-                                     "with the width/height of the other, but lhs has shape (" +
-                                     std::to_string(numRowsLhs) + " x " + std::to_string(numColsLhs) +
-                                     ") and rhs has shape (" + std::to_string(numRowsRhs) + " x " +
-                                     std::to_string(numColsRhs) + ")");
         }
     }
 };

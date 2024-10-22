@@ -135,15 +135,16 @@ template <typename VT> class CompiledPipelineTask<DenseMatrix<VT>> : public Comp
                            uint64_t dimStart, uint64_t dimEnd);
     void accumulateAggregate(DenseMatrix<VT>*& localAddRes, DenseMatrix<VT>* &localResult, 
                            BinaryOpCode opCode);
+    void accumulateConcat(DenseMatrix<VT>*& slice, DenseMatrix<VT>*& localResult);
 };
 
 template <typename VT> class CompiledPipelineTask<CSRMatrix<VT>> : public CompiledPipelineTaskBase<CSRMatrix<VT>> {
-    std::vector<VectorizedDataSink<CSRMatrix<VT>> *> &_resultSinks;
-    using CompiledPipelineTaskBase<CSRMatrix<VT>>::_data;
+std::vector<VectorizedDataSink<CSRMatrix<VT>> *> &_resultSinks;
+using CompiledPipelineTaskBase<CSRMatrix<VT>>::_data;
 
-  public:
-    CompiledPipelineTask(CompiledPipelineTaskData<CSRMatrix<VT>> data,
-                         std::vector<VectorizedDataSink<CSRMatrix<VT>> *> &resultSinks)
+public:
+CompiledPipelineTask(CompiledPipelineTaskData<CSRMatrix<VT>> data,
+                      std::vector<VectorizedDataSink<CSRMatrix<VT>> *> &resultSinks)
         : CompiledPipelineTaskBase<CSRMatrix<VT>>(data), _resultSinks(resultSinks) {}
 
     void execute(uint32_t fid, uint32_t batchSize) override;

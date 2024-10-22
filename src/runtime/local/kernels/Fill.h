@@ -51,9 +51,6 @@ template <typename VT> struct Fill<DenseMatrix<VT>, VT> {
         if (res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
 
-        llvm::outs() << "numItems:" <<  res->getNumItems() << "\n";
-        llvm::outs() << "rowSkip:" <<  res->getRowSkip() << "\n";
-
         if (arg != 0) {
             VT *valuesRes = res->getValues();
             for (auto i = 0ul; i < res->getNumItems(); ++i)

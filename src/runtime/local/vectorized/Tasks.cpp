@@ -103,137 +103,14 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
         switch (_data._combines[o]) {
             case VectorCombine::ROWS: {
                 auto slice = result->sliceRow(dimStart - _data._offset, dimEnd - _data._offset);
-
-                /*llvm::outs() << "+++++++++++++++++++++++++++++++++++++" << "\n";
-
-                llvm::outs() << "s numRows: " << slice->getNumRows() << "\n";
-                llvm::outs() << "s numCols: " << slice->getNumCols() << "\n";
-                llvm::outs() << "s rowSkip: " << slice->getRowSkip() << "\n";
-                llvm::outs() << "s isRowMajor: " << slice->getIsRowMajor() << "\n";
-
-                llvm::outs() << "dimStart: " << dimStart << "\n";
-                llvm::outs() << "dimEnd: " << dimEnd << "\n";
-                llvm::outs() << "offset: "   << _data._offset << "\n";
-
-                llvm::outs() << "lo numRows: "   << localResults[o]->getNumRows()  << "\n";
-                llvm::outs() << "lo numCols: "   << localResults[o]->getNumCols()  << "\n";
-                llvm::outs() << "lo rowSkip: "   << localResults[o]->getRowSkip()  << "\n";
-                llvm::outs() << "lo isRowMajor: "   << localResults[o]->getIsRowMajor()  << "\n";
-
-                llvm::outs() << "r numRows: "   << result->getNumRows()  << "\n";
-                llvm::outs() << "r numCols: "   << result->getNumCols()  << "\n";
-                llvm::outs() << "r rowSkip: "   << result->getRowSkip()  << "\n";
-                llvm::outs() << "r isRowMajor: "   << result->getIsRowMajor()  << "\n";*/
-
-                if (slice->getIsRowMajor() != localResults[0]->getIsRowMajor())
-                    llvm::outs() << "?????????" << "\n";    
-
-                //PAPI_hl_region_begin("fixme_rows");
-                auto start = std::chrono::high_resolution_clock::now();
-                VT *sliceValues = slice->getValues();
-                VT *localResultsValues = localResults[o]->getValues();
-
-                if (slice->getIsRowMajor()) {
-                    for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                        for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                            sliceValues[i * slice->getRowSkip() + j] =
-                                localResultsValues[i * localResults[o]->getRowSkip() + j];
-                        }
-                    }
-                }
-                else {
-                    for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                        for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                            sliceValues[j * slice->getRowSkip() + i] =
-                                localResultsValues[j * localResults[o]->getRowSkip() + i];
-                        }
-                    }
-                }
-                //PAPI_hl_region_end("fixme_rows");
-                auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<double, std::milli> elapsed = end - start;
-                llvm::outs() << "rows: " << elapsed.count() << " ms\n";
-
-                /*for (size_t i = 0; i < slice->getNumItems(); ++i) {
-                    llvm::outs() << "i(" << i << "): " << slice->getValues()[i] << "\n";
-                }
-                llvm::outs() << "\n";
-
-                llvm::outs() << "result" << "\n"; 
-                for (size_t i = 0; i < result->getNumItems(); ++i) {
-                    llvm::outs() << "i(" << i << "): " << result->getValues()[i] << "\n";
-                }
-                llvm::outs() << "\n";*/
+                accumulateConcat(slice, localResults[o]);
 
                 DataObjectFactory::destroy(slice);
                 break;
             }
             case VectorCombine::COLS: {
-
                 auto slice = result->sliceCol(dimStart - _data._offset, dimEnd - _data._offset);
-
-                /*llvm::outs() << "+++++++++++++++++++++++++++++++++++++" << "\n";
-
-                llvm::outs() << "s numRows: " << slice->getNumRows() << "\n";
-                llvm::outs() << "s numCols: " << slice->getNumCols() << "\n";
-                llvm::outs() << "s rowSkip: " << slice->getRowSkip() << "\n";
-                llvm::outs() << "s isRowMajor: " << slice->getIsRowMajor() << "\n";
-
-                llvm::outs() << "dimStart: " << dimStart << "\n";
-                llvm::outs() << "dimEnd: " << dimEnd << "\n";
-                llvm::outs() << "offset: "   << _data._offset << "\n";
-
-                llvm::outs() << "lo numRows: "   << localResults[o]->getNumRows()  << "\n";
-                llvm::outs() << "lo numCols: "   << localResults[o]->getNumCols()  << "\n";
-                llvm::outs() << "lo rowSkip: "   << localResults[o]->getRowSkip()  << "\n";
-                llvm::outs() << "lo isRowMajor: "   << localResults[o]->getIsRowMajor()  << "\n";
-
-                llvm::outs() << "r numRows: "   << result->getNumRows()  << "\n";
-                llvm::outs() << "r numCols: "   << result->getNumCols()  << "\n";
-                llvm::outs() << "r rowSkip: "   << result->getRowSkip()  << "\n";
-                llvm::outs() << "r isRowMajor: "   << result->getIsRowMajor()  << "\n";*/
-
-                if (slice->getIsRowMajor() != localResults[0]->getIsRowMajor())
-                    llvm::outs() << "?????????" << "\n";
-
-                //PAPI_hl_region_begin("fixme_cols");
-                auto start = std::chrono::high_resolution_clock::now();
-                VT *sliceValues = slice->getValues();
-                VT *localResultsValues = localResults[o]->getValues();
-                if (slice->getIsRowMajor() != localResults[0]->getIsRowMajor())
-                    llvm::outs() << "?????????" << "\n";                
-
-                if (slice->getIsRowMajor()) {
-                    for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                        for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                            sliceValues[i * slice->getRowSkip() + j] =
-                                localResultsValues[i * localResults[o]->getRowSkip() + j];
-                        }
-                    }
-                }
-                else {
-                    for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                        for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                            sliceValues[j * slice->getRowSkip() + i] =
-                                localResultsValues[j * localResults[o]->getRowSkip() + i];
-                        }
-                    }
-                }
-                //PAPI_hl_region_end("fixme_rows");
-                auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<double, std::milli> elapsed = end - start;
-                llvm::outs() << "cols: " << elapsed.count() << " ms\n";
-
-                /*for (size_t i = 0; i < slice->getNumItems(); ++i) {
-                    llvm::outs() << "i(" << i << "): " << slice->getValues()[i] << "\n";
-                }
-                llvm::outs() << "\n";
-
-                llvm::outs() << "result" << "\n"; 
-                for (size_t i = 0; i < result->getNumItems(); ++i) {
-                    llvm::outs() << "i(" << i << "): " << result->getValues()[i] << "\n";
-                }
-                llvm::outs() << "\n";*/
+                accumulateConcat(slice, localResults[o]);
 
                 DataObjectFactory::destroy(slice);
                 break;
@@ -271,6 +148,72 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateAggregate(DenseMatrix<VT>*
     }
 }
 
+template<typename VT>
+void CompiledPipelineTask<DenseMatrix<VT>>::accumulateConcat(DenseMatrix<VT>*& slice,
+                                                             DenseMatrix<VT>*& localResult) {
+
+    /*llvm::outs() << "+++++++++++++++++++++++++++++++++++++" << "\n";
+
+    llvm::outs() << "s numRows: " << slice->getNumRows() << "\n";
+    llvm::outs() << "s numCols: " << slice->getNumCols() << "\n";
+    llvm::outs() << "s rowSkip: " << slice->getRowSkip() << "\n";
+    llvm::outs() << "s isRowMajor: " << slice->getIsRowMajor() << "\n";
+
+    llvm::outs() << "dimStart: " << dimStart << "\n";
+    llvm::outs() << "dimEnd: " << dimEnd << "\n";
+    llvm::outs() << "offset: "   << _data._offset << "\n";
+
+    llvm::outs() << "lo numRows: "   << localResults[o]->getNumRows()  << "\n";
+    llvm::outs() << "lo numCols: "   << localResults[o]->getNumCols()  << "\n";
+    llvm::outs() << "lo rowSkip: "   << localResults[o]->getRowSkip()  << "\n";
+    llvm::outs() << "lo isRowMajor: "   << localResults[o]->getIsRowMajor()  << "\n";
+
+    llvm::outs() << "r numRows: "   << result->getNumRows()  << "\n";
+    llvm::outs() << "r numCols: "   << result->getNumCols()  << "\n";
+    llvm::outs() << "r rowSkip: "   << result->getRowSkip()  << "\n";
+    llvm::outs() << "r isRowMajor: "   << result->getIsRowMajor()  << "\n";*/
+
+    if (slice->getIsRowMajor() != localResult->getIsRowMajor())
+        llvm::outs() << "?????????" << "\n"; 
+
+    //PAPI_hl_region_begin("fixme_cols");
+    auto start = std::chrono::high_resolution_clock::now();
+    VT *sliceValues = slice->getValues();
+    VT *localResultsValues = localResult->getValues();
+           
+    if (slice->getIsRowMajor()) {
+        for (auto i = 0u; i < slice->getNumRows(); ++i) {
+            for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                sliceValues[i * slice->getRowSkip() + j] =
+                    localResultsValues[i * localResult->getRowSkip() + j];
+            }
+        }
+    }
+    else {
+        for (auto j = 0u; j < slice->getNumCols(); ++j) {
+            for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                sliceValues[j * slice->getRowSkip() + i] =
+                    localResultsValues[j * localResult->getRowSkip() + i];
+            }
+        }
+    }
+    //PAPI_hl_region_end("fixme_rows");
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    llvm::outs() << "isRowMajor: " << slice->getIsRowMajor() << ": " << elapsed.count() << " ms\n";
+
+    /*for (size_t i = 0; i < slice->getNumItems(); ++i) {
+        llvm::outs() << "i(" << i << "): " << slice->getValues()[i] << "\n";
+    }
+    llvm::outs() << "\n";
+
+    llvm::outs() << "result" << "\n"; 
+    for (size_t i = 0; i < result->getNumItems(); ++i) {
+        llvm::outs() << "i(" << i << "): " << result->getValues()[i] << "\n";
+    }
+    llvm::outs() << "\n";*/
+
+}
 
 //-----------------------------------------------------------------------------
 

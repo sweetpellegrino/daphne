@@ -58,19 +58,30 @@ template <typename VT> struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, V
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
 
+        bool isRowMajor = lhs->getIsRowMajor();
+
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, isRowMajor);
 
         const VT *valuesLhs = lhs->getValues();
         VT *valuesRes = res->getValues();
 
         EwBinaryScaFuncPtr<VT, VT, VT> func = getEwBinaryScaFuncPtr<VT, VT, VT>(opCode);
 
-        for (size_t r = 0; r < numRows; r++) {
-            for (size_t c = 0; c < numCols; c++)
-                valuesRes[c] = func(valuesLhs[c], rhs, ctx);
-            valuesLhs += lhs->getRowSkip();
-            valuesRes += res->getRowSkip();
+        if (isRowMajor) {
+            for (size_t r = 0; r < numRows; r++) {
+                for (size_t c = 0; c < numCols; c++)
+                    valuesRes[c] = func(valuesLhs[c], rhs, ctx);
+                valuesLhs += lhs->getRowSkip();
+                valuesRes += res->getRowSkip();
+            }
+        } else {
+            for (size_t c = 0; c < numCols; c++) {
+                for (size_t r = 0; r < numRows; r++)
+                    valuesRes[r] = func(valuesLhs[r], rhs, ctx);
+                valuesLhs += lhs->getRowSkip();
+                valuesRes += res->getRowSkip();
+            }
         }
     }
 };
