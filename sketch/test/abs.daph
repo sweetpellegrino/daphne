@@ -1,10 +1,11 @@
 // X = rand($r, $c, 0.0, 1.0, 1, 12345);
 X = fill(1.0, $r, $c);
+//print(X);
 
 start = now();
-i1 = sqrt(X);
-i2 = sqrt(i1);
+i1 = round(X);
 end = now();
 
-print(i2);
+//print(i1);
+print(i1[0,0]);
 print("F1XM3:"+ (end - start));

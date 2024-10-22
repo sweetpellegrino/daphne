@@ -69,7 +69,6 @@ DenseMatrix<ValueType>::DenseMatrix(size_t maxNumRows, size_t numCols, bool zero
     : Matrix<ValueType>(maxNumRows, numCols), is_view(false), rowSkip(isRowMajor ? numCols : numRows),
       bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
     DataPlacement *new_data_placement;
-    llvm::outs() << "3twerrwerwer" << "\n";
     if (allocInfo != nullptr) {
         spdlog::debug("Creating {} x {} dense matrix of type: {}. Required memory: {} Mb", numRows, numCols,
                       static_cast<int>(allocInfo->getType()), static_cast<float>(getBufferSize()) / (1048576));
@@ -102,8 +101,6 @@ DenseMatrix<ValueType>::DenseMatrix(const DenseMatrix<ValueType> *src, int64_t r
       bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
     validateArgs(src, rowLowerIncl, rowUpperExcl, colLowerIncl, colUpperExcl);
 
-    llvm::outs() << "twerrwerwer" << "\n";
-
     this->row_offset = rowLowerIncl;
     this->col_offset = colLowerIncl;
     rowSkip = src->rowSkip;
@@ -124,7 +121,6 @@ template <typename ValueType>
 DenseMatrix<ValueType>::DenseMatrix(size_t numRows, size_t numCols, const DenseMatrix<ValueType> *src, bool isRowMajor)
     : Matrix<ValueType>(numRows, numCols), is_view(false), rowSkip(isRowMajor ? numCols : numRows),
       bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
-    llvm::outs() << "2twerrwerwer" << "\n";
     if (src->values)
         values = src->values;
     this->clone_mdo(src);

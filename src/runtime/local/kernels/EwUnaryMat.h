@@ -56,12 +56,12 @@ template <typename VT> struct EwUnaryMat<DenseMatrix<VT>, DenseMatrix<VT>> {
         const size_t numCols = arg->getNumCols();
         
         bool isRowMajor = arg->getIsRowMajor();
-        llvm::outs() << "isRowMajor:";
+        /*llvm::outs() << "isRowMajor:";
         llvm::outs() << isRowMajor << "\n";
         llvm::outs() << "numRows:";
         llvm::outs() << numRows << "\n";
         llvm::outs() << "numCols:";
-        llvm::outs() << numCols << "\n";
+        llvm::outs() << numCols << "\n";*/
 
         if (res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, isRowMajor);

@@ -169,7 +169,8 @@ template <typename DT> class MTWrapperBase {
                 auto zeroOut = combines[i] == mlir::daphne::VectorCombine::ADD ||
                                      combines[i] == mlir::daphne::VectorCombine::MAX ||
                                      combines[i] == mlir::daphne::VectorCombine::MIN;
-                (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut);
+                llvm::outs() << "allocateOutput: " << _ctx->getUserConfig().isRowMajor << "\n";
+                (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut, nullptr, _ctx->getUserConfig().isRowMajor);
                 mem_required += static_cast<DT *>((*res[i]))->getBufferSize();
             }
         }

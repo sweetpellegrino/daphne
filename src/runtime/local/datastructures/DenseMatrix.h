@@ -258,7 +258,6 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
      */
     ValueType *getValues(IAllocationDescriptor *alloc_desc = nullptr, const Range *range = nullptr) {
         auto [isLatest, id, ptr] = const_cast<DenseMatrix<ValueType> *>(this)->getValuesInternal(alloc_desc, range);
-        std::cout << isLatest << " " << id << " " << ptr << "\n";
         if (!isLatest)
             this->mdo->setLatest(id);
         return ptr;
@@ -267,13 +266,11 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
     std::shared_ptr<ValueType[]> getValuesSharedPtr() const { return values; }
 
     ValueType get(size_t rowIdx, size_t colIdx) const override {
-        // std::cout << "pos: " << pos(rowIdx, colIdx, isPartialBuffer()) << "\n";
         return getValues()[pos(rowIdx, colIdx, isPartialBuffer())];
     }
 
     void set(size_t rowIdx, size_t colIdx, ValueType value) override {
         auto vals = getValues();
-        std::cout << "set" << "\n";
         vals[pos(rowIdx, colIdx)] = value;
     }
 
