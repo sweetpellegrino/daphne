@@ -47,14 +47,28 @@ template <class DTRes, typename VTArg> void fill(DTRes *&res, VTArg arg, size_t 
 
 template <typename VT> struct Fill<DenseMatrix<VT>, VT> {
     static void apply(DenseMatrix<VT> *&res, VT arg, size_t numRows, size_t numCols, DCTX(ctx)) {
+        const bool isRowMajor = ctx->getUserConfig().isRowMajor;
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, isRowMajor);
 
         if (arg != 0) {
             VT *valuesRes = res->getValues();
-            for (auto i = 0ul; i < res->getNumItems(); ++i)
-                valuesRes[i] = (VT) (arg * i);
+
+            if(isRowMajor) {
+                for (auto i = 0ul; i < res->getNumItems(); ++i)
+                    valuesRes[i] = (VT) (arg * i + 10);
+            } else {
+                for (auto j = 0ul; j < res->getNumRows(); ++j) {
+                    for (auto i = 0ul; i < res->getNumCols(); ++i) {
+                        valuesRes[i * res->getRowSkip() + j] = (VT) (arg * (i + j * res->getNumCols()) + 10);
+                    }
+                }
+            }
+            /*for (auto i = 0ul; i < res->getNumItems(); ++i) {
+                llvm::outs() << valuesRes[i] << " ";
+            }
+            llvm::outs() << "\n";*/
         }
         
     }

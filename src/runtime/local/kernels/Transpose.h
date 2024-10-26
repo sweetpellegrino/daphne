@@ -52,25 +52,89 @@ template <typename VT> struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
     static void apply(DenseMatrix<VT> *&res, const DenseMatrix<VT> *arg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
+        const bool isRowMajor = !arg->getIsRowMajor();
+
+        /*
+        llvm::outs() << "----arg----" << "\n";
+        llvm::outs() << numRows  << " " << numCols << " " << isRowMajor << "\n";
+        const VT *valuesArg = arg->getValues();
+        for (size_t i = 0; i < arg->getNumItems(); ++i) {
+            llvm::outs() << (int) valuesArg[i] << " ";
+        }
+        llvm::outs() << "\n";*/
 
         // skip data movement for vectors
         if ((numRows == 1 || numCols == 1) && !arg->isView()) {
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, arg);
+            res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, false, nullptr, isRowMajor);
         } else {
             if (res == nullptr)
-                res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, false);
+                res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, false, nullptr, isRowMajor);
 
             const VT *valuesArg = arg->getValues();
             const size_t rowSkipArg = arg->getRowSkip();
             const size_t rowSkipRes = res->getRowSkip();
-            for (size_t r = 0; r < numRows; r++) {
-                VT *valuesRes = res->getValues() + r;
-                for (size_t c = 0; c < numCols; c++) {
-                    *valuesRes = valuesArg[c];
-                    valuesRes += rowSkipRes;
+            if (res->getIsRowMajor() == arg->getIsRowMajor()) {
+                
+                if (isRowMajor) {
+                    for (size_t r = 0; r < numRows; r++) {
+                        VT *valuesRes = res->getValues() + r;
+                        for (size_t c = 0; c < numCols; c++) {
+                            *valuesRes = valuesArg[c];
+                            valuesRes += rowSkipRes;
+                        }
+                        valuesArg += rowSkipArg;
+                    }
+                } else {
+                    for (size_t c = 0; c < numCols; c++) {
+                        VT *valuesRes = res->getValues() + c;
+                        for (size_t r = 0; r < numRows; r++) {
+                            *valuesRes = valuesArg[r];
+                            valuesRes += rowSkipRes;
+                        }
+                        valuesArg += rowSkipArg;
+                    }
                 }
-                valuesArg += rowSkipArg;
+            } else {
+                /*if (res == nullptr)
+                    res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, arg->getValuesSharedPtr(), isRowMajor);
+                else
+                    throw std::runtime_error("does not work");*/
+                // output is row-major
+                if (isRowMajor) {
+                    for (size_t c = 0; c < numCols; c++) {
+                        VT *valuesRes = res->getValues() + c * rowSkipRes;
+                        for (size_t r = 0; r < numRows; r++) {
+                            *valuesRes = valuesArg[r];
+                            valuesRes += 1;
+                        } 
+                        valuesArg += rowSkipArg;
+                    }
+                // output is column-major
+                } else {
+                    for (size_t r = 0; r < numRows; r++) {
+                        VT *valuesRes = res->getValues() + r * rowSkipRes;
+                        for (size_t c = 0; c < numCols; c++) {
+                            *valuesRes = valuesArg[c];
+                            valuesRes += 1;
+                        }
+                        valuesArg += rowSkipArg;
+                    }
+                    /*for (size_t c = 0; c < numCols; c++) {
+                        VT *valuesRes = res->getValues() + c;
+                        for (size_t r = 0; r < numRows; r++) {
+                            llvm::outs() << "r: " << r << ", c: " << c << ", val: " << (int) valuesArg[r * rowSkipArg + c] << "\n";
+                            *valuesRes = valuesArg[r + rowSkipArg * c];
+                            valuesRes += rowSkipRes;
+                        }
+                    }*/
+                }
             }
+            /*llvm::outs() << "----res----" << "\n";
+            VT *valuesRes = res->getValues();
+            for (size_t i = 0; i < res->getNumItems(); ++i) {
+                llvm::outs() << (int) valuesRes[i] << " ";
+            }
+            llvm::outs() << "\n";*/
         }
     }
 };
