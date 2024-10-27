@@ -62,9 +62,6 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const bool isRowMajorLhs = lhs->getIsRowMajor();
         const bool isRowMajorRhs = rhs->getIsRowMajor();
 
-        if (isRowMajorLhs != isRowMajorRhs)
-            throw std::runtime_error("??");
-
         if (res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
 
@@ -74,7 +71,31 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
 
         EwBinaryScaFuncPtr<VTres, VTlhs, VTrhs> func = getEwBinaryScaFuncPtr<VTres, VTlhs, VTrhs>(opCode);
 
-        if (isRowMajorLhs) {
+        if (isRowMajorLhs && !isRowMajorRhs) {
+            for (size_t r = 0; r < numRowsLhs; r++) {
+                valuesRhs = rhs->getValues() + r;
+                for (size_t c = 0; c < numColsLhs; c++) {
+                    valuesRes[c] = func(valuesLhs[c], valuesRhs[0], ctx);
+                    valuesRhs += rhs->getRowSkip();
+                }
+                valuesLhs += lhs->getRowSkip();
+                valuesRes += res->getRowSkip();
+            }
+        }
+        else if (!isRowMajorLhs && isRowMajorRhs) {
+            for (size_t c = 0; c < numColsLhs; c++) {
+                valuesLhs = lhs->getValues() + c;
+                valuesRes = res->getValues() + c;
+                for (size_t r = 0; r < numRowsLhs; r++) {
+                    //llvm::outs() << "Res:" << valuesRes[0] << " lhs: " << valuesLhs[0] << " rhs: " << valuesRhs[r] << "\n";
+                    valuesRes[0] = func(valuesLhs[0], valuesRhs[r], ctx);
+                    valuesLhs += lhs->getRowSkip();
+                    valuesRes += res->getRowSkip();
+                }
+                valuesRhs += rhs->getRowSkip();
+            }
+        }
+        else if (isRowMajorLhs && isRowMajorRhs) {
             if (numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
                 // matrix op matrix (same size)
                 for (size_t r = 0; r < numRowsLhs; r++) {
@@ -111,7 +132,7 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
                                         std::to_string(numColsRhs) + ")");
             }
         }
-        else {
+        else if (!isRowMajorLhs && !isRowMajorRhs) {
             if (numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
                 // matrix op matrix (same size)
                 for (size_t c = 0; c < numColsLhs; c++) {
@@ -147,6 +168,11 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
                                         ") and rhs has shape (" + std::to_string(numRowsRhs) + " x " +
                                         std::to_string(numColsRhs) + ")");
             }
+        }
+        else {
+            std::ostringstream errMsg;
+            errMsg << "Something went wrong: lhs " << (isRowMajorLhs ? "row-major" : "column-major") << " rhs " << (isRowMajorRhs ? "row-major" : "column-major");
+            throw std::runtime_error(errMsg.str());
         }
     }
 };

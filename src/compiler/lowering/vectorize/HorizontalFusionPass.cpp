@@ -163,7 +163,7 @@ void HorizontalFusionPass::runOnOperation()
                             if (pipeOp1.getSplits()[operandIx1] == pipeOp2.getSplits()[operandIx2] && 
                                 pipeOp1.getSplits()[operandIx1].cast<daphne::VectorSplitAttr>().getValue() != daphne::VectorSplit::NONE) {
                                 horizontalRelationships.push_back({pipeOp1, pipeOp2});
-                                break; // We only need one case of arguments matching.
+                                break; // We only need one case of arguments matching for consideration of horz. Fusion.
                             }
                         }
                     }
