@@ -61,9 +61,10 @@ template <typename VTRes, typename VTArg> struct AggRow<DenseMatrix<VTRes>, Dens
     static void apply(AggOpCode opCode, DenseMatrix<VTRes> *&res, const DenseMatrix<VTArg> *arg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
+        const size_t isRowMajor = arg->getIsRowMajor();
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VTRes>>(numRows, 1, false);
+            res = DataObjectFactory::create<DenseMatrix<VTRes>>(numRows, 1, false, nullptr, isRowMajor);
 
         const VTArg *valuesArg = arg->getValues();
         VTRes *valuesRes = res->getValues();
@@ -105,14 +106,27 @@ template <typename VTRes, typename VTArg> struct AggRow<DenseMatrix<VTRes>, Dens
                 // and is less efficient. for MEAN and STDDDEV, we need to sum
                 func = getEwBinaryScaFuncPtr<VTRes, VTRes, VTRes>(AggOpCodeUtils::getBinaryOpCode(AggOpCode::SUM));
 
-            for (size_t r = 0; r < numRows; r++) {
-                VTRes agg = static_cast<VTRes>(*valuesArg);
-                for (size_t c = 1; c < numCols; c++) {
-                    agg = func(agg, static_cast<VTRes>(valuesArg[c]), ctx);
+            if (isRowMajor) {
+                for (size_t r = 0; r < numRows; r++) {
+                    VTRes agg = static_cast<VTRes>(*valuesArg);
+                    for (size_t c = 1; c < numCols; c++) {
+                        agg = func(agg, static_cast<VTRes>(valuesArg[c]), ctx);
+                    }
+                    *valuesRes = static_cast<VTRes>(agg);
+                    valuesArg += arg->getRowSkip();
+                    valuesRes += res->getRowSkip();
                 }
-                *valuesRes = static_cast<VTRes>(agg);
-                valuesArg += arg->getRowSkip();
-                valuesRes += res->getRowSkip();
+            } else {
+                for (size_t c = 0; c < numCols; c++) {
+                    VTRes agg = static_cast<VTRes>(*valuesArg);
+                    for (size_t r = 1; r < numRows; r++) { 
+                        //llvm::outs() << c << " " << r << " " << valuesArg[r* arg->getRowSkip()] << "\n";
+                        agg = func(agg, static_cast<VTRes>(valuesArg[r * arg->getRowSkip()]), ctx);
+                    }
+                    *valuesRes = static_cast<VTRes>(agg);
+                    valuesArg++;
+                    valuesRes++;
+                }
             }
 
             if (AggOpCodeUtils::isPureBinaryReduction(opCode))

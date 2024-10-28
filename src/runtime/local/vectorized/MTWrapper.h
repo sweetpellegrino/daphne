@@ -170,7 +170,7 @@ template <typename DT> class MTWrapperBase {
                                      combines[i] == mlir::daphne::VectorCombine::MAX ||
                                      combines[i] == mlir::daphne::VectorCombine::MIN;
                 //TODO: specifiy from vectOp itself
-                (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut, nullptr, !_ctx->getUserConfig().isRowMajor);
+                (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut, nullptr, _ctx->getUserConfig().isRowMajor);
                 mem_required += static_cast<DT *>((*res[i]))->getBufferSize();
             }
         }

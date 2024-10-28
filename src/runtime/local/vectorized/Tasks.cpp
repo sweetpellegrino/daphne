@@ -173,8 +173,10 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateConcat(DenseMatrix<VT>*& s
     llvm::outs() << "r rowSkip: "   << result->getRowSkip()  << "\n";
     llvm::outs() << "r isRowMajor: "   << result->getIsRowMajor()  << "\n";*/
 
-    if (slice->getIsRowMajor() != localResult->getIsRowMajor())
+    if (slice->getIsRowMajor() != localResult->getIsRowMajor()) {
+        llvm::outs() << slice->getIsRowMajor() << " " << localResult->getIsRowMajor() << "\n";
         llvm::outs() << "?????????" << "\n"; 
+    }
 
     //PAPI_hl_region_begin("fixme_cols");
     auto start = std::chrono::high_resolution_clock::now();
