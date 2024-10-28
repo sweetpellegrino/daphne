@@ -62,8 +62,20 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const bool isRowMajorLhs = lhs->getIsRowMajor();
         const bool isRowMajorRhs = rhs->getIsRowMajor();
 
-        if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
+        if (res == nullptr) {
+            if (isRowMajorLhs && !isRowMajorRhs) {
+                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
+            }
+            else if (!isRowMajorLhs && isRowMajorRhs) {
+                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorRhs);
+            }
+            else if (isRowMajorLhs && isRowMajorRhs) {
+                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
+            }
+            else if (!isRowMajorLhs && !isRowMajorRhs) {
+                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
+            }
+        }
 
         const VTlhs *valuesLhs = lhs->getValues();
         const VTrhs *valuesRhs = rhs->getValues();

@@ -1,19 +1,16 @@
-// X = rand($r, $c, 0.0, 1.0, 1, 12345);
-X = fill(1.0, $r, $c);
-//Y = fill(2.0, $r, $c);
-//print(X);
-//print(Y);
+Z = fill(1.0, $r, $c);
+W = fill(2.0, $r, $c);
 
 start = now();
-i1 = t(X);
-//i2 = t(Y);
-//i3 = i1 + i2;
+i0 = W;
+i1 = Z;
+i2 = i0 + i1;
+i3 = sum(i2);
 end = now();
 
-//print(i1);
-print(i1[2,1]);
-//print(i2);
+print(i0);
+print(i1);
+print(i2);
+print(i3);
 
-//print(i3);
-//print(i3[1,2]);
 print("F1XM3:"+ (end - start));
