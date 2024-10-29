@@ -17,17 +17,11 @@
 #include "runtime/local/vectorized/Tasks.h"
 #include "ir/daphneir/Daphne.h"
 #include "runtime/local/datastructures/DenseMatrix.h"
-#include "runtime/local/kernels/BinaryOpCode.h"
 #include "runtime/local/kernels/EwBinaryMat.h"
 #include <cstdint>
-#include <cstdio>
 #include <llvm/Support/raw_ostream.h>
 #include <stdexcept>
 #include <chrono>
-
-#ifdef USE_PAPI
-#include <papi.h>
-#endif
 
 template <typename VT> void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
     // local add aggregation to minimize locking
@@ -70,18 +64,18 @@ template <typename VT> void CompiledPipelineTask<DenseMatrix<VT>>::execute(uint3
             _resLock.unlock();
         } else {
             switch (_data._combines[o]) {
-                case VectorCombine::ADD:
-                    ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
-                    break;
-                case VectorCombine::MIN:
-                    ewBinaryMat(BinaryOpCode::MIN, result, result, localAddRes[o], _data._ctx);
-                    break;
-                case VectorCombine::MAX:
-                    ewBinaryMat(BinaryOpCode::MAX, result, result, localAddRes[o], _data._ctx);
-                    break;
-                default:
-                    throw std::runtime_error("not implemented");
-                    break;
+            case VectorCombine::ADD:
+                ewBinaryMat(BinaryOpCode::ADD, result, result, localAddRes[o], _data._ctx);
+                break;
+            case VectorCombine::MIN:
+                ewBinaryMat(BinaryOpCode::MIN, result, result, localAddRes[o], _data._ctx);
+                break;
+            case VectorCombine::MAX:
+                ewBinaryMat(BinaryOpCode::MAX, result, result, localAddRes[o], _data._ctx);
+                break;
+            default:
+                throw std::runtime_error("not implemented");
+                break;
             }
             _resLock.unlock();
             // cleanup
@@ -103,28 +97,87 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
         switch (_data._combines[o]) {
             case VectorCombine::ROWS: {
                 auto slice = result->sliceRow(dimStart - _data._offset, dimEnd - _data._offset);
-                accumulateConcat(slice, localResults[o]);
+    #if 0
+                llvm::outs() << "ROWS" << "\n";
+                llvm::outs() << _data._offset << "\n";
+                llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
+                llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
+                llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
+                llvm::outs() << "\n";
+    #endif
+
+                //auto start = std::chrono::high_resolution_clock::now();
+                VT *sliceValues = slice->getValues();
+                VT *localResultsValues = localResults[o]->getValues();
+                for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                    for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                        sliceValues[i * slice->getRowSkip() + j] =
+                            localResultsValues[i * localResults[o]->getRowSkip() + j];
+                    }
+                }
+                /*auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::nano> diff = end - start;
+                llvm::outs() << "ROWS: " << diff.count() << "\n";*/
 
                 DataObjectFactory::destroy(slice);
                 break;
             }
             case VectorCombine::COLS: {
+
                 auto slice = result->sliceCol(dimStart - _data._offset, dimEnd - _data._offset);
-                accumulateConcat(slice, localResults[o]);
+    #if 0
+                llvm::outs() << "COLS" << "\n";
+                llvm::outs() << _data._offset << "\n";
+                llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
+                llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
+                llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
+                llvm::outs() << "\n";
+    #endif
+                //auto start = std::chrono::high_resolution_clock::now();
+                VT *sliceValues = slice->getValues();
+                VT *localResultsValues = localResults[o]->getValues();
+                for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                    for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                        sliceValues[i * slice->getRowSkip() + j] =
+                            localResultsValues[i * localResults[o]->getRowSkip() + j];
+                    }
+                }
+
+                /*auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::nano> diff = end - start;
+                llvm::outs() << "COLS: " << diff.count() << "\n";*/
 
                 DataObjectFactory::destroy(slice);
                 break;
             }
             case VectorCombine::ADD: {
-                accumulateAggregate(localAddRes[o], localResults[0], BinaryOpCode::ADD);
+                if (localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                } else {
+                    ewBinaryMat(BinaryOpCode::ADD, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
                 break;
             }
             case VectorCombine::MAX: {
-                accumulateAggregate(localAddRes[o], localResults[0], BinaryOpCode::MAX);
+                if (localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                } else {
+                    ewBinaryMat(BinaryOpCode::MAX, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
                 break;
             }
             case VectorCombine::MIN: {
-                accumulateAggregate(localAddRes[o], localResults[0], BinaryOpCode::MIN);
+                if (localAddRes[o] == nullptr) {
+                    // take lres and reset it to nullptr
+                    localAddRes[o] = localResults[o];
+                    localResults[o] = nullptr;
+                } else {
+                    ewBinaryMat(BinaryOpCode::MIN, localAddRes[o], localAddRes[o], localResults[o], nullptr);
+                }
                 break;
             }
             default: {
@@ -134,90 +187,6 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
         }
     }
 }
-
-template<typename VT>
-void CompiledPipelineTask<DenseMatrix<VT>>::accumulateAggregate(DenseMatrix<VT>*& localAddRes,
-                                                                DenseMatrix<VT>*& localResult,
-                                                                BinaryOpCode opCode) {
-    if (localAddRes == nullptr) {
-        // take lres and reset it to nullptr
-        localAddRes = localResult;
-        localResult = nullptr;
-    } else {
-        ewBinaryMat(opCode, localAddRes, localAddRes, localResult, nullptr);
-    }
-}
-
-template<typename VT>
-void CompiledPipelineTask<DenseMatrix<VT>>::accumulateConcat(DenseMatrix<VT>*& slice,
-                                                             DenseMatrix<VT>*& localResult) {
-
-    /*llvm::outs() << "+++++++++++++++++++++++++++++++++++++" << "\n";
-
-    llvm::outs() << "s numRows: " << slice->getNumRows() << "\n";
-    llvm::outs() << "s numCols: " << slice->getNumCols() << "\n";
-    llvm::outs() << "s rowSkip: " << slice->getRowSkip() << "\n";
-    llvm::outs() << "s isRowMajor: " << slice->getIsRowMajor() << "\n";
-
-    llvm::outs() << "dimStart: " << dimStart << "\n";
-    llvm::outs() << "dimEnd: " << dimEnd << "\n";
-    llvm::outs() << "offset: "   << _data._offset << "\n";
-
-    llvm::outs() << "lo numRows: "   << localResults[o]->getNumRows()  << "\n";
-    llvm::outs() << "lo numCols: "   << localResults[o]->getNumCols()  << "\n";
-    llvm::outs() << "lo rowSkip: "   << localResults[o]->getRowSkip()  << "\n";
-    llvm::outs() << "lo isRowMajor: "   << localResults[o]->getIsRowMajor()  << "\n";
-
-    llvm::outs() << "r numRows: "   << result->getNumRows()  << "\n";
-    llvm::outs() << "r numCols: "   << result->getNumCols()  << "\n";
-    llvm::outs() << "r rowSkip: "   << result->getRowSkip()  << "\n";
-    llvm::outs() << "r isRowMajor: "   << result->getIsRowMajor()  << "\n";*/
-
-    if (slice->getIsRowMajor() != localResult->getIsRowMajor()) {
-        llvm::outs() << slice->getIsRowMajor() << " " << localResult->getIsRowMajor() << "\n";
-        llvm::outs() << "?????????" << "\n"; 
-    }
-
-    //PAPI_hl_region_begin("fixme_cols");
-    auto start = std::chrono::high_resolution_clock::now();
-    VT *sliceValues = slice->getValues();
-    VT *localResultsValues = localResult->getValues();
-           
-    if (slice->getIsRowMajor()) {
-        for (auto i = 0u; i < slice->getNumRows(); ++i) {
-            for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                sliceValues[i * slice->getRowSkip() + j] =
-                    localResultsValues[i * localResult->getRowSkip() + j];
-            }
-        }
-    }
-    else {
-        for (auto j = 0u; j < slice->getNumCols(); ++j) {
-            for (auto i = 0u; i < slice->getNumRows(); ++i) {
-                sliceValues[j * slice->getRowSkip() + i] =
-                    localResultsValues[j * localResult->getRowSkip() + i];
-            }
-        }
-    }
-    //PAPI_hl_region_end("fixme_rows");
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
-    llvm::outs() << "isRowMajor: " << slice->getIsRowMajor() << ": " << elapsed.count() << " ms\n";
-
-    /*for (size_t i = 0; i < slice->getNumItems(); ++i) {
-        llvm::outs() << "i(" << i << "): " << slice->getValues()[i] << "\n";
-    }
-    llvm::outs() << "\n";
-
-    llvm::outs() << "result" << "\n"; 
-    for (size_t i = 0; i < result->getNumItems(); ++i) {
-        llvm::outs() << "i(" << i << "): " << result->getValues()[i] << "\n";
-    }
-    llvm::outs() << "\n";*/
-
-}
-
-//-----------------------------------------------------------------------------
 
 template <typename VT> void CompiledPipelineTask<CSRMatrix<VT>>::execute(uint32_t fid, uint32_t batchSize) {
     std::vector<size_t> localResNumRows(_data._numOutputs);
