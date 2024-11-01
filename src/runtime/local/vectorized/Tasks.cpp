@@ -109,10 +109,19 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 //auto start = std::chrono::high_resolution_clock::now();
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
-                for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                if (slice->getIsRowMajor()) {
+                    for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                        for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                            sliceValues[i * slice->getRowSkip() + j] =
+                                localResultsValues[i * localResults[o]->getRowSkip() + j];
+                        }
+                    }
+                } else {
                     for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                        sliceValues[i * slice->getRowSkip() + j] =
-                            localResultsValues[i * localResults[o]->getRowSkip() + j];
+                        for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                            sliceValues[j * slice->getRowSkip() + i] =
+                                localResultsValues[j * localResults[o]->getRowSkip() + i];
+                        }
                     }
                 }
                 /*auto end = std::chrono::high_resolution_clock::now();
@@ -136,10 +145,19 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                 //auto start = std::chrono::high_resolution_clock::now();
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
-                for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                if (slice->getIsRowMajor()) {
+                    for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                        for (auto j = 0u; j < slice->getNumCols(); ++j) {
+                            sliceValues[i * slice->getRowSkip() + j] =
+                                localResultsValues[i * localResults[o]->getRowSkip() + j];
+                        }
+                    }
+                } else {
                     for (auto j = 0u; j < slice->getNumCols(); ++j) {
-                        sliceValues[i * slice->getRowSkip() + j] =
-                            localResultsValues[i * localResults[o]->getRowSkip() + j];
+                        for (auto i = 0u; i < slice->getNumRows(); ++i) {
+                            sliceValues[j * slice->getRowSkip() + i] =
+                                localResultsValues[j * localResults[o]->getRowSkip() + i];
+                        }
                     }
                 }
 

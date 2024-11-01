@@ -61,21 +61,18 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const size_t numColsRhs = rhs->getNumCols();
         const bool isRowMajorLhs = lhs->getIsRowMajor();
         const bool isRowMajorRhs = rhs->getIsRowMajor();
+    
+        /*llvm::outs() << "--------------------------------" << "\n";
+    
+        llvm::outs() << "numRowsLhs: " << numRowsLhs << "\n"; 
+        llvm::outs() << "numColsLhs: " << numColsLhs << "\n";
+        llvm::outs() << "numRowsRhs: " << numRowsRhs << "\n";
+        llvm::outs() << "numColsRhs: " << numColsRhs << "\n";
+        llvm::outs() << "isRowMajorLhs: " << isRowMajorLhs << "\n";
+        llvm::outs() << "isRowMajorRhs: " << isRowMajorRhs << "\n";*/
 
-        if (res == nullptr) {
-            if (isRowMajorLhs && !isRowMajorRhs) {
-                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
-            }
-            else if (!isRowMajorLhs && isRowMajorRhs) {
-                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorRhs);
-            }
-            else if (isRowMajorLhs && isRowMajorRhs) {
-                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
-            }
-            else if (!isRowMajorLhs && !isRowMajorRhs) {
-                res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
-            }
-        }
+        if (res == nullptr)
+            res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
 
         const VTlhs *valuesLhs = lhs->getValues();
         const VTrhs *valuesRhs = rhs->getValues();
@@ -147,23 +144,29 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         else if (!isRowMajorLhs && !isRowMajorRhs) {
             if (numRowsLhs == numRowsRhs && numColsLhs == numColsRhs) {
                 // matrix op matrix (same size)
-                for (size_t c = 0; c < numColsLhs; c++) {
-                    for (size_t r = 0; r < numRowsLhs; r++)
+                for (size_t c = 0; c < numColsRhs; c++) {
+                    for (size_t r = 0; r < numRowsRhs; r++) {
                         valuesRes[r] = func(valuesLhs[r], valuesRhs[r], ctx);
+                        //llvm::outs() << r << " " << c << " res:" << valuesRes[r] << " lhs: " << valuesLhs[r] << " rhs: " << valuesRhs[r] << "\n";
+                    }
                     valuesLhs += lhs->getRowSkip();
                     valuesRhs += rhs->getRowSkip();
                     valuesRes += res->getRowSkip();
                 }
             } else if (numRowsLhs == numRowsRhs && (numColsRhs == 1 || numColsLhs == 1)) {
                 // matrix op col-vector
+                //llvm::outs() << "numRowsLhs == numRowsRhs" << "\n";
                 for (size_t c = 0; c < numColsLhs; c++) {
-                    for (size_t r = 0; r < numRowsLhs; r++)
+                    for (size_t r = 0; r < numRowsLhs; r++) {
+                        //llvm::outs() << r << " " << c << " res:" << valuesRes[r] << " lhs: " << valuesLhs[r] << " rhs: " << valuesRhs[r] << "\n";
                         valuesRes[r] = func(valuesLhs[r], valuesRhs[r], ctx);
+                    }
                     valuesLhs += lhs->getRowSkip();
                     valuesRes += res->getRowSkip();
                 }
             } else if (numColsLhs == numColsRhs && (numRowsRhs == 1 || numRowsLhs == 1)) {
                 // matrix op row-vector
+                //llvm::outs() << "numColsLhs == numColsRhs" << "\n";
                 for (size_t c = 0; c < numColsLhs; c++) {
                     for (size_t r = 0; r < numRowsLhs; r++)
                         valuesRes[r] = func(valuesLhs[r], valuesRhs[0], ctx);
@@ -186,6 +189,11 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
             errMsg << "Something went wrong: lhs " << (isRowMajorLhs ? "row-major" : "column-major") << " rhs " << (isRowMajorRhs ? "row-major" : "column-major");
             throw std::runtime_error(errMsg.str());
         }
+        /*llvm::outs() << res->getIsRowMajor() << " " << res->getRowSkip() << " " << res->getNumRows() << " " << res->getNumCols() << "\n";
+        for (auto i = 0ul; i < res->getNumItems(); ++i) {
+            llvm::outs() << res->getValues()[i] << " ";
+        }
+        llvm::outs() << "\n";*/
     }
 };
 

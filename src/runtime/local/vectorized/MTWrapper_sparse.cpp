@@ -21,7 +21,7 @@ template <typename VT>
 void MTWrapper<CSRMatrix<VT>>::executeCpuQueues(
     std::vector<std::function<void(CSRMatrix<VT> ***, Structure **, DCTX(ctx))>> funcs, CSRMatrix<VT> ***res,
     const bool *isScalar, Structure **inputs, size_t numInputs, size_t numOutputs, const int64_t *outRows,
-    const int64_t *outCols, VectorSplit *splits, VectorCombine *combines, DCTX(ctx), const bool verbose) {
+    const int64_t *outCols, VectorSplit *splits, VectorCombine *combines, bool *isRowMajor, DCTX(ctx), const bool verbose) {
     //     TODO: reduce code duplication
     auto inputProps = this->getInputProperties(inputs, numInputs, splits);
     auto len = inputProps.first;

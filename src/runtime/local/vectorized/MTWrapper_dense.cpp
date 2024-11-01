@@ -25,11 +25,11 @@ template <typename VT>
 [[maybe_unused]] void MTWrapper<DenseMatrix<VT>>::executeSingleQueue(
     std::vector<std::function<typename MTWrapper<DenseMatrix<VT>>::PipelineFunc>> funcs, DenseMatrix<VT> ***res,
     const bool *isScalar, Structure **inputs, size_t numInputs, size_t numOutputs, int64_t *outRows, int64_t *outCols,
-    VectorSplit *splits, VectorCombine *combines, DCTX(ctx), const bool verbose) {
+    VectorSplit *splits, VectorCombine *combines, bool *isRowMajor, DCTX(ctx), const bool verbose) {
     auto inputProps = this->getInputProperties(inputs, numInputs, splits);
     auto len = inputProps.first;
     auto mem_required = inputProps.second;
-    mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines);
+    mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines, isRowMajor);
     auto row_mem = mem_required / len;
 
     // create task queue (w/o size-based blocking)
@@ -88,11 +88,11 @@ template <typename VT>
 [[maybe_unused]] void MTWrapper<DenseMatrix<VT>>::executeCpuQueues(
     std::vector<std::function<typename MTWrapper<DenseMatrix<VT>>::PipelineFunc>> funcs, DenseMatrix<VT> ***res,
     const bool *isScalar, Structure **inputs, size_t numInputs, size_t numOutputs, int64_t *outRows, int64_t *outCols,
-    VectorSplit *splits, VectorCombine *combines, DCTX(ctx), bool verbose) {
+    VectorSplit *splits, VectorCombine *combines, bool *isRowMajor, DCTX(ctx), bool verbose) {
     auto inputProps = this->getInputProperties(inputs, numInputs, splits);
     auto len = inputProps.first;
     auto mem_required = inputProps.second;
-    mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines);
+    mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines, isRowMajor);
     auto row_mem = mem_required / len;
 
     std::vector<std::unique_ptr<TaskQueue>> q;
@@ -217,12 +217,12 @@ template <typename VT>
 [[maybe_unused]] void MTWrapper<DenseMatrix<VT>>::executeQueuePerDeviceType(
     std::vector<std::function<typename MTWrapper<DenseMatrix<VT>>::PipelineFunc>> funcs, DenseMatrix<VT> ***res,
     const bool *isScalar, Structure **inputs, size_t numInputs, size_t numOutputs, int64_t *outRows, int64_t *outCols,
-    VectorSplit *splits, VectorCombine *combines, DCTX(ctx), bool verbose) {
+    VectorSplit *splits, VectorCombine *combines, bool *isRowMajor, DCTX(ctx), bool verbose) {
     size_t device_task_len = 0ul;
     auto inputProps = this->getInputProperties(inputs, numInputs, splits);
     auto len = inputProps.first;
     auto mem_required = inputProps.second;
-    mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines);
+    mem_required += this->allocateOutput(res, numOutputs, outRows, outCols, combines, isRowMajor);
     auto row_mem = mem_required / len;
     auto batchSize8M = std::max(100ul, static_cast<size_t>(std::ceil(8388608 / row_mem)));
     // lock for aggregation combine

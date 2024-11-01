@@ -1,16 +1,19 @@
 Z = fill(1.0, $r, $c);
-W = fill(2.0, $r, $c);
+W = fill(2.0, $c, $r);
 
 start = now();
-i0 = W;
-i1 = Z;
-i2 = i0 + i1;
-i3 = sum(i2);
+i0 = t(W);
+i1 = t(i0);
+//i2 = Z + i1;
+//i3 = sum(i2);
 end = now();
+
+print(Z);
+print(W);
 
 print(i0);
 print(i1);
-print(i2);
-print(i3);
+//print(i2);
+//print(i3);
 
 print("F1XM3:"+ (end - start));

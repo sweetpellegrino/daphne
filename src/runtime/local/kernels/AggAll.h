@@ -55,6 +55,7 @@ template <typename VTRes, typename VTArg> struct AggAll<VTRes, DenseMatrix<VTArg
     static VTRes apply(AggOpCode opCode, const DenseMatrix<VTArg> *arg, DCTX(ctx)) {
         const size_t numRows = arg->getNumRows();
         const size_t numCols = arg->getNumCols();
+        const bool isRowMajor = arg->getIsRowMajor();
 
         const VTArg *valuesArg = arg->getValues();
 
@@ -72,10 +73,18 @@ template <typename VTRes, typename VTArg> struct AggAll<VTRes, DenseMatrix<VTArg
             agg = VTRes(0);
         }
 
-        for (size_t r = 0; r < numRows; r++) {
-            for (size_t c = 0; c < numCols; c++)
-                agg = func(agg, static_cast<VTRes>(valuesArg[c]), ctx);
-            valuesArg += arg->getRowSkip();
+        if (isRowMajor) {
+            for (size_t r = 0; r < numRows; r++) {
+                for (size_t c = 0; c < numCols; c++)
+                    agg = func(agg, static_cast<VTRes>(valuesArg[c]), ctx);
+                valuesArg += arg->getRowSkip();
+            }
+        } else {            
+            for (size_t c = 0; c < numCols; c++) {
+                for (size_t r = 0; r < numRows; r++) 
+                    agg = func(agg, static_cast<VTRes>(valuesArg[r]), ctx);
+                valuesArg += arg->getRowSkip();
+            }
         }
         if (AggOpCodeUtils::isPureBinaryReduction(opCode))
             return agg;

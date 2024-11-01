@@ -553,6 +553,11 @@ struct VectorUtils {
                         auto loc = v->getLoc();
 
                         auto toCastOp = builder.create<mlir::daphne::CastOp>(loc, m1x1, r);
+
+                        // for greedy3, can always be true
+                        auto attr = mlir::BoolAttr::get(func.getContext(), true);
+                        toCastOp->setAttr("shouldBeRowMajor", attr);
+
                         toCastOp->moveAfter(v);
 
                         // xxxxxx

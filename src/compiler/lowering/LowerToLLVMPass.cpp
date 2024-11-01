@@ -814,6 +814,25 @@ class VectorizedPipelineOpLowering : public OpConversionPattern<daphne::Vectoriz
         }
         newOperands.push_back(convertToArray(loc, rewriter, rewriter.getI64Type(), combineConsts, ipFuncStart));
 
+        // isRowMajor
+        callee << "__bool";
+
+        std::vector<Value> isRowMajors;
+        if (op->hasAttr("shouldBeRowMajor")) {
+            mlir::ArrayAttr layouts = op->getAttrOfType<mlir::ArrayAttr>("shouldBeRowMajor");
+            for (mlir::Attribute attr : layouts) {
+                bool isRowMajor = attr.cast<BoolAttr>().getValue();
+                mlir::Value constant = rewriter.create<arith::ConstantIntOp>(loc, isRowMajor, rewriter.getI1Type());
+                isRowMajors.push_back(constant);
+            }
+        } else {
+            for (size_t i = 0; i < numOutputs; ++i) {
+                mlir::Value constant = rewriter.create<arith::ConstantIntOp>(loc, cfg.isRowMajor, rewriter.getI1Type());
+                isRowMajors.push_back(constant);
+            }
+        }
+        newOperands.push_back(convertToArray(loc, rewriter, rewriter.getI1Type(), isRowMajors, ipFuncStart));
+
         // TODO: pass function pointer with special placeholder instead of
         // `void`
 

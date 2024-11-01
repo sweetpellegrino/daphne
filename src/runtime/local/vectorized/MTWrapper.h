@@ -161,7 +161,7 @@ template <typename DT> class MTWrapperBase {
     }
 #endif
     size_t allocateOutput(DT ***&res, size_t numOutputs, const int64_t *outRows, const int64_t *outCols,
-                          mlir::daphne::VectorCombine *combines) {
+                          mlir::daphne::VectorCombine *combines, bool *isRowMajor) {
         auto mem_required = 0ul;
         // output allocation for row-wise combine
         for (size_t i = 0; i < numOutputs; ++i) {
@@ -169,8 +169,10 @@ template <typename DT> class MTWrapperBase {
                 auto zeroOut = combines[i] == mlir::daphne::VectorCombine::ADD ||
                                      combines[i] == mlir::daphne::VectorCombine::MAX ||
                                      combines[i] == mlir::daphne::VectorCombine::MIN;
-                //TODO: specifiy from vectOp itself
-                (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut, nullptr, _ctx->getUserConfig().isRowMajor);
+
+                (*res[i]) = DataObjectFactory::create<DT>(outRows[i], outCols[i], zeroOut, nullptr, isRowMajor[i]);
+
+                //BufferSize is identical for Row and Column-Major: numRows*numCols
                 mem_required += static_cast<DT *>((*res[i]))->getBufferSize();
             }
         }
@@ -262,18 +264,18 @@ template <typename VT> class MTWrapper<DenseMatrix<VT>> : public MTWrapperBase<D
     [[maybe_unused]] void executeSingleQueue(std::vector<std::function<PipelineFunc>> funcs, DenseMatrix<VT> ***res,
                                              const bool *isScalar, Structure **inputs, size_t numInputs,
                                              size_t numOutputs, int64_t *outRows, int64_t *outCols, VectorSplit *splits,
-                                             VectorCombine *combines, DCTX(ctx), bool verbose);
+                                             VectorCombine *combines, bool *isRowMajor, DCTX(ctx), bool verbose);
 
     [[maybe_unused]] void executeCpuQueues(std::vector<std::function<PipelineFunc>> funcs, DenseMatrix<VT> ***res,
                                            const bool *isScalar, Structure **inputs, size_t numInputs,
                                            size_t numOutputs, int64_t *outRows, int64_t *outCols, VectorSplit *splits,
-                                           VectorCombine *combines, DCTX(ctx), bool verbose);
+                                           VectorCombine *combines, bool *isRowMajor, DCTX(ctx), bool verbose);
 
     [[maybe_unused]] void executeQueuePerDeviceType(std::vector<std::function<PipelineFunc>> funcs,
                                                     DenseMatrix<VT> ***res, const bool *isScalar, Structure **inputs,
                                                     size_t numInputs, size_t numOutputs, int64_t *outRows,
                                                     int64_t *outCols, VectorSplit *splits, VectorCombine *combines,
-                                                    DCTX(ctx), bool verbose);
+                                                    bool *isRowMajor, DCTX(ctx), bool verbose);
 
     void combineOutputs(DenseMatrix<VT> ***&res, DenseMatrix<VT> ***&res_cuda, size_t numOutputs,
                         mlir::daphne::VectorCombine *combines, DCTX(ctx)) override;
@@ -288,20 +290,20 @@ template <typename VT> class MTWrapper<CSRMatrix<VT>> : public MTWrapperBase<CSR
     [[maybe_unused]] void executeSingleQueue(std::vector<std::function<PipelineFunc>> funcs, CSRMatrix<VT> ***res,
                                              const bool *isScalar, Structure **inputs, size_t numInputs,
                                              size_t numOutputs, const int64_t *outRows, const int64_t *outCols,
-                                             VectorSplit *splits, VectorCombine *combines, DCTX(ctx), bool verbose) {
+                                             VectorSplit *splits, VectorCombine *combines, bool *isRowMajor, DCTX(ctx), bool verbose) {
         throw std::runtime_error("sparse single queue vect exec not implemented");
     }
 
     [[maybe_unused]] void executeCpuQueues(std::vector<std::function<PipelineFunc>> funcs, CSRMatrix<VT> ***res,
                                            const bool *isScalar, Structure **inputs, size_t numInputs,
                                            size_t numOutputs, const int64_t *outRows, const int64_t *outCols,
-                                           VectorSplit *splits, VectorCombine *combines, DCTX(ctx), bool verbose);
+                                           VectorSplit *splits, VectorCombine *combines, bool *isRowMajor, DCTX(ctx), bool verbose);
 
     [[maybe_unused]] void executeQueuePerDeviceType(std::vector<std::function<PipelineFunc>> funcs,
                                                     CSRMatrix<VT> ***res, const bool *isScalar, Structure **inputs,
                                                     size_t numInputs, size_t numOutputs, int64_t *outRows,
                                                     int64_t *outCols, VectorSplit *splits, VectorCombine *combines,
-                                                    DCTX(ctx), bool verbose) {
+                                                    bool *isRowMajor, DCTX(ctx), bool verbose) {
         throw std::runtime_error("sparse queuePerDeviceType vect exec not implemented");
     }
 

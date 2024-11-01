@@ -71,6 +71,8 @@ std::unique_ptr<Pass> createSpecializeGenericFunctionsPass(const DaphneUserConfi
 std::unique_ptr<Pass> createDaphneVectorizeComputationsPass();
 std::unique_ptr<Pass> createGreedy1VectorizeComputationsPass(const DaphneUserConfig& cfg);
 std::unique_ptr<Pass> createGreedy2VectorizeComputationsPass();
+std::unique_ptr<Pass> createDetermineOptimalLayoutPass(const DaphneUserConfig& cfg);
+std::unique_ptr<Pass> createVectorizedOptimalLayoutPass(const DaphneUserConfig& cfg);
 std::unique_ptr<Pass> createGreedyXVectorizeComputationsPass();
 std::unique_ptr<Pass> createOneVectorizeComputationsPass(const DaphneUserConfig& cfg);
 std::unique_ptr<Pass> createAllVectorizeComputationsPass();
