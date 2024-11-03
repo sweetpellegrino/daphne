@@ -1,0 +1,13 @@
+def fib(n) {
+    a = 0;
+    b = 1;
+
+    for(i in 1:n) {
+        _temp = a + b;
+        a = b;
+        b = _temp;
+    }
+    return a;
+}
+
+print(fib(4));
