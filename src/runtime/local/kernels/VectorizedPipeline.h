@@ -76,46 +76,47 @@ void printArgs(DTRes **outputs, size_t numOutputs, int64_t *outputTypes, bool* i
     llvm::outs() << "Outputs: ";
     for (size_t i = 0; i < numOutputs; ++i)
         llvm::outs() << outputs[i] << " ";
-    llvm::outs() << "\n";
+    //llvm::outs() << "\n";
+    llvm::outs() << " ";
 
-    llvm::outs() << "numOutputs: " << numOutputs << "\n";
+    llvm::outs() << "numOutputs: " << numOutputs << " ";
 
     llvm::outs() << "isScalar: ";
     for (size_t i = 0; i < numOutputs; ++i)
         llvm::outs() << isScalar[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
     llvm::outs() << "inputs: ";
     for (size_t i = 0; i < numInputs; ++i)
         llvm::outs() << inputs[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
-    llvm::outs() << "numInputs: " << numInputs << "\n";
+    llvm::outs() << "numInputs: " << numInputs << " ";
 
     llvm::outs() << "outRows: ";
     for (size_t i = 0; i < numOutputs; ++i)
         llvm::outs() << outRows[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
     llvm::outs() << "outCols: ";
     for (size_t i = 0; i < numOutputs; ++i)
         llvm::outs() << outCols[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
     llvm::outs() << "splits: ";
     for (size_t i = 0; i < numInputs; ++i)
         llvm::outs() << splits[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
     llvm::outs() << "combines: ";
     for (size_t i = 0; i < numOutputs; ++i)
         llvm::outs() << combines[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
     llvm::outs() << "isRowMajors: ";
     for (size_t i = 0; i < numOutputs; ++i)
         llvm::outs() << isRowMajor[i] << " ";
-    llvm::outs() << "\n";
+    llvm::outs() << " ";
 
 
     llvm::outs() << "numFuncs: " << numFuncs << "\n";

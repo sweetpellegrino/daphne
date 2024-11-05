@@ -102,6 +102,7 @@ std::vector<std::vector<std::pair<Value, Value>>> createOpsOutputSizes_OuterBina
 // ----------------------------------------------------------------------------
 // Matrix multiplication
 // ----------------------------------------------------------------------------
+// TODO
 std::vector<std::vector<daphne::VectorSplit>> daphne::MatMulOp::getVectorSplits() {
     return {{
                 daphne::VectorSplit::ROWS, // lhs
