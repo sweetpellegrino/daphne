@@ -97,7 +97,7 @@ export PACK_ROOT="${PACK_ROOT1/--/-}"
 
 # shellcheck disable=SC2086
 # MPI is an internal feature so we can turn this on here
-source build.sh -nd -ns -nf --installPrefix /usr/local --mpi $FEATURE --target all
+source build.sh -nd -ns -nf --installPrefix /usr/local --mpi $FEATURE 
 
 
 # this might be obsolete when running from daphne-dev docker container:

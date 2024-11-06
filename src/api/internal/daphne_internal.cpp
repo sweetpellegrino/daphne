@@ -318,7 +318,7 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
             clEnumVal(GREEDY_3, "Use greedy 3 Vectorization pass"),
             clEnumVal(ONE, "ONE"),
             clEnumVal(ALL, "ALL")),
-            init(DAPHNE)
+            init(GREEDY_1)
     );
 
     static opt<int> runKey(
@@ -335,9 +335,10 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
             )
     );
 
-    static opt<bool> isRowMajor(
-        "isRowMajor", cat(daphneOptions),
-        desc("Force DenseMatrix to be Row-Major. Set explicitly to false for Column-Major"));
+    //FIXME
+    static opt<bool> isColumnMajor(
+        "isColumnMajor", cat(daphneOptions),
+        desc("Force DenseMatrix to be Column-Major"));
 
     static opt<bool> noHorizontalFusion(
         "no-hf", cat(daphneOptions),
@@ -414,7 +415,7 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
     user_config.runCombKey = runKey;
     user_config.batchSize = batchSize;
     user_config.colFirst = colFirst;
-    user_config.isRowMajor = isRowMajor;
+    user_config.isRowMajor = !isColumnMajor;
 
     user_config.use_distributed = useDistributedRuntime;
     user_config.use_obj_ref_mgnt = !noObjRefMgnt;

@@ -1,0 +1,16 @@
+# 
+X = rand($r, $c, 0.0, 1.0, 1, 12345);
+Y = rand($r, $c, 0.0, 1.0, 1, 12345);
+
+//<start>
+start = now();
+i1 = t(Y);
+i2 = t(X) + i1;
+//<stop>
+end = now();
+
+print(i2);
+//print(i2[0,1]);
+//<end>
+print("F1XM3:"+ (end - start));
+
