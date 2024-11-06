@@ -53,20 +53,22 @@ void ewBinaryObjSca(BinaryOpCode opCode, DTRes *&res, const DTLhs *lhs, VTRhs rh
 // DenseMatrix <- DenseMatrix, scalar
 // ----------------------------------------------------------------------------
 
-template <typename VT> struct EwBinaryObjSca<DenseMatrix<VT>, DenseMatrix<VT>, VT> {
-    static void apply(BinaryOpCode opCode, DenseMatrix<VT> *&res, const DenseMatrix<VT> *lhs, VT rhs, DCTX(ctx)) {
+template <typename VTRes, typename VTLhs, typename VTRhs>
+struct EwBinaryObjSca<DenseMatrix<VTRes>, DenseMatrix<VTLhs>, VTRhs> {
+    static void apply(BinaryOpCode opCode, DenseMatrix<VTRes> *&res, const DenseMatrix<VTLhs> *lhs, VTRhs rhs,
+                      DCTX(ctx)) {
         const size_t numRows = lhs->getNumRows();
         const size_t numCols = lhs->getNumCols();
 
         bool isRowMajor = lhs->getIsRowMajor();
 
         if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, isRowMajor);
+            res = DataObjectFactory::create<DenseMatrix<VTRes>>(numRows, numCols, false, nullptr, isRowMajor);
 
-        const VT *valuesLhs = lhs->getValues();
-        VT *valuesRes = res->getValues();
+        const VTRes *valuesLhs = lhs->getValues();
+        VTRes *valuesRes = res->getValues();
 
-        EwBinaryScaFuncPtr<VT, VT, VT> func = getEwBinaryScaFuncPtr<VT, VT, VT>(opCode);
+        EwBinaryScaFuncPtr<VTRes, VTLhs, VTRhs> func = getEwBinaryScaFuncPtr<VTRes, VTLhs, VTRhs>(opCode);
 
         if (isRowMajor) {
             for (size_t r = 0; r < numRows; r++) {

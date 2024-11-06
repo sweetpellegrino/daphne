@@ -20,6 +20,8 @@
 #include <runtime/local/datastructures/DataObjectFactory.h>
 #include <runtime/local/datastructures/DenseMatrix.h>
 #include <runtime/local/datastructures/Matrix.h>
+#include <runtime/local/datastructures/ValueTypeUtils.h>
+#include <stdexcept>
 
 // ****************************************************************************
 // Struct for partial template specialization
@@ -80,9 +82,10 @@ template <typename VT> struct Fill<DenseMatrix<VT>, VT> {
 
 template <typename VT> struct Fill<Matrix<VT>, VT> {
     static void apply(Matrix<VT> *&res, VT arg, size_t numRows, size_t numCols, DCTX(ctx)) {
-        if (res == nullptr)
-            res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
+        if (res != nullptr)
+            throw std::invalid_argument("Trying to fill an already existing DenseMatrix.");
 
+        res = DataObjectFactory::create<DenseMatrix<VT>>(numRows, numCols, false, nullptr, ctx->getUserConfig().isRowMajor);
         if (arg != 0) {
             res->prepareAppend();
             for (size_t r = 0; r < numRows; ++r)
