@@ -55,7 +55,7 @@ template <typename VT> struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
         const bool isRowMajorArg = arg->getIsRowMajor();
 
         bool isRowMajorRes;
-        if(ctx->getUserConfig().vectorizationType == GREEDY_3) {
+        if(ctx->getUserConfig().vectorizationType == GREEDY_3 && ctx->getUserConfig().use_vectorized_exec) {
             isRowMajorRes = !isRowMajorArg;
         }
         else {

@@ -301,10 +301,10 @@ template <typename ValueType> class DenseMatrix : public Matrix<ValueType> {
 
     void print(std::ostream &os) const override {
 
-        for (auto i = 0ul; i < this->getNumItems(); ++i) {
+        /*for (auto i = 0ul; i < this->getNumItems(); ++i) {
             os << this->getValues()[i] << " ";
         }
-        os << "\n";
+        os << "\n";*/
 
         os << "DenseMatrix(" << numRows << 'x' << numCols << ", " << ValueTypeUtils::cppNameFor<ValueType> << ", isRowMajor=" << isRowMajor << ')'
            << std::endl;
