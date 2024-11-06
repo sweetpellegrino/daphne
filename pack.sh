@@ -93,15 +93,6 @@ PACK_ROOT1=daphne$FEATURE-$ARCH-$DAPHNE_VERSION-bin
 #minor cosmetics replacing -- with -
 export PACK_ROOT="${PACK_ROOT1/--/-}"
 
-echo "Directories bin, build and lib will be removed before compiling."
-read -p "Are you sure? [y/n] " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    echo -e "\nDid not receive a \"y\". \tAborting.\n"
-    git checkout -
-    exit 1
-fi
 #rm -rf bin build lib
 
 # shellcheck disable=SC2086
