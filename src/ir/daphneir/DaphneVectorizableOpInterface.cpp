@@ -236,8 +236,11 @@ IMPL_SPLIT_COMBINE_EWUNARYOP(EwAcosOp)
 IMPL_SPLIT_COMBINE_EWUNARYOP(EwAtanOp)
 
 // Comparison
-// changes value type?
 IMPL_SPLIT_COMBINE_EWUNARYOP(EwIsNanOp)
+
+// Strings
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwUpperOp)
+IMPL_SPLIT_COMBINE_EWUNARYOP(EwLowerOp)
 
 #undef IMPL_SPLIT_COMBINE_EWUNARYOP
 // ----------------------------------------------------------------------------
