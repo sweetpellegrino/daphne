@@ -168,38 +168,38 @@ int startDAPHNE(int argc, const char **argv, DaphneLibResult *daphneLibRes, int 
                                      init(""));
 
     // Scheduling options
-    using enum SelfSchedulingScheme;
-    using enum QueueTypeOption;
-    using enum VictimSelectionLogic;
+    //using enum SelfSchedulingScheme;
+    //using enum QueueTypeOption;
+    //using enum VictimSelectionLogic;
 
     static opt<SelfSchedulingScheme> taskPartitioningScheme(
         "partitioning", cat(schedulingOptions), desc("Choose task partitioning scheme:"),
-        values(clEnumVal(STATIC, "Static (default)"), clEnumVal(SS, "Self-scheduling"),
-               clEnumVal(GSS, "Guided self-scheduling"), clEnumVal(TSS, "Trapezoid self-scheduling"),
-               clEnumVal(FAC2, "Factoring self-scheduling"), clEnumVal(TFSS, "Trapezoid Factoring self-scheduling"),
-               clEnumVal(FISS, "Fixed-increase self-scheduling"), clEnumVal(VISS, "Variable-increase self-scheduling"),
-               clEnumVal(PLS, "Performance loop-based self-scheduling"),
-               clEnumVal(MSTATIC, "Modified version of Static, i.e., instead "
+        values(clEnumVal(SelfSchedulingScheme::STATIC, "Static (default)"), clEnumVal(SelfSchedulingScheme::SS, "Self-scheduling"),
+               clEnumVal(SelfSchedulingScheme::GSS, "Guided self-scheduling"), clEnumVal(SelfSchedulingScheme::TSS, "Trapezoid self-scheduling"),
+               clEnumVal(SelfSchedulingScheme::FAC2, "Factoring self-scheduling"), clEnumVal(SelfSchedulingScheme::TFSS, "Trapezoid Factoring self-scheduling"),
+               clEnumVal(SelfSchedulingScheme::FISS, "Fixed-increase self-scheduling"), clEnumVal(SelfSchedulingScheme::VISS, "Variable-increase self-scheduling"),
+               clEnumVal(SelfSchedulingScheme::PLS, "Performance loop-based self-scheduling"),
+               clEnumVal(SelfSchedulingScheme::MSTATIC, "Modified version of Static, i.e., instead "
                                   "of n/p, it uses n/(4*p) where n is number "
                                   "of tasks and p is number of threads"),
-               clEnumVal(MFSC, "Modified version of fixed size chunk self-scheduling, "
+               clEnumVal(SelfSchedulingScheme::MFSC, "Modified version of fixed size chunk self-scheduling, "
                                "i.e., MFSC does not require profiling information as FSC"),
-               clEnumVal(PSS, "Probabilistic self-scheduling"), clEnumVal(AUTO, "Automatic partitioning")),
-        init(STATIC));
+               clEnumVal(SelfSchedulingScheme::PSS, "Probabilistic self-scheduling"), clEnumVal(SelfSchedulingScheme::AUTO, "Automatic partitioning")),
+        init(SelfSchedulingScheme::STATIC));
 
     static opt<QueueTypeOption> queueSetupScheme(
         "queue_layout", cat(schedulingOptions), desc("Choose queue setup scheme:"),
-        values(clEnumVal(CENTRALIZED, "One queue (default)"), clEnumVal(PERGROUP, "One queue per CPU group"),
-               clEnumVal(PERCPU, "One queue per CPU core")),
-        init(CENTRALIZED));
+        values(clEnumVal(QueueTypeOption::CENTRALIZED, "One queue (default)"), clEnumVal(QueueTypeOption::PERGROUP, "One queue per CPU group"),
+               clEnumVal(QueueTypeOption::PERCPU, "One queue per CPU core")),
+        init(QueueTypeOption::CENTRALIZED));
 
     static opt<VictimSelectionLogic> victimSelection(
         "victim_selection", cat(schedulingOptions), desc("Choose work stealing victim selection logic:"),
-        values(clEnumVal(SEQ, "Steal from next adjacent worker (default)"),
-               clEnumVal(SEQPRI, "Steal from next adjacent worker, prioritize same NUMA domain"),
-               clEnumVal(RANDOM, "Steal from random worker"),
-               clEnumVal(RANDOMPRI, "Steal from random worker, prioritize same NUMA domain")),
-        init(SEQ));
+        values(clEnumVal(VictimSelectionLogic::SEQ, "Steal from next adjacent worker (default)"),
+               clEnumVal(VictimSelectionLogic::SEQPRI, "Steal from next adjacent worker, prioritize same NUMA domain"),
+               clEnumVal(VictimSelectionLogic::RANDOM, "Steal from random worker"),
+               clEnumVal(VictimSelectionLogic::RANDOMPRI, "Steal from random worker, prioritize same NUMA domain")),
+        init(VictimSelectionLogic::SEQ));
 
     static opt<int> numberOfThreads("num-threads", cat(schedulingOptions),
                                     desc("Define the number of the CPU threads used by the vectorized "
