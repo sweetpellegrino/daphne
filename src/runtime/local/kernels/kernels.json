@@ -2703,12 +2703,6 @@
                     [["DenseMatrix", "uint8_t"], "uint8_t"],
                     [["DenseMatrix", "bool"], "bool"]
                 ]
-            },
-            {
-                "name": ["CPP"],
-                "instantiations": [
-                    [["DenseMatrix", "std::string"], "const char *"]
-                ]
             }
         ]
     },
