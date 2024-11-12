@@ -14,18 +14,36 @@ import shared as sh
 #------------------------------------------------------------------------------
 
 BASE_COMMANDS = {
+    "daphne-org": [
+        ["./run-daphne.sh"],
+        ["./run-daphne.sh", "--vec"]
+    ],
+    "daphne": [
+        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
+        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
+        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_3"]
+    ]
+}
+
+'''
+BASE_COMMANDS = {
     "daphne-X86-64-org-bin": [
         ["./run-daphne.sh"],
         ["./run-daphne.sh", "--vec"]
     ],
     "daphne-X86-64-vec-bin": [
         ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1", "--gr1-col"],
         ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
+        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_3"]
     ]
 }
+'''
 
 EXPERIMENTS = {
+    "ta": {
+        "path": "./sketch/bench/rhs_t_add.daph",
+        "args": ["r=30000", "c=30000"]
+    },
     "ot": {
         "path": "./sketch/bench/outerAdd_t.daph",
         "args": ["r=30000", "c=30000"]
