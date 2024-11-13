@@ -1,5 +1,3 @@
-import sys
-import numpy as np
 import json
 import datetime
 import argparse
@@ -10,6 +8,7 @@ import shared as sh
 #------------------------------------------------------------------------------
 # GLOBAL
 #------------------------------------------------------------------------------
+RESULT_DIR = "results/"
 
 GENERATE_FUNCS = {
     "T": lambda i, arg: [f"v{i} = t({arg});"],
@@ -107,7 +106,7 @@ if __name__ == "__main__":
             "timings": command_output,
         })
 
-    with open(exp_start + "-chain-timings.json", "w+") as f:
+    with open(RESULT_DIR + exp_start + "-chain-timings.json", "w+") as f:
         _output = {
             "settings": {
                 "num-ops": args.num_ops,

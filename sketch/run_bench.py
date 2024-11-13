@@ -1,17 +1,14 @@
 import os
 import subprocess
-import sys
-import numpy as np
 import json
 import datetime
 import argparse
-from tabulate import tabulate
-import pandas as pd
 import shared as sh
 
 #------------------------------------------------------------------------------
 # GLOBAL
 #------------------------------------------------------------------------------
+RESULT_DIR = "results/"
 
 BASE_COMMANDS = {
     "daphne-org": [
@@ -201,6 +198,6 @@ if __name__ == "__main__":
 
     print()
 
-    with open(exp_start + "/timings.json", "w+") as f:
+    with open(RESULT_DIR + exp_start + "/timings.json", "w+") as f:
         json.dump(experiments, f, indent=4)
         f.close()

@@ -1,5 +1,3 @@
-import sys
-import numpy as np
 import json
 import datetime
 import argparse
@@ -10,6 +8,7 @@ import shared as sh
 #------------------------------------------------------------------------------
 # GLOBAL
 #------------------------------------------------------------------------------
+RESULT_DIR = "results/"
 
 GENERATE_FUNCS = {
     "ADD": lambda i, arg: [f"v{i} = {arg} + {i * 0.1};"],
@@ -108,7 +107,7 @@ if __name__ == "__main__":
           
         })
 
-    with open(exp_start + "-horz_timings.json", "w+") as f:
+    with open(RESULT_DIR + exp_start + "-horz_timings.json", "w+") as f:
         _output = {
             "settings": {
                 "num-ops": args.num_ops,

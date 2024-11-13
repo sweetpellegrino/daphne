@@ -72,3 +72,4 @@ data*.json
 *.csv.meta
 *.dot
 sketch/results
+_*.daph

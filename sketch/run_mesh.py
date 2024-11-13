@@ -1,5 +1,3 @@
-import sys
-import numpy as np
 import json
 import datetime
 import argparse
@@ -10,6 +8,7 @@ import shared as sh
 #------------------------------------------------------------------------------
 # GLOBAL
 #------------------------------------------------------------------------------
+RESULT_DIR = "results/"
 # For testing compilation time, we need this:
 ROWS = 10
 COLS = 10
@@ -115,7 +114,7 @@ if __name__ == "__main__":
           
         })
 
-    with open(exp_start + "-mesh_timings.json", "w+") as f:
+    with open(RESULT_DIR + exp_start + "-mesh_timings.json", "w+") as f:
         _output = {
             "settings": {
                 "rows": ROWS,
