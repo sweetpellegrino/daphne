@@ -20,7 +20,7 @@ BASE_COMMANDS = {
     ],
     "daphne": [
         ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
+        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"],
         ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_3"]
     ]
 }
@@ -33,7 +33,7 @@ BASE_COMMANDS = {
     ],
     "daphne-X86-64-vec-bin": [
         ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"]
+        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"],
         ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_3"]
     ]
 }
@@ -77,10 +77,12 @@ def save_sys_info(folder):
     with open(folder+"/lscpu.txt", "w") as f:
         f.write(output.stdout)
         
+    '''
     output = subprocess.run(["neofetch", "--stdout"], capture_output=True, text=True)
     with open(folder+"/neofetch.txt", "w") as f:
         f.write(output.stdout)
-    
+    '''
+
     return
 
 def prepare_script(path, tool):

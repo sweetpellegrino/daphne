@@ -3,17 +3,30 @@ import subprocess
 import json
 import pandas as pd
 from tabulate import tabulate
+import psutil
+import time
+
 
 #------------------------------------------------------------------------------
 # RUN COMMAND
 #------------------------------------------------------------------------------
 
-def run_command(cmd, cwd, env):
+def run_command(command, cwd, env, poll_interval=0.001): 
 
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ})
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ})
+   
+    process_memory = psutil.Process(process.pid)
+    peak_mem = 0
+    while process.poll() is None: 
+        mem_info = process_memory.memory_info().rss // 1024  # Memory usage in KB
+        if mem_info > peak_mem:
+            peak_mem = mem_info
+
+        time.sleep(poll_interval)
+
+
     stdout, stderr = process.communicate()
-
-    return stdout.decode(), stderr.decode()
+    return peak_mem, stdout.decode(), stderr.decode()
 
 def runner(args, cmd, cwd):
 
@@ -25,20 +38,24 @@ def runner(args, cmd, cwd):
     timings = []
     for i in range(0, args.samples):
 
-        stdout, stderr = run_command(cmd, cwd, tool_env)
+        peak_mem, stdout, stderr = run_command(cmd, cwd, tool_env)
                 
         if args.verbose_output:
             print(stdout)
             print(stderr)
+            print(f"Peak memory usage: {peak_mem} KB")
 
         timing = json.loads(stderr.split("\n")[-2])
         timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout)
+        timing["peak_mem_kilobytes"] = peak_mem
 
         df = pd.json_normalize(timing, sep=".")
         print(tabulate(df, headers="keys", tablefmt="psql", showindex=False))
         timings.append(timing)
 
     return timings
+
+
 
 #------------------------------------------------------------------------------
 # TOOLS

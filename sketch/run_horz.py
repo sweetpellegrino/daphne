@@ -21,7 +21,7 @@ GENERATE_PRINT_FUNCS = {
     "ADD_SUM": lambda i: [f"print(v{i});"]
 }
 
-BASE_CWD = "daphne-X86-64-vec-bin"
+BASE_CWD = "daphne"
 GLOBAL_ARGS = []
 BASE_COMMAND = lambda th, bs, no_hf: [
     "./run-daphne.sh",
