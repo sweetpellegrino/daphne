@@ -109,6 +109,7 @@ void HorizontalFusionPass::runOnOperation()
     // to check for additional (changed) fusion possiblities.
     bool changed = true;
     while(changed) {
+
         changed = false;
 
         std::vector<daphne::VectorizedPipelineOp> pipelineOps;
@@ -149,6 +150,7 @@ void HorizontalFusionPass::runOnOperation()
                     continue;
 
                 // Checking for overlapping arguments.
+                bool invalid = false;
                 for(size_t operandIx2 = 0; operandIx2 < pipeOp2.getSplits().size(); ++operandIx2) {
                     auto operand2 = pipeOp2->getOperand(operandIx2);
 
@@ -160,13 +162,24 @@ void HorizontalFusionPass::runOnOperation()
                             
                             size_t operandIx1 = std::distance(defOpsArgs.begin(), fIt);
 
+                            //need match
                             if (pipeOp1.getSplits()[operandIx1] == pipeOp2.getSplits()[operandIx2] && 
                                 pipeOp1.getSplits()[operandIx1].cast<daphne::VectorSplitAttr>().getValue() != daphne::VectorSplit::NONE) {
-                                horizontalRelationships.push_back({pipeOp1, pipeOp2});
-                                break; // We only need one case of arguments matching for consideration of horz. Fusion.
+                                continue;
+                            } else if (pipeOp1.getSplits()[operandIx1].cast<daphne::VectorSplitAttr>().getValue() == daphne::VectorSplit::NONE &&
+                                        pipeOp2.getSplits()[operandIx2].cast<daphne::VectorSplitAttr>().getValue() == daphne::VectorSplit::NONE) {
+                                continue;
+                            }
+                            else{ 
+                                invalid = true;
+                                break;
                             }
                         }
                     }
+                }
+                // all overlapping arguments need to match, if not we made an early break
+                if (!invalid) {
+                    horizontalRelationships.push_back({pipeOp1, pipeOp2});
                 }
             }
         }
@@ -175,9 +188,7 @@ void HorizontalFusionPass::runOnOperation()
         // Merge VectorizedPipelineOps
         //----------------------------------------------------------------- 
 
-        for(auto pipeOpPair : horizontalRelationships) {
-        
-            auto [pipeOp1, pipeOp2] = pipeOpPair;
+        for(auto [pipeOp1, pipeOp2] : horizontalRelationships) {
 
             mlir::Block* b1 = &pipeOp1.getBody().getBlocks().front();
             mlir::Block* b2 = &pipeOp2.getBody().getBlocks().front();

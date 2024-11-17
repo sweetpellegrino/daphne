@@ -194,7 +194,7 @@ struct VectorUtils {
     //------------------------------------------------------------------------------
 
     // only works if pipeline ops are topologically sorted in reverse
-    //Only used for HorizontalFusion
+    // only used for HorizontalFusionPass
     static bool arePipelineOpsDependent(mlir::daphne::VectorizedPipelineOp pipeOp1,
                                         mlir::daphne::VectorizedPipelineOp pipeOp2) {
 
