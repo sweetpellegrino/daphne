@@ -59,6 +59,36 @@ struct Greedy2VectorizeComputationsPass
 // Helper
 //-----------------------------------------------------------------
 
+// 18446744073709551615
+// 00000000006400000000
+// TODO: Dirty
+uint64_t determineMaterializationCost(const std::vector<Pipeline *>& pipelines) {
+
+    uint64_t cost = 0;
+    for (auto pipeline : pipelines) {
+        auto pipe = *pipeline;
+        for (auto op : pipe) {
+
+            // check if op is an output of pipeline
+            // this is the case if op has an consumer, that is not inside the current pipeline
+            bool isOutput = false;
+            for (auto user : op->getResult(0).getUsers()) {
+                if (std::find(pipe.begin(), pipe.end(), user) == pipe.end()) {
+                    isOutput = true;
+                    break;
+                }
+            }
+
+            if (isOutput) {
+                uint64_t size = op->getAttrOfType<mlir::IntegerAttr>("M_SIZE").getValue().getZExtValue();;
+                cost += size;
+            }
+        }
+        
+    }
+    return cost;
+}
+
 void greedyFindMinimumPipelines(std::stack<std::tuple<mlir::Operation *, Pipeline *, DisconnectReason>> &stack,
                                 std::vector<Pipeline *> &pipelines,
                                 std::map<mlir::Operation *, Pipeline *> &operationToPipeline,
@@ -223,12 +253,12 @@ void Greedy2VectorizeComputationsPass::runOnOperation() {
 
     // TODO improve
     size_t min = 0;
-    size_t min_size = INFINITY;
+    uint64_t min_cost = INFINITY;
     for (size_t i = 0; i < solutions.size(); ++i) {
-        size_t size = solutions.at(i).size();
-        if (min_size > size) {
+        uint64_t cost = determineMaterializationCost(solutions.at(i));
+        if (min_cost > cost) {
             min = i;
-            min_size = size;
+            min_cost = cost;
         }
     }
 

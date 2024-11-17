@@ -32,23 +32,14 @@ eps = 10.0^-8.0;
 maxi = 20;
 
 # read sparse ratings matrix 
-X = readMatrix("gmnf_X.csv"); #TODO Matrix Market
+# X = readMatrix($X); #TODO Matrix Market
 n = as.f64($n);
-e = $e;
-//X = rand(2.0*n, n, 1.0, 1.0, 2.0*e/n^2.0, -1);
-//writeMatrix(X, "gmnf_X.csv");
-print(X[0,0]);
-print(X[0,1]);
-print(X[0,2]);
-print(X[0,3]);
+e = as.f64($e);
+X = rand(2.0*n, n, 1.0, 1.0, 2.0*e/n^2.0, -1);
 
 # initialize factors W and H
-W = readMatrix("gmnf_W.csv"); #TODO Matrix Market
-H = readMatrix("gmnf_H.csv"); #TODO Matrix Market
-//W = rand(nrow(X), rnk, -0.05, 0.05, 1.0, -1);
-//H = rand(rnk, ncol(X), -0.05, 0.05, 1.0, -1);
-//writeMatrix(W, "gmnf_W.csv");
-//writeMatrix(H, "gmnf_H.csv");
+W = rand(nrow(X), rnk, -0.05, 0.05, 1.0, -1);
+H = rand(rnk, ncol(X), -0.05, 0.05, 1.0, -1);
 
 #TODO remove workaround for dt change DenseMatrix-Matrix
 H = H * ((t(W) @ X) / (((t(W) @ W) @ H)+eps));

@@ -85,8 +85,6 @@ size_t estimateSize (daphne::MatrixType m) {
 
 struct AnnotateMaterializationSizesPass : public PassWrapper<AnnotateMaterializationSizesPass, OperationPass<func::FuncOp>> {
     void runOnOperation() final;
-
-    //explicit AnnotateMaterializationSizesPass() {}
 };
 } // namespace
 
@@ -104,14 +102,19 @@ void AnnotateMaterializationSizesPass::runOnOperation() {
         }
         if (isValidOp) {
             //estimation
-            auto m = op->getResultTypes()[0].dyn_cast<daphne::MatrixType>();
-            
-            if (!m)
-                return;
+            auto type = op->getResultTypes()[0];
 
             mlir::Builder builder(&getContext());
-            mlir::IntegerAttr a = builder.getI64IntegerAttr(estimateSize(m));
-            op->setAttr("M_SIZE", a);
+            if (auto m = type.dyn_cast<daphne::MatrixType>()) {
+                mlir::IntegerAttr a = builder.getI64IntegerAttr(estimateSize(m));
+                op->setAttr("M_SIZE", a);
+            } else if (type.isIntOrIndexOrFloat() && !llvm::isa<daphne::StringType>(type)){
+                mlir::IntegerAttr a = builder.getI64IntegerAttr(elementTypeToBits(type));
+                op->setAttr("M_SIZE", a);
+            } else {
+                return;
+            }
+
         }
     });
 

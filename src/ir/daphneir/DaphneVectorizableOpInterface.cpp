@@ -109,16 +109,10 @@ std::vector<std::vector<daphne::VectorSplit>> daphne::MatMulOp::getVectorSplits(
                 daphne::VectorSplit::NONE, // rhs
                 daphne::VectorSplit::NONE, // transa
                 daphne::VectorSplit::NONE  // transb
-            },
-            {
-                daphne::VectorSplit::NONE, // lhs
-                daphne::VectorSplit::COLS, // rhs
-                daphne::VectorSplit::NONE, // transa
-                daphne::VectorSplit::NONE  // transb
             }};
 }
 std::vector<std::vector<daphne::VectorCombine>> daphne::MatMulOp::getVectorCombines() {
-    return {{daphne::VectorCombine::ROWS}, {daphne::VectorCombine::COLS}};
+    return {{daphne::VectorCombine::ROWS}};
 }
 std::vector<std::vector<std::pair<Value, Value>>> daphne::MatMulOp::createOpsOutputSizes(OpBuilder &builder) {
     auto loc = getLoc();
