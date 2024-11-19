@@ -19,7 +19,7 @@ def run_command(command, cwd, env, poll_interval=0.005):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
    
     process_memory = psutil.Process(process.pid)
-    process_memory.nice(psutil.HIGH_PRIORITY_CLASS)
+    #process_memory.nice(-20) # needs sudo permission
 
     peak_rss = 0
     peak_vms = 0
