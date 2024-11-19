@@ -23,7 +23,7 @@ GENERATE_PRINT_FUNCS = {
 BASE_CWD = "daphne"
 GLOBAL_ARGS = []
 BASE_COMMAND = lambda th, bs, no_hf: [
-    "./run-daphne.sh",
+    "./bin/daphne",
     "--timing",
     "--vec",
     "--vec-type=GREEDY_1",

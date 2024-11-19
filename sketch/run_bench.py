@@ -12,13 +12,13 @@ RESULT_DIR = "results/"
 
 BASE_COMMANDS = {
     "daphne-org": [
-        ["./run-daphne.sh"],
-        ["./run-daphne.sh", "--vec"]
+        ["./bin/daphne"],
+        ["./bin/daphne", "--vec"]
     ],
     "daphne": [
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_3"]
+        ["./bin/daphne", "--vec", "--vec-type=GREEDY_1"],
+        ["./bin/daphne", "--vec", "--vec-type=GREEDY_2"],
+        ["./bin/daphne", "--vec", "--vec-type=GREEDY_3"]
     ]
 }
 

@@ -16,7 +16,7 @@ COLS = 10
 BASE_CWD = "daphne"
 GLOBAL_ARGS = []
 BASE_COMMAND = lambda th, bs, vt: [
-    "./run-daphne.sh",
+    "./bin/daphne",
     "--timing",
     "--vec",
     f"--vec-type={vt}",
