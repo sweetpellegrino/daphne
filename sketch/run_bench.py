@@ -37,6 +37,10 @@ BASE_COMMANDS = {
 '''
 
 EXPERIMENTS = {
+     "r": {
+        "path": "./sketch/bench/running_example.daph",
+        "args": ["r=30000", "c=30000"]
+    },
     "ta": {
         "path": "./sketch/bench/rhs_t_add.daph",
         "args": ["r=30000", "c=30000"]
@@ -60,6 +64,10 @@ EXPERIMENTS = {
     "kmeans": {
         "path": "./sketch/bench/kmeans.daphne",
         "args": ["r=1000000", "f=100", "c=500", "i=2"]
+    },
+    "components": {
+        "path": "./sketch/bench/components.daphne",
+        "args": ["n=1000", "e=750"]
     }
 }
 

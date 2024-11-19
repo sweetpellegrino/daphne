@@ -1,0 +1,20 @@
+# not vectorizable
+X = rand($n, $n, 0.0, 1.0, 1.0, 12345);
+# not vectorizable
+Y = rand($n, $n, 0.0, 1.0, 1.0, 67890);
+
+<start>
+i1 = t(X);
+i2 = sqrt(Y);
+
+i3 = i1 + i2;
+i4 = t(i2);
+
+i5 = i3 + i4;
+i6 = sqrt(i4);
+<stop>
+
+print(i5[0,0]);
+print(i6[0,0]);
+
+<end>
