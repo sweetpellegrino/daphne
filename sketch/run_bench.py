@@ -39,7 +39,7 @@ BASE_COMMANDS = {
 EXPERIMENTS = {
      "r": {
         "path": "./sketch/bench/running_example.daph",
-        "args": ["r=30000", "c=30000"]
+        "args": ["n=30000"]
     },
     "ta": {
         "path": "./sketch/bench/rhs_t_add.daph",
