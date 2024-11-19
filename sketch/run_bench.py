@@ -39,35 +39,35 @@ BASE_COMMANDS = {
 EXPERIMENTS = {
      "r": {
         "path": "./sketch/bench/running_example.daph",
-        "args": ["n=30000"]
+        "args": ["n=25000"]
     },
     "ta": {
         "path": "./sketch/bench/rhs_t_add.daph",
-        "args": ["r=30000", "c=30000"]
+        "args": ["r=25000", "c=25000"]
     },
     "ot": {
         "path": "./sketch/bench/outerAdd_t.daph",
-        "args": ["r=30000", "c=30000"]
+        "args": ["r=25000", "c=25000"]
     },
     "oe": {
         "path": "./sketch/bench/outerAdd_exp.daph",
-        "args": ["r=30000", "c=30000"]
+        "args": ["r=25000", "c=25000"]
     },
     "ote": {
         "path": "./sketch/bench/outerAdd_t_exp.daph",
-        "args": ["r=30000", "c=30000"]
+        "args": ["r=25000", "c=25000"]
     },
     "ate": {
         "path": "./sketch/bench/abs_t_exp.daph",
-        "args": ["r=30000", "c=30000"]
+        "args": ["r=25000", "c=25000"]
     },
     "kmeans": {
         "path": "./sketch/bench/kmeans.daphne",
-        "args": ["r=1000000", "f=100", "c=500", "i=2"]
+        "args": ["r=500000", "f=100", "c=500", "i=2"]
     },
     "components": {
         "path": "./sketch/bench/components.daphne",
-        "args": ["n=1000", "e=750"]
+        "args": ["n=10000", "e=750"]
     }
 }
 

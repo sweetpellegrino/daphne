@@ -120,17 +120,32 @@ template <typename VT> struct RandMatrix<DenseMatrix<VT>, VT> {
         // Fill Matrix with non-zero/random values
         // TODO It might be faster to pull the check on sparsity out of the
         // loop, including a duplication of the loop.
-        for (size_t r = 0; r < numRows; r++) {
-            for (size_t c = 0; c < numCols; c++) {
-                if (sparsity >= 0.5) {
-                    valuesRes[c] = distrVal(genVal);
-                    while (valuesRes[c] == 0)
+        if (isRowMajor) {
+            for (size_t r = 0; r < numRows; r++) {
+                for (size_t c = 0; c < numCols; c++) {
+                    if (sparsity >= 0.5) {
                         valuesRes[c] = distrVal(genVal);
-                } else {
-                    valuesRes[c] = VT(0);
+                        while (valuesRes[c] == 0)
+                            valuesRes[c] = distrVal(genVal);
+                    } else {
+                        valuesRes[c] = VT(0);
+                    }
                 }
+                valuesRes += res->getRowSkip();
             }
-            valuesRes += res->getRowSkip();
+        } else {
+            for (size_t c = 0; c < numCols; c++) {
+                for (size_t r = 0; r < numRows; r++) {
+                    if (sparsity >= 0.5) {
+                        valuesRes[r] = distrVal(genVal);
+                        while (valuesRes[r] == 0)
+                            valuesRes[r] = distrVal(genVal);
+                    } else {
+                        valuesRes[r] = VT(0);
+                    }
+                }
+                valuesRes += res->getRowSkip();
+            }
         }
 
         // Use Knuth's algorithm to calculate unique random indexes equal to
@@ -143,20 +158,39 @@ template <typename VT> struct RandMatrix<DenseMatrix<VT>, VT> {
         // TODO If res->getRowSkip() == res->getNumCols(), it might be faster
         // not to calculate row and col by / and %, but to directly use the
         // generated index.
-        for (iRange = 0; iRange < (numCols * numRows) && iSize < insertedValuesLimit; iRange++) {
-            size_t rRange = (numCols * numRows) - iRange;
-            size_t rSize = insertedValuesLimit - iSize;
-            if (fmod(distrIndex(genIndex), rRange) < rSize) {
-                size_t row = iRange / numCols;
-                size_t col = iRange % numCols;
-                if (sparsity >= 0.5) {
-                    valuesRes[row * res->getRowSkip() + col] = VT(0);
-                } else {
-                    valuesRes[row * res->getRowSkip() + col] = distrVal(genVal);
-                    while (valuesRes[row * res->getRowSkip() + col] == 0)
+        if (isRowMajor) {
+            for (iRange = 0; iRange < (numCols * numRows) && iSize < insertedValuesLimit; iRange++) {
+                size_t rRange = (numCols * numRows) - iRange;
+                size_t rSize = insertedValuesLimit - iSize;
+                if (fmod(distrIndex(genIndex), rRange) < rSize) {
+                    size_t row = iRange / numCols;
+                    size_t col = iRange % numCols;
+                    if (sparsity >= 0.5) {
+                        valuesRes[row * res->getRowSkip() + col] = VT(0);
+                    } else {
                         valuesRes[row * res->getRowSkip() + col] = distrVal(genVal);
+                        while (valuesRes[row * res->getRowSkip() + col] == 0)
+                            valuesRes[row * res->getRowSkip() + col] = distrVal(genVal);
+                    }
+                    iSize++;
                 }
-                iSize++;
+            }
+        } else {
+            for (iRange = 0; iRange < (numCols * numRows) && iSize < insertedValuesLimit; iRange++) {
+                size_t rRange = (numCols * numRows) - iRange;
+                size_t rSize = insertedValuesLimit - iSize;
+                if (fmod(distrIndex(genIndex), rRange) < rSize) {
+                    size_t row = iRange / numRows;
+                    size_t col = iRange % numRows;
+                    if (sparsity >= 0.5) {
+                        valuesRes[col * res->getRowSkip() + row] = VT(0);
+                    } else {
+                        valuesRes[col * res->getRowSkip() + row] = distrVal(genVal);
+                        while (valuesRes[col * res->getRowSkip() + row] == 0)
+                            valuesRes[col * res->getRowSkip() + row] = distrVal(genVal);
+                    }
+                    iSize++;
+                }
             }
         }
     }
