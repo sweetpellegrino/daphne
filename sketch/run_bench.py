@@ -181,8 +181,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     exp_start = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     
-    os.mkdir(exp_start)
-    save_sys_info(exp_start) 
+    os.mkdir(RESULT_DIR + exp_start)
+    save_sys_info(RESULT_DIR + exp_start) 
 
     if args.explain:
         GLOBAL_ARGS += ["--explain=vectorized"]
