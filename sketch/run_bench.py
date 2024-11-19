@@ -53,6 +53,10 @@ EXPERIMENTS = {
         "path": "./sketch/bench/outerAdd_exp.daph",
         "args": ["r=25000", "c=25000"]
     },
+    "ae": {
+        "path": "./sketch/bench/abs_exp.daph",
+        "args": ["r=25000", "c=25000"]
+    },
     "ote": {
         "path": "./sketch/bench/outerAdd_t_exp.daph",
         "args": ["r=25000", "c=25000"]
