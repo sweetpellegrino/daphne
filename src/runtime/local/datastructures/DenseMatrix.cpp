@@ -101,8 +101,6 @@ DenseMatrix<ValueType>::DenseMatrix(const DenseMatrix<ValueType> *src, int64_t r
     : Matrix<ValueType>(rowUpperExcl - rowLowerIncl, colUpperExcl - colLowerIncl), is_view(true),
       bufferSize(numRows * numCols * sizeof(ValueType)), lastAppendedRowIdx(0), lastAppendedColIdx(0), isRowMajor(isRowMajor) {
 
-    //llvm::outs() << rowLowerIncl << " " << rowUpperExcl << " " << colLowerIncl << " " << colUpperExcl << " " << isRowMajor << " " << src->getNumRows() << " " << src->getNumCols() << "\n";
-
     validateArgs(src, rowLowerIncl, rowUpperExcl, colLowerIncl, colUpperExcl);
 
     this->row_offset = rowLowerIncl;

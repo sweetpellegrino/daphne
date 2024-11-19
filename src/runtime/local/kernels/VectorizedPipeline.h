@@ -39,7 +39,7 @@ template <class DTRes> struct VectorizedPipeline {
         static PipelineHWlocInfo topology{ctx};
         auto wrapper = std::make_unique<MTWrapper<DTRes>>(numFuncs, topology, ctx);
 
-        printArgs(outputs, numOutputs, nullptr, isScalar, inputs, numInputs, outRows, outCols, splits, combines, isRowMajor, numFuncs, fun);
+        //printArgs(outputs, numOutputs, nullptr, isScalar, inputs, numInputs, outRows, outCols, splits, combines, isRowMajor, numFuncs, fun);
 
         std::vector<std::function<void(DTRes ***, Structure **, DCTX(ctx))>> funcs;
         for (auto i = 0ul; i < numFuncs; ++i) {

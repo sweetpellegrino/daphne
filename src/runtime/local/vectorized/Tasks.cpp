@@ -97,16 +97,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
         switch (_data._combines[o]) {
             case VectorCombine::ROWS: {
                 auto slice = result->sliceRow(dimStart - _data._offset, dimEnd - _data._offset);
-    #if 0
-                llvm::outs() << "ROWS" << "\n";
-                llvm::outs() << _data._offset << "\n";
-                llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
-                llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
-                llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
-                llvm::outs() << "\n";
-    #endif
 
-                //auto start = std::chrono::high_resolution_clock::now();
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
                 if (slice->getIsRowMajor()) {
@@ -124,9 +115,6 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                         }
                     }
                 }
-                /*auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<double, std::nano> diff = end - start;
-                llvm::outs() << "ROWS: " << diff.count() << "\n";*/
 
                 DataObjectFactory::destroy(slice);
                 break;
@@ -134,15 +122,7 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
             case VectorCombine::COLS: {
 
                 auto slice = result->sliceCol(dimStart - _data._offset, dimEnd - _data._offset);
-    #if 0
-                llvm::outs() << "COLS" << "\n";
-                llvm::outs() << _data._offset << "\n";
-                llvm::outs() << rowStart-_data._offset << " " << rowEnd-_data._offset << "\n";
-                llvm::outs() << slice->getNumRows() << " " << slice->getNumCols() << "\n";
-                llvm::outs() << localResults[o]->getNumRows() << " " << localResults[o]->getNumCols() << "\n";
-                llvm::outs() << "\n";
-    #endif
-                //auto start = std::chrono::high_resolution_clock::now();
+
                 VT *sliceValues = slice->getValues();
                 VT *localResultsValues = localResults[o]->getValues();
                 if (slice->getIsRowMajor()) {
@@ -160,10 +140,6 @@ void CompiledPipelineTask<DenseMatrix<VT>>::accumulateOutputs(std::vector<DenseM
                         }
                     }
                 }
-
-                /*auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<double, std::nano> diff = end - start;
-                llvm::outs() << "COLS: " << diff.count() << "\n";*/
 
                 DataObjectFactory::destroy(slice);
                 break;

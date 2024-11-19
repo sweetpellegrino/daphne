@@ -187,8 +187,6 @@ struct DaphneVectorizeComputationsPass : public PassWrapper<DaphneVectorizeCompu
 
 void DaphneVectorizeComputationsPass::runOnOperation() {
 
-    llvm::outs() << "DaphneVectorizeComputationsPass" << "\n";
-
     auto func = getOperation();
     // TODO: fuse pipelines that have the matching inputs, even if no output of
     // the one pipeline is used by the other.

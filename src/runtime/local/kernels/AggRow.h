@@ -120,7 +120,6 @@ template <typename VTRes, typename VTArg> struct AggRow<DenseMatrix<VTRes>, Dens
                 for (size_t c = 0; c < numCols; c++) {
                     VTRes agg = static_cast<VTRes>(*valuesArg);
                     for (size_t r = 1; r < numRows; r++) { 
-                        //llvm::outs() << c << " " << r << " " << valuesArg[r* arg->getRowSkip()] << "\n";
                         agg = func(agg, static_cast<VTRes>(valuesArg[r * arg->getRowSkip()]), ctx);
                     }
                     *valuesRes = static_cast<VTRes>(agg);

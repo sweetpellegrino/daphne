@@ -75,7 +75,6 @@ struct VectorUtils {
      */
 
     static bool matchingVectorSplitCombine(mlir::daphne::VectorSplit split, mlir::daphne::VectorCombine combine) {
-        // llvm::outs() << split << " " << combine << " ";
         mlir::daphne::VectorCombine _operandCombine;
         switch (split) {
         case mlir::daphne::VectorSplit::ROWS:
@@ -155,7 +154,6 @@ struct VectorUtils {
     static void mergePipelines(std::vector<Pipeline *> &pipelines,
                                std::map<mlir::Operation *, size_t> &operationToPipelineIx, size_t pipeIx1,
                                size_t pipeIx2) {
-        // llvm::outs() << mergeFromIx << " " << mergeIntoIx << "\n";
         if (pipeIx1 == pipeIx2)
             return;
         if (pipeIx2 > pipeIx1)
@@ -260,15 +258,6 @@ struct VectorUtils {
                 pipeline_graph.at(consumer).insert(producer);
             }
         }
-
-        /*for (auto node : pipeline_graph) {
-            llvm::outs() << "Key: " << node.first << ", Values: ";
-            for (auto dependency : node.second) {
-                llvm::outs() << dependency << " ";
-            }
-            llvm::outs() << "\n";
-        }
-        llvm::outs() << "\n";*/
 
         return tryTopologicalSort(pipeline_graph);
     }
@@ -624,8 +613,6 @@ struct VectorUtils {
             auto argsIx = 0u;
             auto resultsIx = 0u;
             // for every op in pipeline
-            try {
-            
             for (auto vIt = pipeline.begin(); vIt != pipeline.end(); ++vIt) {
                 auto v = *vIt;
                 auto numOperands = v->getNumOperands();
@@ -651,19 +638,7 @@ struct VectorUtils {
                     // FIXME: if output is dynamic sized, we can't do this
                     // replace `NumRowOp` and `NumColOp`s for output size inference
                     for (auto &use : old.getUses()) {
-                        
                         auto *op = use.getOwner();
-
-                        /*if (op == nullptr)
-                            continue;
-
-                        use.get().print(llvm::outs());
-                        llvm::outs() << "\n";
-                        
-                        llvm::outs() << op << "\n";
-
-                        int milliseconds = 500;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));*/
 
                         if (auto nrowOp = llvm::dyn_cast<mlir::daphne::NumRowsOp>(op)) {
                             nrowOp.replaceAllUsesWith(pipelineOp.getOutRows()[replacement.getResultNumber()]);
@@ -679,11 +654,6 @@ struct VectorUtils {
                         return llvm::count(pipeline, opOperand.getOwner()) == 0;
                     });
                 }
-            }
-            } catch (...) {
-                llvm::outs() << "TEST:" << "\n";
-                func.print(llvm::outs());
-                llvm::outs() << "\n";
             }
             bodyBlock->walk([](mlir::Operation *op) {
                 for (auto resVal : op->getResults()) {

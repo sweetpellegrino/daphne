@@ -205,8 +205,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation() {
         for (size_t i = 0; i < vectOp->getNumOperands(); ++i) {
             auto operand = vectOp->getOperand(i);
 
-            // llvm::outs() << op->getName().getStringRef().str() << " ";
-
             if (!llvm::isa<daphne::MatrixType>(operand.getType()))
                 continue;
 
@@ -216,7 +214,6 @@ void Greedy1VectorizeComputationsPass::runOnOperation() {
 
             // could it help to check if we check if operand.getDefiningOp is inside (global) ops vector?
             if (auto vectDefOp = llvm::dyn_cast<daphne::Vectorizable>(operand.getDefiningOp())) {
-                // llvm::outs() << vectDefOp->getName().getStringRef().str() << "\n";
 
                 auto split = vectOp.getVectorSplits()[ZeroDecision][i];
                 auto combine = vectDefOp.getVectorCombines()[ZeroDecision][0];
@@ -232,11 +229,7 @@ void Greedy1VectorizeComputationsPass::runOnOperation() {
                 } else {
                     stack.push({vectDefOp, currPipeline, DisconnectReason::INVALID});
                 }
-            } else {
-                // defOp is outside of consideration, top horz. fusion possible
-                // boundingOperations.push_back(op);
-                // llvm::outs() << "\n";
-            }
+            } 
         }
     }
 

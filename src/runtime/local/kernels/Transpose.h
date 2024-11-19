@@ -62,37 +62,12 @@ template <typename VT> struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
             isRowMajorRes = isRowMajorArg;
         }
 
-        /*llvm::outs() << "\n";
-        llvm::outs() << "\n";
-        
-        llvm::outs() << "----arg----" << "\n";
-        llvm::outs() << numRows  << " " << numCols << " " << isRowMajor << "\n";
-        const VT *valuesArg = arg->getValues();
-        for (size_t i = 0; i < arg->getNumItems(); ++i) {
-            llvm::outs() << (int) valuesArg[i] << " ";
-        }
-        llvm::outs() << "\n";*/
-
         // skip data movement for vectors
         if ((numRows == 1 || numCols == 1) && !arg->isView()) {
-            llvm::outs() << "test" << "\n";
             res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, arg, isRowMajorRes);
         } else {
             if (res == nullptr)
                 res = DataObjectFactory::create<DenseMatrix<VT>>(numCols, numRows, false, nullptr, isRowMajorRes);
-
-            /*const VT *valuesArg = arg->getValues();
-            const size_t rowSkipArg = arg->getRowSkip();
-            const size_t rowSkipRes = res->getRowSkip();
-            for (size_t r = 0; r < numRows; r++) {
-                VT *valuesRes = res->getValues() + r;
-                for (size_t c = 0; c < numCols; c++) {
-                    *valuesRes = valuesArg[c];
-                    llvm::outs() << r << " " << c << " " << *valuesRes << " " << valuesArg[c] << " " << "\n";
-                    valuesRes += rowSkipRes;
-                }
-                valuesArg += rowSkipArg;
-            }*/
 
             const VT *valuesArg = arg->getValues();
             const size_t rowSkipArg = arg->getRowSkip();
@@ -141,13 +116,6 @@ template <typename VT> struct Transpose<DenseMatrix<VT>, DenseMatrix<VT>> {
             }
             
         }
-        /*llvm::outs() << "----res----" << "\n";
-        llvm::outs() << res->getNumRows() << " " << res->getNumCols() << " " << res->getIsRowMajor() << "\n";
-        VT *valuesRes = res->getValues();
-        for (size_t i = 0; i < res->getNumItems(); ++i) {
-            llvm::outs() << (int) valuesRes[i] << " ";
-        }
-        llvm::outs() << "\n";*/
     }
 };
 

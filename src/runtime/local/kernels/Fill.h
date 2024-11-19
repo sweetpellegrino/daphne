@@ -67,10 +67,6 @@ template <typename VT> struct Fill<DenseMatrix<VT>, VT> {
                     }
                 }
             }
-            /*for (auto i = 0ul; i < res->getNumItems(); ++i) {
-                llvm::outs() << valuesRes[i] << " ";
-            }
-            llvm::outs() << "\n";*/
         }
         
     }
