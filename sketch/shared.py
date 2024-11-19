@@ -19,17 +19,23 @@ def run_command(command, cwd, env, poll_interval=0.005):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
    
     process_memory = psutil.Process(process.pid)
-    peak_mem = 0
-    while process.poll() is None: 
-        mem_info = process_memory.memory_info().rss // 1024  # Memory usage in KB
-        if mem_info > peak_mem:
-            peak_mem = mem_info
+    process_memory.nice(psutil.HIGH_PRIORITY_CLASS)
 
+    peak_rss = 0
+    peak_vms = 0
+    while process.poll() is None: 
+        rss = process_memory.memory_info().rss // 1024  # Memory usage in KB
+        vms = process_memory.memory_info().vms // 1024  # Memory usage in KB
+        if rss > peak_rss:
+            peak_rss = rss
+
+        if vms > peak_vms:
+            peak_vms = vms
         time.sleep(poll_interval)
 
 
     stdout, stderr = process.communicate()
-    return peak_mem, stdout.decode(), stderr.decode()
+    return peak_rss, peak_vms, stdout.decode(), stderr.decode()
 
 def runner(args, cmd, cwd):
 
@@ -41,16 +47,18 @@ def runner(args, cmd, cwd):
     timings = []
     for i in range(0, args.samples):
 
-        peak_mem, stdout, stderr = run_command(cmd, cwd, tool_env)
+        peak_rss, peak_vms, stdout, stderr = run_command(cmd, cwd, tool_env)
                 
         if args.verbose_output:
             print(stdout)
             print(stderr)
-            print(f"Peak memory usage: {peak_mem} KB")
+            print(f"Peak RSS usage: {peak_rss} KB")
+            print(f"Peak VMS usage: {peak_vms} KB")
 
         timing = json.loads(stderr.split("\n")[-2])
         timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout)
-        timing["peak_mem_kilobytes"] = peak_mem
+        timing["peak_rss_kilobytes"] = peak_rss
+        timing["peak_vms_kilobytes"] = peak_vms
 
         df = pd.json_normalize(timing, sep=".")
         print(tabulate(df, headers="keys", tablefmt="psql", showindex=False))
