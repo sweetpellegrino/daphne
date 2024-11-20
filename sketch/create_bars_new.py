@@ -3,18 +3,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-exp_folder = "results/r-1-3/"
-exp_folder_4 = "results/r-4-3/"
+exp_folder = "results/components-1-3/"
+exp_folder_4 = "results/components-4-3/"
 
 ignore_ixs = []
-if False: 
+if True: 
     key = "tool"
     unit = 1e9
     unit_text = "(Mean) Execution Seconds"
+    filename = "gr2-tuned-plot.png"
 else: 
     key = "peak_rss_kilobytes"
     unit = 1e3
     unit_text = "(Mean) Peak Resident Set Size"
+    filename = "gr2-tuned-plot-memory.png"
 
 
 with open(exp_folder + "timings.json", "r") as f:
@@ -46,8 +48,8 @@ fig, axs = plt.subplots(nrows, 1, figsize=(8, 4*nrows))
 # (150,116,165) :#9674a5
 
 #colors = ["tab:gray", "seagreen", "seagreen", "mediumseagreen", "mediumseagreen", "springgreen", "springgreen"]
-colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5"]
-edgecolors = ["#666666", "#6e8fbd", "#83b26a"]
+colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5", "#ffe6ce"]
+edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#d69a23"]
 
 legend = ""
 
@@ -98,16 +100,16 @@ for i, d in enumerate(data):
     _max = np.max(y)
     ax.set_ylim(0, _max + 0.2*_max)
 
-    plt.xticks(x+width/2, ["Original (No Vec)", "CTB #1 (Vec) 1,4 threads", "CTB #2 (Vec) 1,4 threads"])
+    plt.xticks(x+width/2, ["Original (No Vec)", "Original (Vec) 1,4 threads", "CTB #1 (Vec) 1,4 threads", "CTB #2 (Vec) 1,4 threads"])
 
     legend += "\n"
 
     ax.set_title(script_args)
-    ax.set_ylabel("(Mean) Seconds")
+    ax.set_ylabel(unit_text)
 
 plt.tight_layout()
 
-plt.savefig(exp_folder + "bars.png")
+plt.savefig(exp_folder + filename)
 # plt.savefig("my_plot.svg", format='svg')
 
 with open(exp_folder + "legends.txt", "w") as f:

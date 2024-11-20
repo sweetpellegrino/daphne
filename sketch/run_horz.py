@@ -10,14 +10,18 @@ import shared as sh
 #------------------------------------------------------------------------------
 RESULT_DIR = "results/"
 
+AGG_FUNCTIONS = ["sum","min","max"]
+
 GENERATE_FUNCS = {
     "ADD": lambda i, arg: [f"v{i} = {arg} + {i * 0.1};"],
-    "ADD_SUM": lambda i, arg: [f"i{i} = {arg} + {i * 0.1};", f"v{i} = sum(i{i});"]
+    "ADD_SUM": lambda i, arg: [f"i{i} = {arg} + {i * 0.1};", f"v{i} = sum(i{i});"],
+    "AGG": lambda i, arg: [f"v{i} = {AGG_FUNCTIONS[i]}({arg});"]
 }
 
 GENERATE_PRINT_FUNCS = {
     "ADD": lambda i: [f"print(v{i}[0,0]);"],
-    "ADD_SUM": lambda i: [f"print(v{i});"]
+    "ADD_SUM": lambda i: [f"print(v{i});"],
+    "AGG": lambda i: [f"print(v{i});"]
 }
 
 BASE_CWD = "daphne"
@@ -77,6 +81,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     exp_start = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    
+    if args.script == "AGG" and args.num_ops > 3:
+        print("warn: max num-ops of AGG is 3")
+        args.num_ops = 3
+        
 
     if args.explain:
         GLOBAL_ARGS += ["--explain=vectorized"]
