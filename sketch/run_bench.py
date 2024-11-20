@@ -22,20 +22,6 @@ BASE_COMMANDS = {
     ]
 }
 
-'''
-BASE_COMMANDS = {
-    "daphne-X86-64-org-bin": [
-        ["./run-daphne.sh"],
-        ["./run-daphne.sh", "--vec"]
-    ],
-    "daphne-X86-64-vec-bin": [
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_1"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_2"],
-        ["./run-daphne.sh", "--vec", "--vec-type=GREEDY_3"]
-    ]
-}
-'''
-
 EXPERIMENTS = {
      "r": {
         "path": "./sketch/bench/running_example.daph",
@@ -43,6 +29,10 @@ EXPERIMENTS = {
     },
     "ta": {
         "path": "./sketch/bench/rhs_t_add.daph",
+        "args": ["r=25000", "c=25000"]
+    },
+    "tsate": {
+        "path": "./sketch/bench/t_sqrt_add_t_exp.daph",
         "args": ["r=25000", "c=25000"]
     },
     "ot": {
