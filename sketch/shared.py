@@ -14,7 +14,7 @@ DAPHNE_ENV = {
     "LD_LIBRARY_PATH": "$PWD/lib:$PWD/thirdparty/installed/lib:$LD_LIBRARY_PATH"
 }
 
-def run_command(command, cwd, env, poll_interval=0.005): 
+def run_command(command, cwd, env, poll_interval=0.001): 
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
    
