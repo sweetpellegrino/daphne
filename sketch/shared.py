@@ -127,7 +127,7 @@ def extract_malloc_f1xm3(stdout,stderr):
             
     return {
             "time": f1xm3, 
-            "total_malloc": total_alloc
+            "tmalloc": total_alloc
         }
 
 def extract_papi(stdout):
