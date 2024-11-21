@@ -1,0 +1,1 @@
+gcc -shared -fPIC lib.c -o lib_prof_malloc.so -ldl

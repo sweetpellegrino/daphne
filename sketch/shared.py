@@ -81,6 +81,24 @@ def extract_f1xm3(stdout):
             return int(number)
     return None
 
+def extract_malloc_f1xm3(stdout):
+    lines = stdout.split('\n')
+
+    f1xm3 = -1
+    total_alloc = -1
+    for line in reversed(lines):
+        if "F1XM3" in line:
+            number = line.split("F1XM3:")[1]
+            fixm3 = int(number)
+        if "ALLOC" in line:
+            alloc = line.split("ALLOC:")[1] 
+            total_alloc += alloc
+            
+    return {
+            "time": f1xm3, 
+            "total_malloc": total_alloc
+        }
+
 def extract_papi(stdout):
     lines = stdout.split('\n')
 
@@ -130,6 +148,15 @@ TOOLS = {
     },
     "NOW": {
         "ENV": {},
+        "START_OP": "start = now();",
+        "STOP_OP": "end = now();",
+        "END_OP": "print(\"F1XM3:\"+ (end - start));",
+        "GET_INFO": extract_f1xm3
+    },
+    "MALLOC": {
+        "ENV": {
+            "LD_PRELOAD": "../sketch/prof_malloc/lib_prof_malloc.so"
+        },
         "START_OP": "start = now();",
         "STOP_OP": "end = now();",
         "END_OP": "print(\"F1XM3:\"+ (end - start));",

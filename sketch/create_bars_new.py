@@ -2,115 +2,125 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
-exp_folder = "results/components-1-3/"
-exp_folder_4 = "results/components-4-3/"
+exp_folder = "results/ae-1-10/"
+exp_folder_4 = "results/ae-48-10/"
 
 ignore_ixs = []
-if True: 
-    key = "tool"
-    unit = 1e9
-    unit_text = "(Mean) Execution Seconds"
-    filename = "gr2-tuned-plot.png"
-else: 
-    key = "peak_rss_kilobytes"
-    unit = 1e3
-    unit_text = "(Mean) Peak Resident Set Size"
-    filename = "gr2-tuned-plot-memory.png"
 
+for b in [True, False]:
+    if b: 
+        key = "tool"
+        unit = 1e9
+        unit_text = "(Mean) Execution Seconds"
+        filename = "exec_perf"
+    else: 
+        key = "peak_rss_kilobytes"
+        unit = 1e3
+        unit_text = "(Max) Peak Resident Set Size"
+        filename = "memory_perf"
 
-with open(exp_folder + "timings.json", "r") as f:
-    data = json.load(f)
-with open(exp_folder_4 + "timings.json", "r") as f:
-    data_4 = json.load(f)
+    with open(exp_folder + "timings.json", "r") as f:
+        data = json.load(f)
+    with open(exp_folder_4 + "timings.json", "r") as f:
+        data_4 = json.load(f)
 
-nrows = len(data)
+    nrows = len(data)
+    fig, axs = plt.subplots(nrows, 1, figsize=(6, 4*nrows))
+    plt.rcParams['font.size'] = 12
+    width = 0.45
 
-fig, axs = plt.subplots(nrows, 1, figsize=(8, 4*nrows))
+    # gray 
+    # (245,245,245) : #f5f5f5
+    # (102,102,102) : #666666 (0.40, 0.40, 0.40)
+    # blue
+    # (219,232,251) : #dbe8fb
+    # (110,143,189) : #6e8fbd (0.43, 0.56, 0.74)
+    # green
+    # (214,232,213) : #d6e8d5
+    # (131,178,106) : #83b26a (0.51, 0.70, 0.42)
+    # orange
+    # (255,230,206) : #ffe6ce
+    # (214,154,35) : #d69a23 (0.84, 0.60, 0.14)
+    # red
+    # (247,206,206) : #f7cece
+    # (182,85,82) : #b65552 (0.71, 0.33, 0.32)
+    # purple
+    # (225,214,231) :#e1d6e7
+    # (150,116,165) :#9674a5 (0.59, 0.45, 0.65)
 
-# gray 
-# (245,245,245) : #f5f5f5
-# (102,102,102) : #666666
-# blue
-# (219,232,251) : #dbe8fb
-# (110,143,189) : #6e8fbd
-# green
-# (214,232,213) : #d6e8d5
-# (131,178,106) : #83b26a
-# orange
-# (255,230,206) : #ffe6ce
-# (214,154,35) : #d69a23
-# red
-# (247,206,206) : #f7cece
-# (182,85,82) : #b65552
-# purple
-# (225,214,231) :#e1d6e7
-# (150,116,165) :#9674a5
+    #colors = ["tab:gray", "seagreen", "seagreen", "mediumseagreen", "mediumseagreen", "springgreen", "springgreen"]
+    colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5", "#e1d6e7", "#ffe6ce"]
+    edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#9674a5", "#d69a23"]
 
-#colors = ["tab:gray", "seagreen", "seagreen", "mediumseagreen", "mediumseagreen", "springgreen", "springgreen"]
-colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5", "#ffe6ce"]
-edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#d69a23"]
+    def draw_bars(ax, x, y, y4):
 
-legend = ""
+        x2 = x + width
+        x2[0] = x[0] 
+        y4[0] = y[0]
 
-def draw_bars(ax, x, y, y4):
-    width = 0.35
-    handle = ax.bar(x, y, width, color=colors, edgecolor=edgecolors)
-    handle2 = ax.bar(x + width, y4, width, color=edgecolors, edgecolor=edgecolors)
+        handle = ax.bar(x, y, width, color=colors, edgecolor=edgecolors)
+        handle2 = ax.bar(x2, y4, width, color=edgecolors, edgecolor=edgecolors)
 
-    for h in handle + handle2:
-        height = h.get_height()
-        ax.text(h.get_x() + h.get_width() / 2.0, h.get_height() + 0.15, f"{h.get_height():.5f}", color='black', ha='center')
+        if False:
+            for i,h in enumerate(handle + handle2):
+                if i == len(handle):
+                    continue
+                ax.text(h.get_x() + h.get_width() / 2.0, h.get_height() + 0.15, f"{h.get_height():.2f}", color='black', ha='center')
 
-def calc_means(d_exec):
-    y = []
-    names = []
-    for j, c in enumerate(d_exec):
-        if j in ignore_ixs:
-            continue
-            
-        timings = pd.DataFrame(c["timings"])
-        mean = timings[key].mean() / unit
-        std = timings[key].std() / unit
+    def calc_means(d_exec, calc_max):
+        y = []
+        names = []
+        for j, c in enumerate(d_exec):
+            if j in ignore_ixs:
+                continue
+                
+            timings = pd.DataFrame(c["timings"])
+            if calc_max:
+                mean = timings[key].max() / unit
+            else:
+                mean = timings[key].mean() / unit
+            std = timings[key].std() / unit
 
-        name = "".join([s[-1] for s in c["cmd"]])
-        names.append(name)
-        y.append(mean)
+            name = "".join([s[-1] for s in c["cmd"]])
+            names.append(name)
+            y.append(mean)
 
-    return y, names
-  
+        return y, names
     
+        
 
-for i, d in enumerate(data):
-    script_args = " ".join([d["script"]["path"]] + d["script"]["args"])
+    for i, d in enumerate(data):
+        script_args = " ".join([d["script"]["path"]] + d["script"]["args"])
 
-    if len(data) == 1:
-        ax = axs
-    else:
-        ax = axs[i]
-    
-    width = 0.3
+        if len(data) == 1:
+            ax = axs
+        else:
+            ax = axs[i]
+        
+        x = np.arange(0.0, len(d["exec"]))
+        x[0] = x[0] + width/2 
 
-    x = np.arange(len(d["exec"]) - len(ignore_ixs))
-    y, names = calc_means(d["exec"])
-    y4, names4 = calc_means(data_4[i]["exec"])
-    
-    draw_bars(ax, x, y, y4)
+        y, names = calc_means(d["exec"], False)
+        y4, names4 = calc_means(data_4[i]["exec"], True)
+        
+        draw_bars(ax, x, y, y4)
 
-    _max = np.max(y)
-    ax.set_ylim(0, _max + 0.2*_max)
+        _max = np.max(y)
+        _max4 = np.max(y4)
+        if _max < _max4:
+            _max = _max4
+        
+        ax.set_ylim(0, _max + 0.2*_max)
 
-    plt.xticks(x+width/2, ["Original (No Vec)", "Original (Vec) 1,4 threads", "CTB #1 (Vec) 1,4 threads", "CTB #2 (Vec) 1,4 threads"])
+        x[0] = x[0] - width/2 
+        plt.xticks(x+width/2, ["Base", "Base (Vec)", "CTB #1", "CTB #2", "CTB #3 "])
 
-    legend += "\n"
+        #ax.set_title(script_args)
+        ax.set_ylabel(unit_text)
 
-    ax.set_title(script_args)
-    ax.set_ylabel(unit_text)
+    plt.tight_layout()
 
-plt.tight_layout()
-
-plt.savefig(exp_folder + filename)
-# plt.savefig("my_plot.svg", format='svg')
-
-with open(exp_folder + "legends.txt", "w") as f:
-    f.write(legend)
+    plt.savefig(exp_folder + filename + ".png")
+    plt.savefig(exp_folder + filename + ".svg", format='svg')
