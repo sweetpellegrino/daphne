@@ -112,7 +112,6 @@ def extract_malloc_f1xm3(stdout,stderr):
 
     f1xm3 = -1
     for line in reversed(lines):
-        print(line)
         if "F1XM3" in line:
             number = line.split("F1XM3:")[1]
             f1xm3 = int(number)
