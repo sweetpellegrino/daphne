@@ -5,6 +5,8 @@ import pandas as pd
 from tabulate import tabulate
 import psutil
 import time
+from multiprocessing.pool import ThreadPool
+import io
 
 #------------------------------------------------------------------------------
 # RUN COMMAND
@@ -14,13 +16,7 @@ DAPHNE_ENV = {
     "LD_LIBRARY_PATH": "$PWD/lib:$PWD/thirdparty/installed/lib:$LD_LIBRARY_PATH"
 }
 
-def run_command(command, cwd, env, poll_interval=0.001): 
-
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
-   
-    process_memory = psutil.Process(process.pid)
-    #process_memory.nice(-20) # needs sudo permission
-
+def poll_memory_info(process, process_memory, poll_interval=0.001):
     peak_rss = 0
     peak_vms = 0
     while process.poll() is None: 
@@ -32,10 +28,35 @@ def run_command(command, cwd, env, poll_interval=0.001):
         if vms > peak_vms:
             peak_vms = vms
         time.sleep(poll_interval)
+    return peak_rss, peak_vms
 
+    
+def run_command(command, cwd, env): 
 
-    stdout, stderr = process.communicate()
-    return peak_rss, peak_vms, stdout.decode(), stderr.decode()
+    pool = ThreadPool(processes=1)
+
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
+
+    process_memory = psutil.Process(process.pid)
+    async_memory = pool.apply_async(poll_memory_info, (process, process_memory))
+
+    buffer = io.BytesIO();
+    with process.stderr:
+        for line in iter(process.stderr.readline, ''):
+            if line:
+                buffer.write(line)
+            else:
+                break
+
+    process.stderr.close()
+
+    process.wait()
+
+    peak_rss, peak_vms = async_memory.get()
+    stdout, _ = process.communicate()
+
+    buffer.seek(0)
+    return peak_rss, peak_vms, stdout.decode(), buffer.read().decode()
 
 def runner(args, cmd, cwd):
 
@@ -48,15 +69,20 @@ def runner(args, cmd, cwd):
     for i in range(0, args.samples):
 
         peak_rss, peak_vms, stdout, stderr = run_command(cmd, cwd, tool_env)
-                
+
         if args.verbose_output:
             print(stdout)
             print(stderr)
             print(f"Peak RSS usage: {peak_rss} KB")
             print(f"Peak VMS usage: {peak_vms} KB")
 
-        timing = json.loads(stderr.split("\n")[-2])
-        timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout)
+        if args.tool == "MALLOC":
+            timing = json.loads(stderr.split("\n")[-4])
+            timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout,stderr)
+        else:
+            timing = json.loads(stderr.split("\n")[-2])
+            timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout)
+
         timing["peak_rss_kilobytes"] = peak_rss
         timing["peak_vms_kilobytes"] = peak_vms
 
@@ -81,18 +107,23 @@ def extract_f1xm3(stdout):
             return int(number)
     return None
 
-def extract_malloc_f1xm3(stdout):
+def extract_malloc_f1xm3(stdout,stderr):
     lines = stdout.split('\n')
 
     f1xm3 = -1
-    total_alloc = -1
     for line in reversed(lines):
+        print(line)
         if "F1XM3" in line:
             number = line.split("F1XM3:")[1]
-            fixm3 = int(number)
+            f1xm3 = int(number)
+            break
+
+    lines = stderr.split('\n')
+    total_alloc = -1
+    for line in lines:
         if "ALLOC" in line:
             alloc = line.split("ALLOC:")[1] 
-            total_alloc += alloc
+            total_alloc += int(alloc)
             
     return {
             "time": f1xm3, 
@@ -160,6 +191,6 @@ TOOLS = {
         "START_OP": "start = now();",
         "STOP_OP": "end = now();",
         "END_OP": "print(\"F1XM3:\"+ (end - start));",
-        "GET_INFO": extract_f1xm3
+        "GET_INFO": extract_malloc_f1xm3
     }
 }
