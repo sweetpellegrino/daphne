@@ -5,8 +5,8 @@ import numpy as np
 import plot_config as pc
 import matplotlib.patches as mpatches
 
-exp_folder = "results/ae-1-10/"
-exp_folder_4 = "results/ae-48-10/"
+exp_folder = "results/ot-1-10/"
+exp_folder_4 = "results/ot-48-10/"
 
 for b in [True, False]:
     if b: 

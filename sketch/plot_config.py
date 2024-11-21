@@ -17,8 +17,8 @@
 # (225,214,231) :#e1d6e7
 # (150,116,165) :#9674a5 (0.59, 0.45, 0.65)
 
-figsize_width = 6
-figsize_height = 4
+figsize_width = 5
+figsize_height = 3.5
 bar_width = 0.45
 font_size = 11
 offset_max = 0.2

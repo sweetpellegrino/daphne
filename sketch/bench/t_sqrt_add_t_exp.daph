@@ -9,7 +9,7 @@ i3 = i1 + i2;
 
 i4 = t(i3);
 
-i5 = exp(t4);
+i5 = exp(i4);
 <stop>
 
 print(i5[0,0]);
