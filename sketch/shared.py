@@ -33,12 +33,12 @@ def poll_memory_info(process, process_memory, poll_interval=0.001):
     
 def run_command(command, cwd, env): 
 
-    pool = ThreadPool(processes=1)
+    #pool = ThreadPool(processes=1)
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
 
     process_memory = psutil.Process(process.pid)
-    async_memory = pool.apply_async(poll_memory_info, (process, process_memory))
+    #async_memory = pool.apply_async(poll_memory_info, (process, process_memory))
 
     buffer = io.BytesIO();
     with process.stderr:
@@ -50,12 +50,13 @@ def run_command(command, cwd, env):
 
     process.stderr.close()
 
-    peak_rss, peak_vms = async_memory.get()
+    #peak_rss, peak_vms = async_memory.get()
     process.wait()
 
     stdout, _ = process.communicate()
 
     buffer.seek(0)
+    peak_rss, peak_vms = -1, -1
     return peak_rss, peak_vms, stdout.decode(), buffer.read().decode()
 
 def runner(args, cmd, cwd):
@@ -83,8 +84,10 @@ def runner(args, cmd, cwd):
             timing = json.loads(stderr.split("\n")[-2])
             timing["tool"] = TOOLS[args.tool]["GET_INFO"](stdout)
 
-        timing["peak_rss_kilobytes"] = peak_rss
-        timing["peak_vms_kilobytes"] = peak_vms
+        if peak_rss != -1:
+            timing["peak_rss_kilobytes"] = peak_rss
+        if peak_vms != -1
+            timing["peak_vms_kilobytes"] = peak_vms
 
         df = pd.json_normalize(timing, sep=".")
         print(tabulate(df, headers="keys", tablefmt="psql", showindex=False))
