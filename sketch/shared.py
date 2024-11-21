@@ -50,9 +50,9 @@ def run_command(command, cwd, env):
 
     process.stderr.close()
 
+    peak_rss, peak_vms = async_memory.get()
     process.wait()
 
-    peak_rss, peak_vms = async_memory.get()
     stdout, _ = process.communicate()
 
     buffer.seek(0)
@@ -126,7 +126,7 @@ def extract_malloc_f1xm3(stdout,stderr):
             
     return {
             "time": f1xm3, 
-            "tmalloc": total_alloc
+            "malloc": total_alloc
         }
 
 def extract_papi(stdout):
