@@ -1,0 +1,14 @@
+X = rand($r, $c, 0.0, 1.0, 1, 12345);
+Y = rand($r, $c, 0.0, 1.0, 1, 12345);
+
+i1 = t(X);
+i2 = sqrt(Y);
+i3 = i1 + i2;
+i4 = t(i3);
+i5 = exp(i4);
+
+print(i5[0,0]);
+print(i5[0,1]);
+print(i5[0,2]);
+print(i5[1,2]);
+print(i5[2,1]);

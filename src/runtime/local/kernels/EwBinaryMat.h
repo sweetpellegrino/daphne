@@ -61,7 +61,7 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         const size_t numColsRhs = rhs->getNumCols();
         const bool isRowMajorLhs = lhs->getIsRowMajor();
         const bool isRowMajorRhs = rhs->getIsRowMajor();
-    
+
         if (res == nullptr)
             res = DataObjectFactory::create<DenseMatrix<VTres>>(numRowsLhs, numColsLhs, false, nullptr, isRowMajorLhs);
 
@@ -84,14 +84,13 @@ struct EwBinaryMat<DenseMatrix<VTres>, DenseMatrix<VTlhs>, DenseMatrix<VTrhs>> {
         }
         else if (!isRowMajorLhs && isRowMajorRhs) {
             for (size_t c = 0; c < numColsLhs; c++) {
-                valuesLhs = lhs->getValues() + c;
-                valuesRes = res->getValues() + c;
+                valuesRhs = rhs->getValues() + c;
                 for (size_t r = 0; r < numRowsLhs; r++) {
-                    valuesRes[0] = func(valuesLhs[0], valuesRhs[r], ctx);
-                    valuesLhs += lhs->getRowSkip();
-                    valuesRes += res->getRowSkip();
+                    valuesRes[r] = func(valuesLhs[r], valuesRhs[0], ctx);
+                    valuesRhs += rhs->getRowSkip();
                 }
-                valuesRhs += rhs->getRowSkip();
+                valuesLhs += lhs->getRowSkip();
+                valuesRes += res->getRowSkip();
             }
         }
         else if (isRowMajorLhs && isRowMajorRhs) {
