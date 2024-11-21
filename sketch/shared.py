@@ -147,7 +147,7 @@ def extract_papi(stdout):
 TOOLS = {
     "PAPI_STD": {
         "ENV": {
-            "PAPI_EVENTS": "perf::CYCLES,perf::INSTRUCTIONS,perf::CACHE-REFERENCES,perf::CACHE-MISSES,perf::BRANCHES,perf::BRANCH-MISSES",
+            "PAPI_EVENTS": "perf::CACHE-REFERENCES,perf::CACHE-MISSES,perf::L1-dcache-load-misses,L1-icache-load-misses",
             "PAPI_REPORT": "1"
         },
         "START_OP": "startProfiling();",
