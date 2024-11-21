@@ -10,7 +10,7 @@ import shared as sh
 #------------------------------------------------------------------------------
 RESULT_DIR = "results/"
 
-AGG_FUNCTIONS = ["sum","min","max"]
+AGG_FUNCTIONS = ["sum","minAgg","maxAgg"]
 
 GENERATE_FUNCS = {
     "ADD": lambda i, arg: [f"v{i} = {arg} + {i * 0.1};"],
@@ -86,7 +86,6 @@ if __name__ == "__main__":
         print("warn: max num-ops of AGG is 3")
         args.num_ops = 3
         
-
     if args.explain:
         GLOBAL_ARGS += ["--explain=vectorized"]
 
