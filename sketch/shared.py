@@ -37,7 +37,7 @@ def run_command(command, cwd, env):
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env={**env, **os.environ, **DAPHNE_ENV})
 
-    process_memory = psutil.Process(process.pid)
+    #process_memory = psutil.Process(process.pid)
     #async_memory = pool.apply_async(poll_memory_info, (process, process_memory))
 
     buffer = io.BytesIO();
