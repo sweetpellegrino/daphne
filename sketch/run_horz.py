@@ -10,7 +10,7 @@ import shared as sh
 #------------------------------------------------------------------------------
 RESULT_DIR = "results/"
 
-AGG_FUNCTIONS = ["sum","minAgg","maxAgg"]
+AGG_FUNCTIONS = ["sum","aggMin","aggMax"]
 
 GENERATE_FUNCS = {
     "ADD": lambda i, arg: [f"v{i} = {arg} + {i * 0.1};"],
