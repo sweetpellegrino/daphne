@@ -86,7 +86,7 @@ def runner(args, cmd, cwd):
 
         if peak_rss != -1:
             timing["peak_rss_kilobytes"] = peak_rss
-        if peak_vms != -1
+        if peak_vms != -1:
             timing["peak_vms_kilobytes"] = peak_vms
 
         df = pd.json_normalize(timing, sep=".")
