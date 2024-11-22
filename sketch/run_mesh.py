@@ -52,6 +52,8 @@ def generate_script(tool, depth, width):
             count = count + 1
         script.append("")
 
+    script.append(sh.TOOLS[tool]["STOP_OP"])
+
     for j in range(0, width):
         script.append("print(i"+str(count-1-j)+"[0,0]);")
 
