@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import plot_config as pc
 import numpy as np
 
-d = "results/horz_agg/"
+d = "results/horz_add/"
 
 files = [f for f in listdir(d) if isfile(join(d, f))]
 
 timings_hf = {}
 timings_no_hf = {}
 for file in files:
-    if file[-3:] == "png":
+    if file[-3:] == "png" or file[-3:] == "svg":
         continue
 
     with open(d + file, "r") as f:
@@ -47,7 +47,6 @@ x = np.array(x, dtype="int")
 y1 = [timings_hf[ops]["tool"] for ops in x]
 y2 = [timings_no_hf[ops]["tool"] for ops in x]
 
-
 fig, ax = plt.subplots()
 plt.rcParams['font.size'] = pc.font_size
 
@@ -61,8 +60,8 @@ plt.xticks(np.arange(x.min(), x.max() + 1, 1))
 plt.xlabel("Number of operators")
 plt.ylabel(pc.units["exec_time"]["label"])
 
-fig.tight_layout()
-plt.savefig(d + "lines.png") 
+plt.tight_layout(pad=0)
+plt.savefig(d + f"lines.svg", format='svg') 
 
 
     

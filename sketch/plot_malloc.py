@@ -5,12 +5,13 @@ import numpy as np
 import plot_config as pc
 import matplotlib.patches as mpatches
 
-exp_folder = "results/ot-malloc/"
+exp_name = "ae"
+exp_folder = f"results/microbenchmark/{exp_name}/{exp_name}-malloc/"
 
 key = "tool.malloc"
 unit = 1e9
 unit_text = "(Mean) Allocated Data [GB]"
-filename = "ae-malloc"
+filename = f"{exp_name}-malloc"
 
 with open(exp_folder + "timings.json", "r") as f:
     data = json.load(f)
@@ -23,7 +24,7 @@ legend_handles = [
     mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], hatch='///', label='1 Thread'),
 ]
 
-plt.legend(loc='upper right', handles=legend_handles)
+plt.legend(loc='center right', handles=legend_handles)
 
 def draw_bars(ax, x, y):
 
@@ -79,7 +80,6 @@ for i, d in enumerate(data):
     #ax.set_title(script_args)
     ax.set_ylabel(unit_text)
 
-plt.tight_layout()
+plt.tight_layout(pad=0)
 
-plt.savefig(exp_folder + filename + ".png")
 plt.savefig(exp_folder + filename + ".svg", format='svg')

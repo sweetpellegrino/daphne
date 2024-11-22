@@ -84,7 +84,8 @@ if __name__ == "__main__":
         GLOBAL_ARGS += ["--explain=vectorized"]
 
     output = []
-    for gr1_col in [False, True]: 
+    #for gr1_col in [False, True]: 
+    for gr1_col in [False]: 
         
         cmd = BASE_COMMAND(args.threads, args.batchSize, gr1_col)
 
