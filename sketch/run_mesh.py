@@ -34,7 +34,7 @@ def generate_script(tool, depth, width):
     count = 0
 
     for i in range (0, width):
-        script.append(f"m{i} = fill({i+1}, {ROWS}, {COLS});")
+        script.append(f"m{i} = fill({float(i+1)}, {ROWS}, {COLS});")
 
     script.append(sh.TOOLS[tool]["START_OP"])
 
