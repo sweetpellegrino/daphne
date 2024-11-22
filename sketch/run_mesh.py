@@ -10,8 +10,8 @@ import shared as sh
 #------------------------------------------------------------------------------
 RESULT_DIR = "results/"
 # For testing compilation time, we need this:
-ROWS = 10
-COLS = 10
+ROWS = 1
+COLS = 1
 
 BASE_CWD = "daphne"
 GLOBAL_ARGS = []
@@ -22,7 +22,7 @@ BASE_COMMAND = lambda th, bs, vt: [
     f"--vec-type={vt}",
     f"--num-threads={th}",
     f"--batchSize={bs}",
-] + GLOBAL_ARGS + ["../_horz.daph"]
+] + GLOBAL_ARGS + ["../_mesh.daph"]
 
 #------------------------------------------------------------------------------
 # HELPER

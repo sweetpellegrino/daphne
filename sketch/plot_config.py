@@ -23,7 +23,14 @@ bar_width = 0.45
 font_size = 11
 offset_max = 0.2
 
-colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5", "#e1d6e7", "#ffe6ce"]
-edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#9674a5", "#d69a23"]
+colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5", "#e1d6e7", "#ffe6ce", "#f7cece", "#cef7f7"]
+edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#9674a5", "#d69a23", "#b65552", "#52b3b6"]
 
 xticks_name = ["Base", "Base (Vec)", "CTB #1", "CTB #2", "CTB #3"]
+
+units = {
+    "exec_time": {
+        "label": "(Mean) Execution Time [s]",
+        "conversion": 1e9
+    }
+}
