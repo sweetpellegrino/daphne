@@ -123,7 +123,6 @@ if __name__ == "__main__":
                 "cols": COLS,
                 "depth": args.depth,
                 "width": args.width,
-                "type": args.script,
                 "tool": args.tool,
                 "threads": args.threads,
                 "samples": args.samples,
