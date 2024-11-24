@@ -7,14 +7,18 @@ import matplotlib.patches as mpatches
 
 exp_name = "ae"
 exp_folder = f"results/microbenchmark/{exp_name}/{exp_name}-malloc/"
+exp_folder_4 = f"results/microbenchmark/{exp_name}/{exp_name}-malloc-48/"
 
 key = "tool.malloc"
 unit = 1e9
-unit_text = "(Mean) Allocated Data [GB]"
+unit_text = "Allocated Data [GB]"
 filename = f"{exp_name}-malloc"
 
 with open(exp_folder + "timings.json", "r") as f:
     data = json.load(f)
+
+with open(exp_folder_4 + "timings.json", "r") as f:
+    data4 = json.load(f)
 
 fig, axs = plt.subplots(1, 1, figsize=(pc.figsize_width, pc.figsize_height))
 plt.rcParams['font.size'] = pc.font_size
@@ -22,14 +26,20 @@ plt.rcParams['font.size'] = pc.font_size
 legend_handles = [
     mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], label='Scalar'),
     mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], hatch='///', label='1 Thread'),
+    mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], hatch='///', label='48 Threads'),
 ]
 
 plt.legend(loc='center right', handles=legend_handles)
 
-def draw_bars(ax, x, y):
+def draw_bars(ax, x, y, y4):
+
+    x2 = x + pc.bar_width
+    x2[0] = x[0] 
+    y4[0] = 0
 
     handle = ax.bar(x, y, pc.bar_width, color=pc.colors, edgecolor=pc.edgecolors)
-
+    handle2 = ax.bar(x2, y4, pc.bar_width, color=pc.edgecolors, edgecolor=pc.edgecolors)
+    
     for i,h in enumerate(handle):
         if i != 0:
             h.set_hatch("/")
@@ -67,15 +77,20 @@ for i, d in enumerate(data):
     x = np.arange(0.0, len(d["exec"]))
     x[0] = x[0] + pc.bar_width/2 
 
-    y, names = calc_means(d["exec"])
+    y,_ = calc_means(d["exec"])
+    y4,_ = calc_means(data4[i]["exec"])
     
-    draw_bars(ax, x, y)
+    draw_bars(ax, x, y, y4)
 
     _max = np.max(y)
-    
+    _max4 = np.max(y4)
+    if _max < _max4:
+        _max = _max4
+        
     ax.set_ylim(0, _max + pc.offset_max*_max)
-
-    plt.xticks(x, pc.xticks_name)
+    
+    x[0] = x[0] - pc.bar_width/2 
+    plt.xticks(x+pc.bar_width/2, pc.xticks_name)
 
     #ax.set_title(script_args)
     ax.set_ylabel(unit_text)

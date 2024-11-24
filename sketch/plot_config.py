@@ -24,7 +24,7 @@ font_size = 11
 offset_max = 0.2
 
 colors = ["#f5f5f5", "#dbe8fb", "#d6e8d5", "#e1d6e7", "#ffe6ce", "#f7cece", "#cef7f7"]
-edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#9674a5", "#d69a23", "#b65552", "#52b3b6"]
+edgecolors = ["#666666", "#6e8fbd", "#83b26a", "#9674a5", "#d69a23", "#82375b", "#375b82", "#5281b6", "#b65281"]
 
 xticks_name = ["Base", "BVec", "CTB #1", "CTB #2", "CTB #3"]
 xticks_shortname = ["B", "BV", "C1", "C2", "C3"]

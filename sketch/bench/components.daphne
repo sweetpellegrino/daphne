@@ -10,15 +10,15 @@ e = as.f64($e);
 // Generation of a random undirected graph.
 source = rand(n, n, 1.0, 1.0, 2.0 * e / n ^ 2.0, -1); 
 
-<start>
-UT = upperTri(source, false, false);
-G = UT + t(UT);
-
 // Initialization.
 maxi = 1000;
-c = seq(1.0, n, 1.0); // init w/ vertex IDs
 diff = inf;
 iter = 1;
+c = seq(1.0, n, 1.0); // init w/ vertex IDs
+
+UT = upperTri(source, false, false);
+<start>
+G = UT + t(UT);
 
 // Iterative computation of connected components (decisive part).
 while(as.si64(diff > 0.0) && iter <= maxi) {

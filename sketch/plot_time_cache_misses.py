@@ -7,7 +7,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 import matplotlib.patches as mpatches
 
 
-exp_name = "ae"
+exp_name = "tsate"
 
 exp_folder   = f"results/microbenchmark/{exp_name}/{exp_name}-1-10-papi/"
 exp_folder_4 = f"results/microbenchmark/{exp_name}/{exp_name}-48-10-papi/"

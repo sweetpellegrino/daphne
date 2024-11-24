@@ -5,7 +5,8 @@ import numpy as np
 import plot_config as pc
 import matplotlib.patches as mpatches
 
-exp_folder = "results/microbenchmark/ae/"
+exp_name = "tsate"
+exp_folder = f"results/microbenchmark/{exp_name}/"
 
 with open(exp_folder + "static-metrics.json", "r") as f:
     data = json.load(f)
@@ -41,4 +42,4 @@ if _max < _max4:
 axs.set_xlim(0, _max + pc.offset_max*_max)
 
 plt.tight_layout(pad=0)
-plt.savefig(exp_folder + f"static-metrics.svg", format='svg') 
+plt.savefig(exp_folder + f"{exp_name}-static-metrics.svg", format='svg') 
