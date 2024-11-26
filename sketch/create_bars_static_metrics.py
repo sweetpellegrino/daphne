@@ -30,7 +30,7 @@ plt.xlabel("Number of operators")
 axs.text(0.15, pc.bar_width/2+0.1, "No vectorization", fontsize=10)
 
 plt.yticks(x+pc.bar_width/2, pc.xticks_name)
-plt.xticks(x, x)
+plt.xticks(np.arange(0, int(np.max(df)+1), 1))
 
 plt.gca().invert_yaxis()
 

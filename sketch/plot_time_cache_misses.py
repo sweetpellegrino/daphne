@@ -7,10 +7,10 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 import matplotlib.patches as mpatches
 
 
-exp_name = "tsate"
+exp_name = "kmeans"
 
-exp_folder   = f"results/microbenchmark/{exp_name}/{exp_name}-1-10-papi/"
-exp_folder_4 = f"results/microbenchmark/{exp_name}/{exp_name}-48-10-papi/"
+exp_folder   = f"results/e2e/{exp_name}/{exp_name}-1-10-papi/"
+exp_folder_4 = f"results/e2e/{exp_name}/{exp_name}-48-10-papi/"
 
 for b in [True, False]:
     if b: 
@@ -94,7 +94,8 @@ for b in [True, False]:
         ax.set_ylim(0, _max + pc.offset_max*_max)
 
         x[0] = x[0] - pc.bar_width/2 
-        plt.xticks(x+pc.bar_width/2, pc.xticks_name)
+        #plt.xticks(x+pc.bar_width/2, pc.xticks_name)
+        plt.xticks(x+pc.bar_width/2, pc.xticks_name[:4])
 
         if not b:
             ax_inset = inset_axes(ax, width="45%", height="45%", loc="center right")

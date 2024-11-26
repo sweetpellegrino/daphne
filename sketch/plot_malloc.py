@@ -5,9 +5,9 @@ import numpy as np
 import plot_config as pc
 import matplotlib.patches as mpatches
 
-exp_name = "ae"
-exp_folder = f"results/microbenchmark/{exp_name}/{exp_name}-malloc/"
-exp_folder_4 = f"results/microbenchmark/{exp_name}/{exp_name}-malloc-48/"
+exp_name = "kmeans"
+exp_folder = f"results/e2e/{exp_name}/{exp_name}-malloc/"
+exp_folder_4 = f"results/e2e/{exp_name}/{exp_name}-malloc-48/"
 
 key = "tool.malloc"
 unit = 1e9
@@ -26,7 +26,7 @@ plt.rcParams['font.size'] = pc.font_size
 legend_handles = [
     mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], label='Scalar'),
     mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], hatch='///', label='1 Thread'),
-    mpatches.Patch(facecolor=pc.colors[0], edgecolor=pc.edgecolors[0], hatch='///', label='48 Threads'),
+    mpatches.Patch(facecolor=pc.edgecolors[0], edgecolor=pc.edgecolors[0], label='48 Threads'),
 ]
 
 plt.legend(loc='center right', handles=legend_handles)
@@ -90,7 +90,8 @@ for i, d in enumerate(data):
     ax.set_ylim(0, _max + pc.offset_max*_max)
     
     x[0] = x[0] - pc.bar_width/2 
-    plt.xticks(x+pc.bar_width/2, pc.xticks_name)
+    plt.xticks(x+pc.bar_width/2, pc.xticks_name[:4])
+    #plt.xticks(x+pc.bar_width/2, pc.xticks_name)
 
     #ax.set_title(script_args)
     ax.set_ylabel(unit_text)

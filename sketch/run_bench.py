@@ -57,11 +57,11 @@ EXPERIMENTS = {
     },
     "kmeans": {
         "path": "./sketch/bench/kmeans.daphne",
-        "args": ["r=500000", "f=100", "c=500", "i=2"]
+        "args": ["r=250000", "f=100", "c=500", "i=5"]
     },
     "components": {
         "path": "./sketch/bench/components.daphne",
-        "args": ["n=10000", "e=750"]
+        "args": ["n=25000", "e=750"]
     }
 }
 
